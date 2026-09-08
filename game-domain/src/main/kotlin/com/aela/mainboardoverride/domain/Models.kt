@@ -77,6 +77,10 @@ enum class GameResult {
  * cell: they are hidden coordinates activated when hardware is placed over them.
  */
 data class BoardState(
+    val width: Int = BOARD_WIDTH,
+    val height: Int = BOARD_HEIGHT,
+    val start: Position = Position(0, height / 2),
+    val extraction: Position = Position(width - 1, height / 2),
     val placed: List<PlacedDomino> = emptyList(),
     val firewalls: Set<Position> = emptySet(),
     val honeypots: Set<Position> = emptySet(),
@@ -85,9 +89,6 @@ data class BoardState(
     val bridges: List<Bridge> = emptyList(),
     val daemon: Daemon? = null,
 ) {
-    val start = Position(0, BOARD_HEIGHT / 2)
-    val extraction = Position(BOARD_WIDTH - 1, BOARD_HEIGHT / 2)
-
     fun valueAt(position: Position): Int? {
         if (position == start) return 0
         if (position == extraction) return 6

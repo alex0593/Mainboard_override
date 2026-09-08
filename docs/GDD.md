@@ -46,7 +46,8 @@ Las derrotas posibles son rastreo al 100 %, daemon en el inicio, kernel panic si
 - [ ] Conectar audio original, vibración y VFX a los ajustes ya persistidos.
 - [ ] Añadir arrastre real; la interacción accesible por selección y pulsación ya está implementada.
 - [x] Elegir visualmente orientación de `BRIDGE` y ambas mitades de `SPOOF`, con previsualización y cancelación.
-- [x] Tutorial contextual con ejercicios deterministas y práctica final; ver [guía completa](TUTORIAL.md).
+- [x] Ayuda contextual con «?» durante la partida; sustituye el tutorial del menú. Sus ejercicios deterministas se conservan para pruebas; ver [guía completa](TUTORIAL.md).
+- [x] Fichas claras de Kenney con puntos en mano, tablero y vistas previas.
 - [ ] Completar validación manual de TalkBack, texto ampliado y pantallas pequeñas.
 - [x] Añadir pruebas instrumentadas Compose del tutorial y los controles de scripts.
 - [ ] Añadir pruebas masivas de semillas y perfiles en dispositivos reales.

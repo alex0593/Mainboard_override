@@ -3,7 +3,6 @@
     <string name="tagline">INTRUSIÓN TÁCTICA DE RED</string>
     <string name="new_network">NUEVA RED</string>
     <string name="retry_seed">REPETIR ÚLTIMA SEMILLA</string>
-    <string name="tutorial">EJECUTAR TUTORIAL</string>
     <string name="settings">AJUSTES</string>
     <string name="help">PROTOCOLO</string>
     <string name="back">VOLVER</string>
@@ -25,7 +24,6 @@
     <string name="reduced_motion">MOVIMIENTO REDUCIDO</string>
     <string name="english">ENGLISH</string>
     <string name="spanish">ESPAÑOL</string>
-    <string name="protocol_text">Conecta INICIO (0) con EXTRACCIÓN (6). Todo contacto externo debe tener el mismo valor. Usa scripts con la RAM disponible y coloca exactamente una ficha por turno. El RASTREO aumenta tras cada turno; los firewalls bloquean celdas y los honeypots añaden ruido.</string>
     <string name="record">MEJOR: %1$d TURNOS · %2$d%% RASTREO</string>
     <string name="continue_lesson">Continuar</string>
     <string name="restart_lesson">Reiniciar lección</string>
@@ -38,7 +36,6 @@
     <string name="ping_preview">PING: próximas fichas</string>
     <string name="noise">Ruido +%1$d</string>
     <string name="pending_noise">Próximo rastreo: 8 + ruido (%1$d)</string>
-    <string name="orientation_preview">%1$s · %2$d → %3$d</string>
     <string name="lesson_progress">Tutorial · %1$d / %2$d</string>
     <string name="follow_step">Sigue el objetivo resaltado o reinicia esta lección.</string>
     <string name="node_description">Nodo %1$d, %2$d: %3$s</string>
@@ -86,4 +83,33 @@
     <string name="result_daemon_breach">El daemon alcanzó inicio.</string>
     <string name="result_kernel_panic">No hay colocaciones para continuar esta red.</string>
     <string name="result_memory_exhausted">No quedan fichas.</string>
+    <string name="help_description">Ayuda: %1$s</string>
+    <string name="help_close">Cerrar</string>
+    <string name="help_board_title">Tablero y objetivo</string>
+    <string name="help_board_body">Conecta S0 (inicio, valor 0) con X6 (extracción, valor 6) y ejecuta el turno. Todos los contactos externos deben coincidir; las dos mitades de una ficha se conectan automáticamente. Los bordes verdes marcan orígenes válidos para la ficha seleccionada. Toca un origen para colocar allí su primer puerto; el otro queda a la derecha o abajo.\n\n██: firewall, bloquea la colocación. HP: honeypot revelado; cubrir una trampa oculta o revelada añade 20 de ruido y descarta un script (una vez por colocación, solo para trampas nuevas). D!: daemon, avanza una celda conectada hacia inicio por turno; si llega, pierdes. ═ / ║: puente horizontal / vertical sobre un firewall.\n\nPierdes al llegar a 100 de rastreo, al agotar las fichas o al quedarte sin colocaciones y sin SPOOF disponible. Las derrotas por rastreo o daemon se comprueban antes de la victoria.</string>
+    <string name="help_ram_title">RAM</string>
+    <string name="help_ram_body">Los scripts gastan RAM al ejecutarse correctamente. Dispones de hasta 3 RAM, que se reponen al ejecutar el turno. Colocar y rotar fichas no consume RAM. Puedes consultar la ayuda aunque un script no esté disponible.</string>
+    <string name="help_trace_title">Rastreo</string>
+    <string name="help_trace_body">El rastreo aumenta 8 más el ruido pendiente cada vez que ejecutas el turno. Al llegar a 100 pierdes, incluso si conectaste extracción en ese turno. Usa menos turnos y considera el ruido de los scripts.</string>
+    <string name="help_turn_title">Turno</string>
+    <string name="help_turn_body">Coloca exactamente una ficha por turno. También puedes ejecutar scripts mientras tengas RAM, antes o después de colocarla. Ejecuta el turno para resolver el sistema y continuar.</string>
+    <string name="help_noise_title">Ruido pendiente</string>
+    <string name="help_noise_body">El ruido se acumula con los scripts y los honeypots que activas por primera vez. Se suma a los 8 de rastreo base al ejecutar el turno y vuelve a cero para el siguiente. Consultar ayuda no añade ruido.</string>
+    <string name="help_seed_title">Semilla</string>
+    <string name="help_seed_body">Este número identifica la red generada y los mazos iniciales. Repetir última semilla en el menú inicia de nuevo el mismo desafío; no reanuda la partida anterior.</string>
+    <string name="help_scripts_body">Selecciona un script para usar su efecto. PING se ejecuta inmediatamente; los demás requieren un objetivo. Cada ejecución correcta consume la carta y su coste de RAM y añade su ruido. Puedes cancelar una selección pendiente sin gastar recursos. Consulta el ? de cada carta para ver sus instrucciones.</string>
+    <string name="help_hardware_body">Cada ficha tiene dos puertos con valores de 0 a 6; una mitad vacía vale 0. Selecciona una ficha, rótala si hace falta y toca una celda con borde verde. Ambas celdas deben estar libres y todos los contactos externos deben coincidir. La colocación debe tocar la red conectada con S0.</string>
+    <string name="help_rotate_body">Alterna entre horizontal, vertical, horizontal invertida y vertical invertida. La vista previa muestra el orden exacto: el primer puerto queda a la izquierda o arriba. Cuatro pulsaciones recuperan la orientación inicial. Rotar no gasta recursos.</string>
+    <string name="help_end_turn_body">Disponible después de colocar una ficha. Suma 8 más el ruido al rastreo, mueve al daemon y comprueba derrota y victoria. Si la partida continúa, repone 3 RAM, roba una ficha y hasta un script si hay espacio y existencias, y limpia la vista de próximas fichas de PING.</string>
+    <string name="help_ping_title">PING</string>
+    <string name="help_ping_body">Toca la carta para revelar inmediatamente todos los honeypots ocultos y hasta tres próximas fichas. Las trampas siguen reveladas; la vista de fichas dura hasta ejecutar el turno. Revelar trampas no las activa.</string>
+    <string name="help_spoof_title">SPOOF</string>
+    <string name="help_spoof_body">Selecciona la carta y una ficha de tu mano. Elige cualquiera de los dos puertos y un valor de 0 a 6. Revisa las imágenes de antes y después y aplica para cambiar ese puerto permanentemente. Cancelar o cerrar conserva la ficha y los recursos.</string>
+    <string name="help_kill_title">KILL_PROCESS</string>
+    <string name="help_kill_body">Selecciona la carta y toca un firewall para eliminarlo y liberar su celda para colocar fichas. Este script actúa sobre firewalls; no elimina al daemon.</string>
+    <string name="help_bridge_title">BRIDGE</string>
+    <string name="help_bridge_body">Selecciona la carta, elige horizontal o vertical y toca un firewall. Deben existir dos puertos de igual valor a sus lados opuestos. El puente los conecta sin eliminar el firewall. Cada firewall admite un puente.</string>
+    <string name="help_script_cost">Coste: %1$d RAM · Ruido: +%2$d</string>
+    <string name="spoof_before">Antes</string>
+    <string name="spoof_after">Después</string>
 </resources>

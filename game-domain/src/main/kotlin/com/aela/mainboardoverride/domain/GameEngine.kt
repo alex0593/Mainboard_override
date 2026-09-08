@@ -32,13 +32,13 @@ object GameEngine {
     fun canPlace(board: BoardState, domino: Domino, origin: Position, orientation: Orientation): Boolean {
         val placed = PlacedDomino(domino, origin, orientation)
         val (firstPosition, secondPosition) = placed.positions
-        if (!inBounds(firstPosition) || !inBounds(secondPosition)) return false
+        if (!inBounds(board, firstPosition) || !inBounds(board, secondPosition)) return false
         if (board.isOccupied(firstPosition) || board.isOccupied(secondPosition)) return false
 
         val newPositions = setOf(firstPosition, secondPosition)
         for (position in newPositions) {
             val value = placed.valueAt(position) ?: continue
-            for (neighbor in position.neighbors().filterNot { it in newPositions }) {
+            for (neighbor in neighbors(board, position).filterNot { it in newPositions }) {
                 val neighborValue = board.valueAt(neighbor) ?: continue
                 if (neighborValue != value) return false
             }
@@ -47,7 +47,7 @@ object GameEngine {
         val reachable = reachableFromStart(board)
         return newPositions.any { position ->
             val value = placed.valueAt(position)
-            position.neighbors().any { it in reachable && board.valueAt(it) == value }
+            neighbors(board, position).any { it in reachable && board.valueAt(it) == value }
         }
     }
 
@@ -58,7 +58,7 @@ object GameEngine {
     fun legalPlacements(state: GameState): List<GameAction.PlaceDomino> = buildList {
         state.dominoHand.forEach { tile ->
             Orientation.entries.forEach { orientation ->
-                for (y in 0 until BOARD_HEIGHT) for (x in 0 until BOARD_WIDTH) {
+                for (y in 0 until state.board.height) for (x in 0 until state.board.width) {
                     val position = Position(x, y)
                     if (canPlace(state.board, tile, position, orientation)) {
                         add(GameAction.PlaceDomino(tile.id, position, orientation))
@@ -79,12 +79,12 @@ object GameEngine {
         val tile = if (action.rotated) handTile.rotated() else handTile
         val placed = PlacedDomino(tile, action.origin, action.orientation)
         val (first, second) = placed.positions
-        if (!inBounds(first) || !inBounds(second)) return rejected(state, RejectReason.OUT_OF_BOUNDS)
+        if (!inBounds(state.board, first) || !inBounds(state.board, second)) return rejected(state, RejectReason.OUT_OF_BOUNDS)
         if (state.board.isOccupied(first) || state.board.isOccupied(second)) {
             return rejected(state, RejectReason.CELL_OCCUPIED)
         }
         if (!canPlace(state.board, tile, action.origin, action.orientation)) {
-            val touchesNetwork = setOf(first, second).any { p -> p.neighbors().any { state.board.valueAt(it) != null } }
+            val touchesNetwork = setOf(first, second).any { p -> neighbors(state.board, p).any { state.board.valueAt(it) != null } }
             return rejected(state, if (touchesNetwork) RejectReason.CONTACT_MISMATCH else RejectReason.NOT_CONNECTED)
         }
 
@@ -139,7 +139,7 @@ object GameEngine {
             Position(center.x, center.y - 1) to Position(center.x, center.y + 1)
         }
         val values = state.board.valueAt(ends.first) to state.board.valueAt(ends.second)
-        if (!inBounds(ends.first) || !inBounds(ends.second) || values.first == null || values.first != values.second) {
+        if (!inBounds(state.board, ends.first) || !inBounds(state.board, ends.second) || values.first == null || values.first != values.second) {
             return rejected(state, RejectReason.INVALID_TARGET)
         }
         return playCard(state, action.cardId, ScriptType.BRIDGE) { current ->
@@ -251,7 +251,7 @@ object GameEngine {
         }
         val value = board.valueAt(position)
         if (value != null) {
-            position.neighbors().filterTo(result) { board.valueAt(it) == value }
+            neighbors(board, position).filterTo(result) { board.valueAt(it) == value }
         }
         board.bridges.forEach { bridge ->
             val ends = if (bridge.horizontal) {
@@ -262,11 +262,16 @@ object GameEngine {
             if (position == ends.first) result += ends.second
             if (position == ends.second) result += ends.first
         }
-        return result.filter(::inBounds)
+        return result.filter { inBounds(board, it) }
     }
 
-    private fun inBounds(position: Position): Boolean =
-        position.x in 0 until BOARD_WIDTH && position.y in 0 until BOARD_HEIGHT
+    private fun inBounds(board: BoardState, position: Position): Boolean =
+        position.x in 0 until board.width && position.y in 0 until board.height
+
+    private fun neighbors(board: BoardState, position: Position): List<Position> = listOf(
+        Position(position.x - 1, position.y), Position(position.x + 1, position.y),
+        Position(position.x, position.y - 1), Position(position.x, position.y + 1),
+    ).filter { inBounds(board, it) }
 
     private fun rejected(state: GameState, reason: RejectReason) =
         Transition(state, listOf(GameEvent.Rejected(reason)))

@@ -39,7 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.FlowRow
@@ -73,8 +73,6 @@ import androidx.navigation.compose.composable
 import com.aela.mainboardoverride.MainViewModel
 import com.aela.mainboardoverride.GameUiState
 import com.aela.mainboardoverride.R
-import com.aela.mainboardoverride.domain.BOARD_HEIGHT
-import com.aela.mainboardoverride.domain.BOARD_WIDTH
 import com.aela.mainboardoverride.domain.BoardState
 import com.aela.mainboardoverride.domain.Domino
 import com.aela.mainboardoverride.domain.GameEngine
@@ -98,7 +96,6 @@ fun MainboardApp(nav: NavHostController, state: GameUiState, actions: MainViewMo
                 state = state,
                 onNew = { actions.start(); nav.navigate(GAME) },
                 onRetry = { state.preferences.lastSeed?.let(actions::start); nav.navigate(GAME) },
-                onTutorial = { actions.start(tutorial = true); nav.navigate(GAME) },
                 onSettings = { nav.navigate(SETTINGS) },
                 onHelp = { nav.navigate(HELP) },
             )
@@ -120,7 +117,6 @@ private fun MenuScreen(
     state: GameUiState,
     onNew: () -> Unit,
     onRetry: () -> Unit,
-    onTutorial: () -> Unit,
     onSettings: () -> Unit,
     onHelp: () -> Unit,
 ) {
@@ -156,7 +152,6 @@ private fun MenuScreen(
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 TerminalButton(stringResource(R.string.new_network), onNew)
                 if (state.preferences.lastSeed != null) TerminalButton(stringResource(R.string.retry_seed), onRetry, primary = false)
-                TerminalButton(stringResource(R.string.tutorial), onTutorial, primary = false)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     SmallButton(stringResource(R.string.settings), onSettings, Modifier.weight(1f))
                     SmallButton(stringResource(R.string.help), onHelp, Modifier.weight(1f))
@@ -174,7 +169,8 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("NO SESSION") }
         return
     }
-    var showHelp by remember { mutableStateOf(false) }
+    var helpTopic by rememberSaveable { mutableStateOf<HelpTopic?>(null) }
+    val onHelp: (HelpTopic) -> Unit = { helpTopic = it }
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(8.dp)) {
             FlowRow(
@@ -184,8 +180,8 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 TextButton(onClick = onMenu) { Text("< ${stringResource(R.string.main_menu)}") }
-                StatusModule(stringResource(R.string.turn, game.turn), Cyan)
-                StatusModule(stringResource(R.string.ram, game.ram, MAX_RAM), Terminal) {
+                StatusModule(stringResource(R.string.turn, game.turn), Cyan, HelpTopic.TURN, onHelp)
+                StatusModule(stringResource(R.string.ram, game.ram, MAX_RAM), Terminal, HelpTopic.RAM, onHelp) {
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         repeat(MAX_RAM) { index ->
                             Box(Modifier.size(22.dp, 4.dp).background(if (index < game.ram) Terminal else Muted.copy(alpha = .2f)))
@@ -193,76 +189,95 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                     }
                 }
                 val traceColor = if (game.trace >= 80) Danger else Warning
-                StatusModule(stringResource(R.string.trace, game.trace), traceColor) {
+                StatusModule(stringResource(R.string.trace, game.trace), traceColor, HelpTopic.TRACE, onHelp) {
                     Box(Modifier.width(96.dp).height(4.dp).background(Muted.copy(alpha = .2f))) {
                         Box(Modifier.fillMaxWidth(game.trace / 100f).fillMaxHeight().background(traceColor))
                     }
                 }
-                TextButton(onClick = { showHelp = true }) { Text(stringResource(R.string.help)) }
+                HelpButton(HelpTopic.BOARD, onHelp)
             }
             Spacer(Modifier.height(8.dp))
             BoxWithConstraints(Modifier.weight(1f)) {
-            val controlsWidth = (maxWidth * .29f).coerceIn(190.dp, 260.dp)
-            Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val controlsWidth = (maxWidth * .29f).coerceIn(190.dp, 260.dp)
+                Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Board(
-                    board = game.board,
-                    legalOrigins = state.selectedDominoId?.takeIf { !game.tilePlacedThisTurn && state.selectedScriptId == null && game.result == null }?.let { id ->
-                        GameEngine.legalPlacements(game).filter {
-                            it.dominoId == id &&
-                                it.orientation == (if (state.rotationSteps % 2 == 0) Orientation.HORIZONTAL else Orientation.VERTICAL) &&
-                                (it.rotated == (state.rotationSteps >= 2) || game.dominoHand.any { tile -> tile.id == id && tile.first == tile.second })
-                        }.map { it.origin }.toSet()
-                    }.orEmpty(),
-                    target = state.tutorialStep?.let(Tutorial::target),
-                    modifier = Modifier.weight(1f).fillMaxHeight(),
-                    onCell = actions::placeAt,
-                )
-                Column(
-                    Modifier.width(controlsWidth).fillMaxHeight()
-                        .background(Brush.verticalGradient(listOf(Panel, Void)), RoundedCornerShape(8.dp))
-                        .border(1.dp, Cyan.copy(alpha = .3f), RoundedCornerShape(8.dp))
-                        .verticalScroll(rememberScrollState()).padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    state.tutorialStep?.let { step ->
-                        TutorialPanel(step, state.tutorialBlocked, actions::continueTutorial, actions::restartLesson)
-                    }
-                    Text(stringResource(R.string.seed, game.seed), color = Muted, fontSize = 11.sp)
-                    Text(stringResource(R.string.pending_noise, game.pendingNoise), color = Warning, fontSize = 12.sp)
-                    PanelHeading(stringResource(R.string.scripts))
-                    game.scriptHand.forEach { card ->
-                        ScriptCardView(card, state.selectedScriptId == card.id, game.ram >= card.type.ramCost && game.result == null, highlighted = state.tutorialStep?.let { step -> when(card.type) { ScriptType.PING -> step == TutorialStep.PING; ScriptType.SPOOF -> step == TutorialStep.SPOOF; ScriptType.KILL_PROCESS -> step == TutorialStep.KILL; ScriptType.BRIDGE -> step == TutorialStep.BRIDGE } } == true) {
-                            actions.selectScript(card.id)
+                            board = game.board,
+                            legalOrigins = state.selectedDominoId?.takeIf { !game.tilePlacedThisTurn && state.selectedScriptId == null && game.result == null }?.let { id ->
+                                GameEngine.legalPlacements(game).filter {
+                                    it.dominoId == id &&
+                                        it.orientation == (if (state.rotationSteps % 2 == 0) Orientation.HORIZONTAL else Orientation.VERTICAL) &&
+                                        (it.rotated == (state.rotationSteps >= 2) || game.dominoHand.any { tile -> tile.id == id && tile.first == tile.second })
+                                }.map { it.origin }.toSet()
+                            }.orEmpty(),
+                            target = state.tutorialStep?.let(Tutorial::target),
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            onCell = actions::placeAt,
+                    )
+                    Column(
+                        Modifier.width(controlsWidth).fillMaxHeight()
+                            .background(Brush.verticalGradient(listOf(Panel, Void)), RoundedCornerShape(8.dp))
+                            .border(1.dp, Cyan.copy(alpha = .3f), RoundedCornerShape(8.dp))
+                            .verticalScroll(rememberScrollState()).padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        state.tutorialStep?.let { step ->
+                            TutorialPanel(step, state.tutorialBlocked, actions::continueTutorial, actions::restartLesson)
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(stringResource(R.string.seed, game.seed), Modifier.weight(1f), color = Muted, fontSize = 11.sp)
+                            HelpButton(HelpTopic.SEED, onHelp)
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(stringResource(R.string.pending_noise, game.pendingNoise), Modifier.weight(1f), color = Warning, fontSize = 12.sp)
+                            HelpButton(HelpTopic.NOISE, onHelp)
+                        }
+                        PanelHeading(stringResource(R.string.scripts), HelpTopic.SCRIPTS, onHelp)
+                        game.scriptHand.forEach { card ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.weight(1f)) {
+                                    ScriptCardView(card, state.selectedScriptId == card.id, game.ram >= card.type.ramCost && game.result == null, highlighted = state.tutorialStep?.let { step -> when(card.type) { ScriptType.PING -> step == TutorialStep.PING; ScriptType.SPOOF -> step == TutorialStep.SPOOF; ScriptType.KILL_PROCESS -> step == TutorialStep.KILL; ScriptType.BRIDGE -> step == TutorialStep.BRIDGE } } == true) {
+                                        actions.selectScript(card.id)
+                                    }
+                                }
+                                HelpButton(card.type.helpTopic(), onHelp)
+                            }
+                        }
+                        state.message?.let {
+                            Text(stringResource(rejectionText(it)), color = Danger, fontSize = 11.sp)
+                        }
+                        if (game.scriptHand.any { it.id == state.selectedScriptId && it.type == ScriptType.BRIDGE }) {
+                            BridgeControl(state.bridgeHorizontal, actions::toggleBridge)
+                        }
+                        if (state.selectedScriptId != null) SmallButton(stringResource(R.string.cancel), actions::cancelScript)
+                        if (game.pingPreview.isNotEmpty()) PingPreview(game.pingPreview)
+                        PanelHeading(stringResource(R.string.dominoes), HelpTopic.HARDWARE, onHelp)
+                        game.dominoHand.forEach { tile ->
+                            DominoView(tile, state.selectedDominoId == tile.id, highlighted = state.tutorialStep == TutorialStep.SELECT || state.tutorialStep == TutorialStep.SPOOF) { actions.selectDomino(tile.id) }
+                        }
+                        game.dominoHand.find { it.id == state.selectedDominoId }?.let { tile ->
+                            val preview = if (state.rotationSteps >= 2) tile.rotated() else tile
+                            val orientation = if (state.rotationSteps % 2 == 0) Orientation.HORIZONTAL else Orientation.VERTICAL
+                            Text(stringResource(if (orientation == Orientation.HORIZONTAL) R.string.horizontal else R.string.vertical), color = Cyan)
+                            DominoImage(preview, Modifier.align(Alignment.CenterHorizontally).width(if (orientation == Orientation.HORIZONTAL) 96.dp else 48.dp), orientation)
+                        }
+                        HorizontalDivider(color = Cyan.copy(alpha = .2f))
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                SmallButton(stringResource(R.string.rotate), actions::rotate, Modifier.weight(1f).then(if (state.tutorialStep == TutorialStep.ROTATE) Modifier.border(2.dp, Warning) else Modifier))
+                                HelpButton(HelpTopic.ROTATE, onHelp)
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Button(
+                                    onClick = actions::endTurn,
+                                    enabled = game.tilePlacedThisTurn,
+                                    modifier = Modifier.weight(1f).then(if (state.tutorialStep == TutorialStep.END_TURN) Modifier.border(2.dp, Warning) else Modifier),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Terminal, contentColor = Void),
+                                ) { Text(stringResource(R.string.end_turn), fontSize = 10.sp) }
+                                HelpButton(HelpTopic.END_TURN, onHelp)
+                            }
                         }
                     }
-                    state.message?.let {
-                        Text(stringResource(rejectionText(it)), color = Danger, fontSize = 11.sp)
-                    }
-                    if (game.scriptHand.any { it.id == state.selectedScriptId && it.type == ScriptType.BRIDGE }) {
-                        BridgeControl(state.bridgeHorizontal, actions::toggleBridge)
-                    }
-                    if (state.selectedScriptId != null) SmallButton(stringResource(R.string.cancel), actions::cancelScript)
-                    if (game.pingPreview.isNotEmpty()) PingPreview(game.pingPreview)
-                    PanelHeading(stringResource(R.string.dominoes))
-                    game.dominoHand.forEach { tile ->
-                        DominoView(tile, state.selectedDominoId == tile.id, highlighted = state.tutorialStep == TutorialStep.SELECT || state.tutorialStep == TutorialStep.SPOOF) { actions.selectDomino(tile.id) }
-                    }
-                    game.dominoHand.find { it.id == state.selectedDominoId }?.let { tile ->
-                        val preview = if (state.rotationSteps >= 2) tile.rotated() else tile
-                        Text(stringResource(R.string.orientation_preview, stringResource(if (state.rotationSteps % 2 == 0) R.string.horizontal else R.string.vertical), preview.first, preview.second), color = Cyan)
-                    }
-                    HorizontalDivider(color = Cyan.copy(alpha = .2f))
-                    Column {
-                        SmallButton(stringResource(R.string.rotate), actions::rotate, Modifier.then(if (state.tutorialStep == TutorialStep.ROTATE) Modifier.border(2.dp, Warning) else Modifier))
-                        Button(
-                            onClick = actions::endTurn,
-                            enabled = game.tilePlacedThisTurn,
-                            modifier = Modifier.fillMaxWidth().then(if (state.tutorialStep == TutorialStep.END_TURN) Modifier.border(2.dp, Warning) else Modifier),
-                            colors = ButtonDefaults.buttonColors(containerColor = Terminal, contentColor = Void),
-                        ) { Text(stringResource(R.string.end_turn), fontSize = 10.sp) }
-                    }
                 }
-            }
             }
         }
     }
@@ -274,12 +289,7 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                 actions::setSpoofHalf, actions::setSpoofValue, { actions.spoof(state.spoofValue) }, actions::cancelScript)
         }
     }
-    if (showHelp) AlertDialog(
-        onDismissRequest = { showHelp = false }, title = { Text(stringResource(R.string.help)) },
-        text = { Column(Modifier.verticalScroll(rememberScrollState())) {
-            ProtocolContent()
-        } }, confirmButton = { TextButton(onClick = { showHelp = false }) { Text(stringResource(R.string.back)) } },
-    )
+    helpTopic?.let { HelpDialog(it) { helpTopic = null } }
     game.result?.let { ResultDialog(it, game.turn, game.trace, actions::retry, onMenu, state.tutorialStep == TutorialStep.COMPLETE) }
 }
 
@@ -311,13 +321,24 @@ private fun Board(
             }
         }
         val margin = if (maxHeight < 250.dp) 12.dp else 20.dp
-        val cell = minOf((maxWidth - margin * 2) / BOARD_WIDTH, (maxHeight - margin * 2) / BOARD_HEIGHT).coerceAtLeast(0.dp)
-        Box(Modifier.width(cell * BOARD_WIDTH).height(cell * BOARD_HEIGHT).background(Void).border(1.dp, Muted.copy(alpha = .4f))) {
+        val cell = minOf((maxWidth - margin * 2) / board.width, (maxHeight - margin * 2) / board.height).coerceAtLeast(0.dp)
+        Box(Modifier.width(cell * board.width).height(cell * board.height).background(Void).border(1.dp, Muted.copy(alpha = .4f))) {
             Canvas(Modifier.fillMaxSize()) {
-                for (x in 0..BOARD_WIDTH) drawLine(Muted.copy(alpha = .18f), Offset(x * size.width / BOARD_WIDTH, 0f), Offset(x * size.width / BOARD_WIDTH, size.height))
-                for (y in 0..BOARD_HEIGHT) drawLine(Muted.copy(alpha = .18f), Offset(0f, y * size.height / BOARD_HEIGHT), Offset(size.width, y * size.height / BOARD_HEIGHT))
+                for (x in 0..board.width) drawLine(Muted.copy(alpha = .18f), Offset(x * size.width / board.width, 0f), Offset(x * size.width / board.width, size.height))
+                for (y in 0..board.height) drawLine(Muted.copy(alpha = .18f), Offset(0f, y * size.height / board.height), Offset(size.width, y * size.height / board.height))
             }
-            for (y in 0 until BOARD_HEIGHT) for (x in 0 until BOARD_WIDTH) {
+            // Sprites sit below the cell hit targets and threat badges.
+            board.placed.forEach { placed ->
+                val horizontal = placed.orientation == Orientation.HORIZONTAL
+                DominoImage(
+                    placed.domino,
+                    Modifier.offset(cell * placed.origin.x, cell * placed.origin.y)
+                        .size(cell * (if (horizontal) 2 else 1), cell * (if (horizontal) 1 else 2)).padding(2.dp),
+                    placed.orientation,
+                    describe = false,
+                )
+            }
+            for (y in 0 until board.height) for (x in 0 until board.width) {
                 val position = Position(x, y)
                 BoardCell(board, position, cell, position in legalOrigins, position == target, onCell)
             }
@@ -328,6 +349,7 @@ private fun Board(
 @Composable
 private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Boolean, target: Boolean, onCell: (Position) -> Unit) {
     val value = board.valueAt(position)
+    val isPlaced = board.placed.any { it.valueAt(position) != null }
     val isStart = position == board.start
     val isExit = position == board.extraction
     val firewall = position in board.firewalls
@@ -359,13 +381,20 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
             .offset(x = size * position.x, y = size * position.y)
             .size(size)
             .padding(2.dp)
-            .background(placedColor.copy(alpha = if (value != null || firewall || trap) .22f else placedColor.alpha))
+            .background(if (isPlaced) Color.Transparent else placedColor.copy(alpha = if (value != null || firewall || trap) .22f else placedColor.alpha))
             .then(if (target) Modifier.border(3.dp, Warning) else if (legal) Modifier.border(1.dp, Terminal) else Modifier)
             .clickable { onCell(position) }
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {
-        Text(
+        if (isPlaced) {
+            if (trap || daemon) {
+                Row(Modifier.align(Alignment.TopEnd).background(Void.copy(alpha = .9f), RoundedCornerShape(2.dp))) {
+                    if (trap) Text("HP", color = Warning, fontSize = 9.sp)
+                    if (daemon) Text("D!", color = Danger, fontSize = 9.sp)
+                }
+            }
+        } else Text(
             when {
                 bridge != null -> if (bridge.horizontal) "═" else "║"
                 firewall -> "██"
@@ -409,7 +438,7 @@ private fun DominoView(tile: Domino, selected: Boolean, highlighted: Boolean = f
             .border(1.dp, if (highlighted) Warning else if (selected) Terminal else Muted).clickable(onClick = onClick).padding(6.dp),
         horizontalArrangement = Arrangement.Center,
     ) {
-        Text("[ ${tile.first} │ ${tile.second} ]", color = if (selected) Terminal else Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        DominoImage(tile, Modifier.width(96.dp), describe = false)
     }
 }
 
@@ -489,22 +518,26 @@ private fun SmallButton(label: String, onClick: () -> Unit, modifier: Modifier =
 }
 
 @Composable
-private fun StatusModule(label: String, tint: Color, detail: @Composable () -> Unit = {}) {
-    Column(
-        Modifier.background(Void.copy(alpha = .7f), RoundedCornerShape(4.dp)).padding(horizontal = 10.dp, vertical = 5.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(label, color = tint, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-        detail()
+private fun StatusModule(label: String, tint: Color, topic: HelpTopic, onHelp: (HelpTopic) -> Unit, detail: @Composable () -> Unit = {}) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(
+            Modifier.background(Void.copy(alpha = .7f), RoundedCornerShape(4.dp)).padding(horizontal = 10.dp, vertical = 5.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(label, color = tint, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            detail()
+        }
+        HelpButton(topic, onHelp)
     }
 }
 
 @Composable
-private fun PanelHeading(label: String) {
+private fun PanelHeading(label: String, topic: HelpTopic, onHelp: (HelpTopic) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Box(Modifier.size(3.dp, 14.dp).background(Cyan))
         Text(label, color = Cyan, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
         HorizontalDivider(Modifier.weight(1f), color = Cyan.copy(alpha = .25f))
+        HelpButton(topic, onHelp)
     }
 }
 
@@ -587,7 +620,7 @@ internal fun TutorialPanel(step: TutorialStep, blocked: Boolean, onContinue: () 
 internal fun PingPreview(tiles: List<Domino>) {
     Column {
         Text(stringResource(R.string.ping_preview), color = Cyan)
-        tiles.forEach { Text("[ ${it.first} | ${it.second} ]", color = Terminal) }
+        tiles.forEach { DominoImage(it, Modifier.width(96.dp).padding(vertical = 3.dp)) }
     }
 }
 
@@ -600,7 +633,16 @@ internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?, block
         title = { Text(stringResource(R.string.spoof_value)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text("[ ${tile.first} | ${tile.second} ] → [ ${if (half == 0) value else tile.first} | ${if (half == 1) value else tile.second} ]")
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.spoof_before))
+                        DominoImage(tile, Modifier.widthIn(max = 112.dp).fillMaxWidth())
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.spoof_after))
+                        DominoImage(if (half == 0) tile.copy(first = value) else tile.copy(second = value), Modifier.widthIn(max = 112.dp).fillMaxWidth())
+                    }
+                }
                 FlowRow {
                     listOf(R.string.first_half, R.string.second_half).forEachIndexed { index, label ->
                         OutlinedButton(onClick = { onHalf(index) }, modifier = Modifier.semantics { selected = half == index }) { Text(stringResource(label)) }
@@ -627,7 +669,8 @@ internal fun BridgeControl(horizontal: Boolean, onToggle: () -> Unit) {
 
 @Composable
 private fun ProtocolContent() {
-    listOf(R.string.protocol_text, R.string.lesson_system, R.string.lesson_ping,
-        R.string.lesson_spoof_result, R.string.lesson_kill_result, R.string.lesson_bridge_result,
-        R.string.lesson_final).forEach { Text(stringResource(it), color = Color.White, modifier = Modifier.padding(bottom = 12.dp)) }
+    HelpTopic.entries.forEach { topic ->
+        Text(stringResource(topic.title), color = Cyan, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp))
+        HelpBody(topic)
+    }
 }

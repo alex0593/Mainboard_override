@@ -1,3 +1,30 @@
+# Ayuda durante la partida
+
+La experiencia normal usa botones «?» junto a turno, RAM, rastreo, ruido, semilla, scripts, hardware, rotación y ejecución de turno. Cada carta tiene su propia ayuda, accesible aunque no alcance la RAM. El «?» del tablero explica conexiones, inicio/extracción, colocaciones válidas, firewalls, honeypots, daemon, puentes y condiciones de fin de partida. PROTOCOLO en el menú reúne estos mismos temas.
+
+Cada diálogo muestra una explicación en español o inglés y los costes vigentes del script. Se cierra con Cerrar, atrás o tocando fuera. Abrir y cerrar ayuda conserva selección, orientación, recursos y estado del juego; no ejecuta acciones ni revela trampas ocultas.
+
+Las 28 fichas claras de Kenney reemplazan las representaciones numéricas en mano, tablero, orientación, PING y el antes/después de SPOOF. Las mitades vacías representan cero; las imágenes conservan el orden del motor incluso para valores invertidos. En el tablero cada imagen ocupa dos celdas y las insignias HP/D! permanecen sobre ella. Los valores siguen disponibles para accesibilidad. Los contadores y el selector 0–6 de SPOOF mantienen números.
+
+Los botones «?» tienen un área táctil de 48 dp. El panel y los diálogos permiten desplazamiento. No cambian las reglas ni las preferencias guardadas. El tutorial ya no aparece en el menú; sus escenarios, componentes y pruebas se conservan internamente para regresión, sin iniciar lecciones durante partidas normales.
+
+## Verificación de la ayuda y las fichas
+
+`DominoResourcesTest` comprueba las 28 combinaciones, inversión y orientación. `ContextHelpUiTest` abre todos los temas en español e inglés con texto ampliado a 1,3 en 640 × 360, comprueba cierre y conservación del estado, incluye RAM agotada y verifica mediante píxeles que las imágenes muestran los puntos en la mitad correcta en ambas orientaciones. `TutorialUiTest` mantiene cobertura de PING, SPOOF, BRIDGE, colocación y los escenarios internos; las fichas se localizan por su descripción accesible.
+
+```bash
+./gradlew :game-domain:test :app:testDebugUnitTest :app:assembleDebug :app:lintDebug
+./gradlew :app:connectedDebugAndroidTest
+```
+
+La última tarea requiere Android autorizado. Revisar además las fichas colocadas y las insignias de amenazas en pantalla real; TalkBack requiere una comprobación manual de uso.
+
+---
+
+## Referencia del tutorial interno (conservado para pruebas)
+
+El recorrido siguiente documenta los escenarios internos anteriores. Su acceso desde el menú fue sustituido por la ayuda contextual.
+
 # Tutorial interactivo
 
 ## Entrada y alcance

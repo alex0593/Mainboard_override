@@ -24,9 +24,13 @@ Las clases públicas centrales incluyen KDoc. Al cambiar una regla se debe actua
 El proyecto fija AGP, Kotlin, Compose BOM y Gradle para que una semilla y una revisión sean reproducibles. `local.properties` es configuración local ignorada por control de versiones.
 
 
-## Tutorial y presentación de scripts
+## Ayuda contextual, fichas y escenarios internos
 
-`TutorialStep` y `Tutorial` viven en `game-domain`: definen escenarios deterministas, objetivos permitidos, transiciones tras acciones aceptadas y puntos de reinicio. `GameState` y `GameAction` conservan sus contratos. La colocación y ejecución de scripts siguen pasando por `GameEngine.reduce`; la guía no aplica efectos directamente al tablero.
+`HelpTopic` centraliza títulos, explicaciones y el tipo de script para obtener costes del dominio. `GameScreen` conserva únicamente el tema abierto como estado de presentación; `HelpButton` es independiente de los controles que ejecutan acciones. `HelpDialog` y PROTOCOLO comparten contenido localizado.
+
+`DominoImage` usa los 28 PNG claros de Kenney en `drawable-nodpi`: normaliza el par para elegir imagen y transforma el dibujo para conservar el primer puerto a la izquierda o arriba. Las imágenes colocadas se dibujan bajo las celdas táctiles y sus insignias; las descripciones de celda siguen usando los valores del motor. La licencia viaja en los assets del APK.
+
+El tutorial ya no tiene entrada en el menú. Sus escenarios y componentes permanecen para las pruebas internas. `TutorialStep` y `Tutorial` viven en `game-domain`: definen escenarios deterministas, objetivos permitidos, transiciones tras acciones aceptadas y puntos de reinicio. `GameState` y `GameAction` conservan sus contratos. La colocación y ejecución de scripts siguen pasando por `GameEngine.reduce`; la guía no aplica efectos directamente al tablero.
 
 `GameUiState` incorpora paso, aviso de acción ajena a la guía, puerto/valor de SPOOF y orientación de BRIDGE. El ViewModel valida selecciones y rotación, filtra acciones según el paso y llama a `Tutorial.after` con la transición del motor. Las explicaciones avanzan mediante `continueTutorial`; cada ejercicio nuevo carga su escenario, mientras que los resultados conservan el tablero para inspección. La práctica final utiliza el generador habitual sin filtrar sus acciones.
 

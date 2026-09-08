@@ -11,18 +11,23 @@ object LevelGenerator {
 
     internal fun generateVerified(seed: Long): GeneratedLevel {
         val random = Random(seed)
+        val startY = random.nextInt(1, 6)
+        val exitY = (startY + random.nextInt(1, 6)) % 6 + 1
+        val start = Position(0, startY)
+        // Some seeds use an eight-column board, others nine columns.
+        val extraction = Position(if (random.nextBoolean()) 7 else 8, exitY)
         repeat(24) {
-            val path = findPath(random, random.nextInt(5, 8))
-            if (path != null) buildLevel(seed, random, path)?.let { return it }
+            val path = findPath(random, random.nextInt(5, 8), start, extraction)
+            if (path != null) buildLevel(seed, random, path, start, extraction)?.let { return it }
         }
         // A five-tile detour; reflections retain valid board geometry.
         val fallback = listOf(1 to 3, 1 to 2, 2 to 2, 3 to 2, 4 to 2, 5 to 2, 6 to 2, 7 to 2, 7 to 3, 7 to 4)
         val reflect = random.nextBoolean()
-        return checkNotNull(buildLevel(seed, random, fallback.map { (x, y) -> Position(x, if (reflect) 6 - y else y) }))
+        return checkNotNull(buildLevel(seed, random, fallback.map { (x, y) -> Position(x, if (reflect) 6 - y else y) }, start, extraction))
     }
 
-    private fun findPath(random: Random, count: Int): List<Position>? {
-        val board = BoardState()
+    private fun findPath(random: Random, count: Int, start: Position, extraction: Position): List<Position>? {
+        val board = BoardState(start = start, extraction = extraction)
         val path = mutableListOf<Position>()
         var budget = 12000
         fun visit(current: Position): Boolean {
@@ -43,8 +48,12 @@ object LevelGenerator {
         return if (visit(board.start)) path.toList() else null
     }
 
-    private fun buildLevel(seed: Long, random: Random, path: List<Position>): GeneratedLevel? {
-        val base = BoardState()
+    private fun buildLevel(seed: Long, random: Random, path: List<Position>, start: Position = Position(0, BOARD_HEIGHT / 2), extraction: Position = Position(BOARD_WIDTH - 1, BOARD_HEIGHT / 2)): GeneratedLevel? {
+        // Fit the generated witness while varying the playable footprint per seed.
+        val width = if (path.all { it.x < 8 } && extraction.x < 8) 8 else 9
+        val height = if (path.all { it.y < 6 } && extraction.y < 6) 6 else 7
+        if (start.x !in 0 until width || extraction.x !in 0 until width || start.y !in 0 until height || extraction.y !in 0 until height) return null
+        val base = BoardState(width = width, height = height, start = start, extraction = extraction)
         val positions = path + base.start + base.extraction
         val parent = IntArray(positions.size) { it }
         fun root(index: Int): Int {
@@ -69,7 +78,7 @@ object LevelGenerator {
             val domino = Domino("hardware-$index", values.getValue(root(path.indexOf(ordered[0]))), values.getValue(root(path.indexOf(ordered[1]))))
             PlacedDomino(domino, ordered[0], if (horizontal) Orientation.HORIZONTAL else Orientation.VERTICAL)
         }
-        val available = (0 until BOARD_HEIGHT).flatMap { y -> (0 until BOARD_WIDTH).map { x -> Position(x, y) } }
+        val available = (0 until height).flatMap { y -> (0 until width).map { x -> Position(x, y) } }
             .filter { it !in positions }.shuffled(random)
         val firewallCount = random.nextInt(4, 8)
         val board = base.copy(

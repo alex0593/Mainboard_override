@@ -56,9 +56,9 @@ class TutorialUiTest {
         }
         compose.onNodeWithText(text(R.string.second_half)).performClick().assertIsSelected()
         compose.onNodeWithText("6").performClick()
-        compose.onNodeWithText("[ 3 | 2 ] → [ 3 | 6 ]").assertIsDisplayed()
+        compose.onNodeWithContentDescription(app.getString(R.string.domino_description, 3, 6)).assertIsDisplayed()
         compose.onNodeWithText(text(R.string.first_half)).performClick().assertIsSelected()
-        compose.onNodeWithText("[ 3 | 2 ] → [ 6 | 2 ]").assertIsDisplayed()
+        compose.onNodeWithContentDescription(app.getString(R.string.domino_description, 6, 2)).assertIsDisplayed()
         compose.onNodeWithText(text(R.string.cancel)).performClick()
         compose.runOnIdle { assertTrue(cancelled); assertEquals(0, applied) }
     }
@@ -78,8 +78,8 @@ class TutorialUiTest {
     @Test fun pingShowsUpcomingHardware() {
         compose.setContent { PingPreview(listOf(Domino("one", 2, 3), Domino("two", 4, 6))) }
         compose.onNodeWithText(text(R.string.ping_preview)).assertIsDisplayed()
-        compose.onNodeWithText("[ 2 | 3 ]").assertIsDisplayed()
-        compose.onNodeWithText("[ 4 | 6 ]").assertIsDisplayed()
+        compose.onNodeWithContentDescription(app.getString(R.string.domino_description, 2, 3)).assertIsDisplayed()
+        compose.onNodeWithContentDescription(app.getString(R.string.domino_description, 4, 6)).assertIsDisplayed()
     }
 
     @Test fun completeTutorialDoesNotWriteNormalRecordsAndCompletionIsWrittenOnce() {

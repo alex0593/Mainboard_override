@@ -4,7 +4,6 @@
     <string name="tagline">TACTICAL NETWORK INTRUSION</string>
     <string name="new_network">NEW NETWORK</string>
     <string name="retry_seed">RETRY LAST SEED</string>
-    <string name="tutorial">RUN TUTORIAL</string>
     <string name="settings">SETTINGS</string>
     <string name="help">PROTOCOL</string>
     <string name="back">BACK</string>
@@ -27,7 +26,6 @@
     <string name="reduced_motion">REDUCED MOTION</string>
     <string name="english">ENGLISH</string>
     <string name="spanish">ESPAÑOL</string>
-    <string name="protocol_text">Connect START (0) to EXTRACTION (6). Every external contact must have the same value. Use scripts with available RAM and place exactly one domino per turn. TRACE increases after every turn; firewalls block cells and honeypots add noise.</string>
     <string name="record">BEST: %1$d TURNS · %2$d%% TRACE</string>
     <string name="continue_lesson">Continue</string>
     <string name="restart_lesson">Restart lesson</string>
@@ -40,7 +38,6 @@
     <string name="ping_preview">PING: next hardware</string>
     <string name="noise">Noise +%1$d</string>
     <string name="pending_noise">Next trace: 8 + noise (%1$d)</string>
-    <string name="orientation_preview">%1$s · %2$d → %3$d</string>
     <string name="lesson_progress">Tutorial · %1$d / %2$d</string>
     <string name="follow_step">Follow the highlighted objective, or restart this lesson.</string>
     <string name="node_description">Node %1$d, %2$d: %3$s</string>
@@ -88,4 +85,33 @@
     <string name="result_daemon_breach">The daemon reached start.</string>
     <string name="result_kernel_panic">No placement can continue this network.</string>
     <string name="result_memory_exhausted">No hardware remains.</string>
+    <string name="help_description">Help: %1$s</string>
+    <string name="help_close">Close</string>
+    <string name="help_board_title">Board and objective</string>
+    <string name="help_board_body">Connect S0 (start, value 0) to X6 (extraction, value 6), then execute the turn. Match every outside contact; the two halves inside a domino connect automatically. Green outlines mark valid origins for the selected domino. Tap an origin to place its first port there; the other goes right or down.\n\n██: firewall, blocks placement. HP: revealed honeypot; covering a hidden or revealed trap adds 20 noise and discards a script (once per placement, only for new traps). D!: daemon, moves one connected cell toward start each turn; reaching start ends the match. ═ / ║: horizontal / vertical bridge across a firewall.\n\nAt 100 trace you lose. Running out of hardware or having no legal placements without an available SPOOF also ends the match. Defeats from trace or daemon are checked before victory.</string>
+    <string name="help_ram_title">RAM</string>
+    <string name="help_ram_body">Scripts spend RAM when executed successfully. You have up to 3 RAM, restored after executing the turn. Placing and rotating hardware cost no RAM. You can read help even when a script is unavailable.</string>
+    <string name="help_trace_title">Trace</string>
+    <string name="help_trace_body">Trace rises by 8 plus pending noise each time you execute the turn. At 100 you lose, even if you connected extraction that turn. Spend fewer turns and use noisy scripts carefully.</string>
+    <string name="help_turn_title">Turn</string>
+    <string name="help_turn_body">Place exactly one domino per turn. You may also execute scripts while you have RAM, before or after placing it. Execute the turn to resolve the system and continue.</string>
+    <string name="help_noise_title">Pending noise</string>
+    <string name="help_noise_body">Noise accumulates from scripts and newly triggered honeypots. It is added to the base 8 trace when you execute the turn, then resets for the next turn. Reading help adds no noise.</string>
+    <string name="help_seed_title">Seed</string>
+    <string name="help_seed_body">This number identifies the generated network and starting decks. Retry last seed in the menu starts the same challenge again; it does not resume your previous match.</string>
+    <string name="help_scripts_body">Select a script to use its effect. PING runs immediately; other scripts require a target. Each successful execution consumes the card and its RAM cost and adds its noise. Cancel a pending selection without spending resources. Use the ? beside each card for instructions.</string>
+    <string name="help_hardware_body">Each domino has two ports with values from 0 to 6; a blank half means 0. Select a domino, rotate if needed, then tap a green outlined cell. Both cells must be free and every outside contact must match. The placement must touch the network connected to S0.</string>
+    <string name="help_rotate_body">Cycles through horizontal, vertical, reversed horizontal and reversed vertical. The preview shows the exact port order: first on the left or top. Four presses restore the original orientation. Rotation spends no resources.</string>
+    <string name="help_end_turn_body">Available after placing one domino. Applies 8 plus noise to trace, moves the daemon and checks defeat and victory. If play continues, restores 3 RAM, draws one domino and up to one script if there is room and stock, and clears the PING hardware preview.</string>
+    <string name="help_ping_title">PING</string>
+    <string name="help_ping_body">Tap the card to reveal all hidden honeypots and up to three upcoming dominoes immediately. Traps stay revealed; the domino preview lasts until you execute the turn. Revealing traps does not trigger them.</string>
+    <string name="help_spoof_title">SPOOF</string>
+    <string name="help_spoof_body">Select the card, then a domino in your hand. Choose either port and a value from 0 to 6. Check the before/after images and apply to change that port permanently. Cancel or close to leave the domino and resources unchanged.</string>
+    <string name="help_kill_title">KILL_PROCESS</string>
+    <string name="help_kill_body">Select the card, then tap a firewall to remove it and free its cell for hardware. This script targets firewalls; it cannot remove the daemon.</string>
+    <string name="help_bridge_title">BRIDGE</string>
+    <string name="help_bridge_body">Select the card, choose horizontal or vertical, then tap a firewall. The two ports on opposite sides must exist and have equal values. The bridge connects them without removing the firewall. Each firewall can hold one bridge.</string>
+    <string name="help_script_cost">Cost: %1$d RAM · Noise: +%2$d</string>
+    <string name="spoof_before">Before</string>
+    <string name="spoof_after">After</string>
 </resources>

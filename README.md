@@ -19,8 +19,10 @@ Requisitos: JDK 17 y Android SDK 37.
 
 El APK se genera en `app/build/outputs/apk/debug/app-debug.apk`.
 
-## Tutorial y controles
+## Fichas, ayuda y controles
 
-El tutorial incluye lecciones interactivas, práctica de los cuatro scripts y una partida final. Consulta [la guía completa](docs/TUTORIAL.md) para conocer el recorrido, controles, accesibilidad, persistencia y pruebas. SPOOF permite editar ambos puertos con previsualización y cancelación; BRIDGE admite dos orientaciones y PING muestra las próximas fichas.
+Las fichas usan los gráficos claros de Kenney, con puntos en la mano, el tablero y las vistas previas. Los botones «?» dentro de la partida explican indicadores, scripts, controles y símbolos del tablero sin gastar recursos. Sustituyen el acceso al tutorial del menú. Consulta [la guía de ayuda y controles](docs/TUTORIAL.md) para conocer accesibilidad, compatibilidad y pruebas. SPOOF permite editar ambos puertos con previsualización y cancelación; BRIDGE admite dos orientaciones y PING muestra las próximas fichas.
 
 Antes de entregar cambios, ejecutar también `./gradlew :app:lintDebug`. Las pruebas de interfaz se ejecutan con `./gradlew :app:connectedDebugAndroidTest` y requieren un dispositivo o emulador autorizado.
+
+Los gráficos proceden de `kenney_domino-pack.zip` (Kenney, CC0). La licencia se incluye en `app/src/main/assets/licenses/kenney-domino-pack.txt`.
