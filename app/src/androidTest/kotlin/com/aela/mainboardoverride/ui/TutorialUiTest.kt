@@ -169,5 +169,9 @@ class TutorialUiTest {
         override suspend fun markTutorialComplete() { completions++; preferences.value = preferences.value.copy(tutorialComplete = true) }
         override suspend fun setLastSeed(seed: Long) { preferences.value = preferences.value.copy(lastSeed = seed) }
         override suspend fun recordVictory(turns: Int, trace: Int) { records++ }
+        override suspend fun setDominoSkin(value: String) {}
+        override suspend fun setBoardSkin(value: String) {}
+        override suspend fun setContextHelpEnabled(value: Boolean) {}
+        override suspend fun recordChallengeVictory(level: Int, turns: Int, trace: Int) {}
     }
 }

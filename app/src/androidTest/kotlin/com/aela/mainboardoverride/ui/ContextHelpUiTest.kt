@@ -122,5 +122,9 @@ class ContextHelpUiTest {
         override suspend fun markTutorialComplete() {}
         override suspend fun setLastSeed(seed: Long) {}
         override suspend fun recordVictory(turns: Int, trace: Int) {}
+        override suspend fun setDominoSkin(value: String) {}
+        override suspend fun setBoardSkin(value: String) {}
+        override suspend fun setContextHelpEnabled(value: Boolean) {}
+        override suspend fun recordChallengeVictory(level: Int, turns: Int, trace: Int) {}
     }
 }

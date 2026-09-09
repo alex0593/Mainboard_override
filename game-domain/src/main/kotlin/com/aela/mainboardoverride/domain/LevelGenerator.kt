@@ -8,34 +8,38 @@ object LevelGenerator {
     internal data class GeneratedLevel(val state: GameState, val solution: List<GameAction.PlaceDomino>)
 
     fun generate(seed: Long): GameState = generateVerified(seed).state
+    fun generateChallenge(level: Int): GameState = generateVerified(
+        ChallengeCatalog.level(level)?.seed ?: error("Unknown challenge level $level"), level
+    ).state
 
-    internal fun generateVerified(seed: Long): GeneratedLevel {
+    internal fun generateVerified(seed: Long, challengeLevel: Int? = null): GeneratedLevel {
         val random = Random(seed)
         val startY = random.nextInt(1, 6)
         val exitY = (startY + random.nextInt(1, 6)) % 6 + 1
         val start = Position(0, startY)
         // Some seeds use an eight-column board, others nine columns.
-        val extraction = Position(if (random.nextBoolean()) 7 else 8, exitY)
+        val extraction = Position(random.nextInt(7, MAX_GENERATED_BOARD_WIDTH), exitY)
         repeat(24) {
-            val path = findPath(random, random.nextInt(5, 8), start, extraction)
-            if (path != null) buildLevel(seed, random, path, start, extraction)?.let { return it }
+            val count = challengeLevel?.let { (4 + it / 2).coerceIn(5, 9) } ?: random.nextInt(5, 8)
+            val path = findPath(random, count, start, extraction)
+            if (path != null) buildLevel(seed, random, path, start, extraction, challengeLevel)?.let { return it }
         }
         // A five-tile detour; reflections retain valid board geometry.
         val fallback = listOf(1 to 3, 1 to 2, 2 to 2, 3 to 2, 4 to 2, 5 to 2, 6 to 2, 7 to 2, 7 to 3, 7 to 4)
         val reflect = random.nextBoolean()
-        return checkNotNull(buildLevel(seed, random, fallback.map { (x, y) -> Position(x, if (reflect) 6 - y else y) }, start, extraction))
+        return checkNotNull(buildLevel(seed, random, fallback.map { (x, y) -> Position(x, if (reflect) 6 - y else y) }, start, extraction, challengeLevel))
     }
 
     private fun findPath(random: Random, count: Int, start: Position, extraction: Position): List<Position>? {
-        val board = BoardState(start = start, extraction = extraction)
+        val board = BoardState(width = MAX_GENERATED_BOARD_WIDTH, start = start, extraction = extraction)
         val path = mutableListOf<Position>()
         var budget = 12000
         fun visit(current: Position): Boolean {
             if (--budget <= 0) return false
-            if (path.size == count * 2) return path.takeLast(2).any { board.extraction in it.neighbors() }
+            if (path.size == count * 2) return path.takeLast(2).any { board.extraction in it.neighbors(board.width, board.height) }
             val remaining = count * 2 - path.size
             if (kotlin.math.abs(current.x - board.extraction.x) + kotlin.math.abs(current.y - board.extraction.y) > remaining + 1) return false
-            for (next in current.neighbors().shuffled(random)) {
+            for (next in current.neighbors(board.width, board.height).shuffled(random)) {
                 if (next == board.start || next == board.extraction || next in path) continue
                 // Only the final domino may touch extraction.
                 if (path.size < count * 2 - 2 && board.extraction in next.neighbors()) continue
@@ -48,9 +52,13 @@ object LevelGenerator {
         return if (visit(board.start)) path.toList() else null
     }
 
-    private fun buildLevel(seed: Long, random: Random, path: List<Position>, start: Position = Position(0, BOARD_HEIGHT / 2), extraction: Position = Position(BOARD_WIDTH - 1, BOARD_HEIGHT / 2)): GeneratedLevel? {
+    private fun buildLevel(seed: Long, random: Random, path: List<Position>, start: Position = Position(0, BOARD_HEIGHT / 2), extraction: Position = Position(BOARD_WIDTH - 1, BOARD_HEIGHT / 2), challengeLevel: Int? = null): GeneratedLevel? {
         // Fit the generated witness while varying the playable footprint per seed.
-        val width = if (path.all { it.x < 8 } && extraction.x < 8) 8 else 9
+        val width = when {
+            path.all { it.x < MIN_GENERATED_BOARD_WIDTH } && extraction.x < MIN_GENERATED_BOARD_WIDTH -> MIN_GENERATED_BOARD_WIDTH
+            path.all { it.x < 9 } && extraction.x < 9 -> 9
+            else -> MAX_GENERATED_BOARD_WIDTH
+        }
         val height = if (path.all { it.y < 6 } && extraction.y < 6) 6 else 7
         if (start.x !in 0 until width || extraction.x !in 0 until width || start.y !in 0 until height || extraction.y !in 0 until height) return null
         val base = BoardState(width = width, height = height, start = start, extraction = extraction)
@@ -80,10 +88,10 @@ object LevelGenerator {
         }
         val available = (0 until height).flatMap { y -> (0 until width).map { x -> Position(x, y) } }
             .filter { it !in positions }.shuffled(random)
-        val firewallCount = random.nextInt(4, 8)
+        val firewallCount = random.nextInt(4 + (challengeLevel ?: 1) / 3, 8 + (challengeLevel ?: 1) / 2).coerceAtMost(available.size)
         val board = base.copy(
             firewalls = available.take(firewallCount).toSet(),
-            honeypots = available.drop(firewallCount).take(random.nextInt(2, 5)).toSet(),
+            honeypots = available.drop(firewallCount).take(random.nextInt(2, 4 + (challengeLevel ?: 0) / 3)).toSet(),
             daemon = Daemon(base.extraction),
         )
         val decoys = (0..6).flatMap { a -> (a..6).map { b -> a to b } }.shuffled(random).take(12)
@@ -91,7 +99,15 @@ object LevelGenerator {
         val flipped = route.map { if (random.nextBoolean()) it.domino.rotated() else it.domino }
         val bag = (listOf(flipped.first()) + decoys.take(2)).shuffled(random) + flipped.drop(1) + decoys.drop(2)
         val scripts = (0..2).flatMap { cycle -> ScriptType.entries.map { ScriptCard("$cycle-${it.name}", it) } }.shuffled(random)
-        val state = GameState(seed, board, bag.take(DOMINO_HAND_SIZE), bag.drop(DOMINO_HAND_SIZE), scripts.take(2), scripts.drop(2))
+        val state = GameState(
+            seed = seed,
+            board = board,
+            dominoHand = bag.take(DOMINO_HAND_SIZE),
+            dominoBag = bag.drop(DOMINO_HAND_SIZE),
+            scriptHand = scripts.take(2),
+            scriptDeck = scripts.drop(2),
+            challengeRules = challengeLevel?.let { ChallengeCatalog.level(it)?.rules },
+        )
         val actions = route.mapIndexed { index, tile -> GameAction.PlaceDomino(tile.domino.id, tile.origin, tile.orientation, flipped[index] != tile.domino) }
         var replay = state
         actions.forEach { action ->

@@ -85,6 +85,7 @@
     <string name="result_daemon_breach">The daemon reached start.</string>
     <string name="result_kernel_panic">No placement can continue this network.</string>
     <string name="result_memory_exhausted">No hardware remains.</string>
+    <string name="result_challenge_limit">Challenge failed: the turn or trace limit was exceeded.</string>
     <string name="help_description">Help: %1$s</string>
     <string name="help_close">Close</string>
     <string name="help_board_title">Board and objective</string>
@@ -114,4 +115,27 @@
     <string name="help_script_cost">Cost: %1$d RAM · Noise: +%2$d</string>
     <string name="spoof_before">Before</string>
     <string name="spoof_after">After</string>
+    <string name="skins">SKINS</string>
+    <string name="domino_skin">DOMINO SKIN</string>
+    <string name="board_skin">BOARD SKIN</string>
+    <string name="skin_kenney">Kenney clear</string>
+    <string name="skin_light">Light</string>
+    <string name="skin_terminal">Terminal green</string>
+    <string name="skin_neon">Neon cyan</string>
+    <string name="skin_dark">Dark</string>
+    <string name="skin_gingerbread">Gingerbread</string>
+    <string name="skin_hearts">Hearts</string>
+    <string name="skin_stars">Stars</string>
+    <string name="skin_pcb">Dark PCB</string>
+    <string name="skin_blueprint">Blue blueprint</string>
+    <string name="skin_industrial">Amber industrial</string>
+    <string name="skin_rust">Red rust</string>
+    <string name="skin_ice">Cryogenic ice</string>
+    <string name="context_help">Contextual help buttons</string>
+    <string name="challenge">CHALLENGE</string>
+    <string name="challenge_description">Ten deterministic puzzles. Win one to unlock the next.</string>
+    <string name="challenge_level">Puzzle %1$d</string>
+    <string name="challenge_rules_turns">Rule: max %1$d turns</string>
+    <string name="challenge_rules_trace">Rule: max %1$d trace</string>
+    <string name="challenge_rules_both">Rule: max %1$d turns and %2$d trace</string>
 </resources>

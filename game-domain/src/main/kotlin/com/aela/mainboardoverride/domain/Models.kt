@@ -2,16 +2,18 @@ package com.aela.mainboardoverride.domain
 
 const val BOARD_WIDTH = 9
 const val BOARD_HEIGHT = 7
+const val MIN_GENERATED_BOARD_WIDTH = 8
+const val MAX_GENERATED_BOARD_WIDTH = 10
 const val MAX_RAM = 3
 const val MAX_TRACE = 100
 const val DOMINO_HAND_SIZE = 3
 const val SCRIPT_HAND_SIZE = 5
 
 data class Position(val x: Int, val y: Int) {
-    fun neighbors(): List<Position> = listOf(
+    fun neighbors(width: Int = BOARD_WIDTH, height: Int = BOARD_HEIGHT): List<Position> = listOf(
         Position(x - 1, y), Position(x + 1, y),
         Position(x, y - 1), Position(x, y + 1),
-    ).filter { it.x in 0 until BOARD_WIDTH && it.y in 0 until BOARD_HEIGHT }
+    ).filter { it.x in 0 until width && it.y in 0 until height }
 }
 
 enum class Orientation { HORIZONTAL, VERTICAL }
@@ -68,6 +70,7 @@ enum class GameResult {
     DAEMON_BREACH,
     KERNEL_PANIC,
     MEMORY_EXHAUSTED,
+    CHALLENGE_LIMIT,
 }
 
 /**
@@ -114,6 +117,7 @@ data class GameState(
     val turn: Int = 1,
     val tilePlacedThisTurn: Boolean = false,
     val pingPreview: List<Domino> = emptyList(),
+    val challengeRules: ChallengeRules? = null,
     val phase: TurnPhase = TurnPhase.ACTION,
     val result: GameResult? = null,
 )

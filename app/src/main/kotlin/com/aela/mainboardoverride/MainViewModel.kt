@@ -40,6 +40,7 @@ data class GameUiState(
     val spoofHalf: Int = 0,
     val spoofValue: Int = 0,
     val bridgeHorizontal: Boolean = true,
+    val challengeLevel: Int? = null,
 )
 
 /** Coordinates navigation-facing selection state, the pure engine and player preferences. */
@@ -57,8 +58,14 @@ class MainViewModel(application: Application, private val repository: PlayerPref
         if (!tutorial) viewModelScope.launch { repository.setLastSeed(actualSeed) }
     }
 
+    fun startChallenge(level: Int) {
+        if (level !in 1..com.aela.mainboardoverride.domain.ChallengeCatalog.COUNT || level > uiState.value.preferences.challengeUnlocked) return
+        session.value = GameUiState(game = LevelGenerator.generateChallenge(level), challengeLevel = level)
+    }
+
     fun retry() {
         if (session.value.tutorial) { restartLesson(); return }
+        session.value.challengeLevel?.let { startChallenge(it); return }
         val current = session.value.game ?: return
         start(current.seed, session.value.tutorial)
     }
@@ -155,6 +162,9 @@ class MainViewModel(application: Application, private val repository: PlayerPref
     fun setAudio(value: Boolean) = viewModelScope.launch { repository.setAudio(value) }
     fun setVibration(value: Boolean) = viewModelScope.launch { repository.setVibration(value) }
     fun setReducedMotion(value: Boolean) = viewModelScope.launch { repository.setReducedMotion(value) }
+    fun setDominoSkin(value: String) = viewModelScope.launch { repository.setDominoSkin(value) }
+    fun setBoardSkin(value: String) = viewModelScope.launch { repository.setBoardSkin(value) }
+    fun setContextHelpEnabled(value: Boolean) = viewModelScope.launch { repository.setContextHelpEnabled(value) }
 
     private fun dispatch(action: GameAction) {
         val current = session.value.game ?: return
@@ -178,9 +188,11 @@ class MainViewModel(application: Application, private val repository: PlayerPref
         }
         if (current.result == null && transition.state.result == GameResult.VICTORY) {
             val isTutorial = session.value.tutorial
+            val challengeLevel = session.value.challengeLevel
             val completed = session.value.tutorialStep == TutorialStep.COMPLETE
             viewModelScope.launch {
-                if (!isTutorial) repository.recordVictory(transition.state.turn, transition.state.trace)
+                if (challengeLevel != null) repository.recordChallengeVictory(challengeLevel, transition.state.turn, transition.state.trace)
+                else if (!isTutorial) repository.recordVictory(transition.state.turn, transition.state.trace)
                 else if (completed) repository.markTutorialComplete()
             }
         }

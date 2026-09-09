@@ -39,7 +39,7 @@ class GameEngineTest {
             assertTrue(state.board.honeypots.size in 2..4)
             assertTrue(state.board.firewalls.intersect(state.board.honeypots).isEmpty())
             assertTrue((state.board.firewalls + state.board.honeypots).none {
-                it == state.board.start || it == state.board.extraction || it.x !in 0 until BOARD_WIDTH || it.y !in 0 until BOARD_HEIGHT
+                it == state.board.start || it == state.board.extraction || it.x !in 0 until state.board.width || it.y !in 0 until state.board.height
             })
             assertTrue(generated.solution.size in 5..7)
             for (action in generated.solution) {
@@ -90,5 +90,29 @@ class GameEngineTest {
         }
         state = state.copy(trace = 99)
         assertEquals(GameResult.TRACE_INTERCEPTED, GameEngine.reduce(state, GameAction.EndTurn).state.result)
+    }
+
+    @Test fun `challenge rules allow the exact limit and fail when trace is exceeded`() {
+        val rules = ChallengeRules(maxTrace = 48)
+        val state = Tutorial.fixture(TutorialStep.FINAL).copy(challengeRules = rules, trace = 40)
+        val placed = GameEngine.reduce(state, GameAction.PlaceDomino("route-1", Position(1, 3), Orientation.HORIZONTAL)).state
+        val result = GameEngine.reduce(placed, GameAction.EndTurn).state
+        assertNotEquals(GameResult.CHALLENGE_LIMIT, result.result)
+
+        val overLimit = placed.copy(trace = 41)
+        assertEquals(GameResult.CHALLENGE_LIMIT, GameEngine.reduce(overLimit, GameAction.EndTurn).state.result)
+    }
+
+    @Test fun `challenge turn limit fails only when extraction is not reached`() {
+        val rules = ChallengeRules(maxTurns = 1)
+        val state = Tutorial.fixture(TutorialStep.FINAL).copy(challengeRules = rules)
+        val placed = GameEngine.reduce(state, GameAction.PlaceDomino("route-1", Position(1, 3), Orientation.HORIZONTAL)).state
+        assertEquals(GameResult.CHALLENGE_LIMIT, GameEngine.reduce(placed, GameAction.EndTurn).state.result)
+    }
+
+    @Test fun `challenge catalog contains ten constrained levels`() {
+        assertEquals(10, ChallengeCatalog.COUNT)
+        assertTrue(ChallengeCatalog.levels.all { it.rules.maxTurns != null || it.rules.maxTrace != null })
+        assertEquals(10, ChallengeCatalog.levels.distinctBy { it.seed }.size)
     }
 }

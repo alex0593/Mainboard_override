@@ -82,11 +82,14 @@ import com.aela.mainboardoverride.domain.Orientation
 import com.aela.mainboardoverride.domain.Position
 import com.aela.mainboardoverride.domain.ScriptCard
 import com.aela.mainboardoverride.domain.ScriptType
+import com.aela.mainboardoverride.domain.ChallengeCatalog
 
 private const val MENU = "menu"
 private const val GAME = "game"
 private const val SETTINGS = "settings"
 private const val HELP = "help"
+private const val SKINS = "skins"
+private const val CHALLENGE = "challenge"
 
 @Composable
 fun MainboardApp(nav: NavHostController, state: GameUiState, actions: MainViewModel) {
@@ -95,8 +98,10 @@ fun MainboardApp(nav: NavHostController, state: GameUiState, actions: MainViewMo
             MenuScreen(
                 state = state,
                 onNew = { actions.start(); nav.navigate(GAME) },
+                onChallenge = { nav.navigate(CHALLENGE) },
                 onRetry = { state.preferences.lastSeed?.let(actions::start); nav.navigate(GAME) },
                 onSettings = { nav.navigate(SETTINGS) },
+                onSkins = { nav.navigate(SKINS) },
                 onHelp = { nav.navigate(HELP) },
             )
         }
@@ -108,6 +113,15 @@ fun MainboardApp(nav: NavHostController, state: GameUiState, actions: MainViewMo
             )
         }
         composable(SETTINGS) { SettingsScreen(state, actions) { nav.popBackStack() } }
+        composable(SKINS) { SkinScreen(state, actions) { nav.popBackStack() } }
+        composable(CHALLENGE) {
+            ChallengeScreen(
+                state = state,
+                actions = actions,
+                onStart = { nav.navigate(GAME) },
+                onBack = { nav.popBackStack() },
+            )
+        }
         composable(HELP) { InfoScreen { nav.popBackStack() } }
     }
 }
@@ -116,8 +130,10 @@ fun MainboardApp(nav: NavHostController, state: GameUiState, actions: MainViewMo
 private fun MenuScreen(
     state: GameUiState,
     onNew: () -> Unit,
+    onChallenge: () -> Unit,
     onRetry: () -> Unit,
     onSettings: () -> Unit,
+    onSkins: () -> Unit,
     onHelp: () -> Unit,
 ) {
     CircuitBackground {
@@ -151,10 +167,12 @@ private fun MenuScreen(
             }
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 TerminalButton(stringResource(R.string.new_network), onNew)
+                TerminalButton(stringResource(R.string.challenge), onChallenge, primary = false)
                 if (state.preferences.lastSeed != null) TerminalButton(stringResource(R.string.retry_seed), onRetry, primary = false)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     SmallButton(stringResource(R.string.settings), onSettings, Modifier.weight(1f))
-                    SmallButton(stringResource(R.string.help), onHelp, Modifier.weight(1f))
+                    SmallButton(stringResource(R.string.skins), onSkins, Modifier.weight(1f))
+                    SmallButton(stringResource(R.string.help), onHelp, Modifier.weight(1.35f))
                 }
             }
         }
@@ -180,8 +198,8 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 TextButton(onClick = onMenu) { Text("< ${stringResource(R.string.main_menu)}") }
-                StatusModule(stringResource(R.string.turn, game.turn), Cyan, HelpTopic.TURN, onHelp)
-                StatusModule(stringResource(R.string.ram, game.ram, MAX_RAM), Terminal, HelpTopic.RAM, onHelp) {
+                StatusModule(stringResource(R.string.turn, game.turn), Cyan, HelpTopic.TURN, onHelp, visible = state.preferences.contextHelpEnabled)
+                StatusModule(stringResource(R.string.ram, game.ram, MAX_RAM), Terminal, HelpTopic.RAM, onHelp, visible = state.preferences.contextHelpEnabled) {
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         repeat(MAX_RAM) { index ->
                             Box(Modifier.size(22.dp, 4.dp).background(if (index < game.ram) Terminal else Muted.copy(alpha = .2f)))
@@ -189,19 +207,21 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                     }
                 }
                 val traceColor = if (game.trace >= 80) Danger else Warning
-                StatusModule(stringResource(R.string.trace, game.trace), traceColor, HelpTopic.TRACE, onHelp) {
+                StatusModule(stringResource(R.string.trace, game.trace), traceColor, HelpTopic.TRACE, onHelp, visible = state.preferences.contextHelpEnabled) {
                     Box(Modifier.width(96.dp).height(4.dp).background(Muted.copy(alpha = .2f))) {
                         Box(Modifier.fillMaxWidth(game.trace / 100f).fillMaxHeight().background(traceColor))
                     }
                 }
-                HelpButton(HelpTopic.BOARD, onHelp)
+                HelpButton(HelpTopic.BOARD, onHelp, visible = true)
             }
             Spacer(Modifier.height(8.dp))
             BoxWithConstraints(Modifier.weight(1f)) {
                 val controlsWidth = (maxWidth * .29f).coerceIn(190.dp, 260.dp)
                 Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Board(
+                        Board(
                             board = game.board,
+                            skin = state.preferences.boardSkin,
+                            dominoSkin = state.preferences.dominoSkin,
                             legalOrigins = state.selectedDominoId?.takeIf { !game.tilePlacedThisTurn && state.selectedScriptId == null && game.result == null }?.let { id ->
                                 GameEngine.legalPlacements(game).filter {
                                     it.dominoId == id &&
@@ -225,13 +245,13 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(stringResource(R.string.seed, game.seed), Modifier.weight(1f), color = Muted, fontSize = 11.sp)
-                            HelpButton(HelpTopic.SEED, onHelp)
+                            HelpButton(HelpTopic.SEED, onHelp, state.preferences.contextHelpEnabled)
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(stringResource(R.string.pending_noise, game.pendingNoise), Modifier.weight(1f), color = Warning, fontSize = 12.sp)
-                            HelpButton(HelpTopic.NOISE, onHelp)
+                            HelpButton(HelpTopic.NOISE, onHelp, state.preferences.contextHelpEnabled)
                         }
-                        PanelHeading(stringResource(R.string.scripts), HelpTopic.SCRIPTS, onHelp)
+                        PanelHeading(stringResource(R.string.scripts), HelpTopic.SCRIPTS, onHelp, state.preferences.contextHelpEnabled)
                         game.scriptHand.forEach { card ->
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(Modifier.weight(1f)) {
@@ -239,7 +259,7 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                                         actions.selectScript(card.id)
                                     }
                                 }
-                                HelpButton(card.type.helpTopic(), onHelp)
+                                HelpButton(card.type.helpTopic(), onHelp, state.preferences.contextHelpEnabled)
                             }
                         }
                         state.message?.let {
@@ -250,21 +270,21 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                         }
                         if (state.selectedScriptId != null) SmallButton(stringResource(R.string.cancel), actions::cancelScript)
                         if (game.pingPreview.isNotEmpty()) PingPreview(game.pingPreview)
-                        PanelHeading(stringResource(R.string.dominoes), HelpTopic.HARDWARE, onHelp)
+                        PanelHeading(stringResource(R.string.dominoes), HelpTopic.HARDWARE, onHelp, state.preferences.contextHelpEnabled)
                         game.dominoHand.forEach { tile ->
-                            DominoView(tile, state.selectedDominoId == tile.id, highlighted = state.tutorialStep == TutorialStep.SELECT || state.tutorialStep == TutorialStep.SPOOF) { actions.selectDomino(tile.id) }
+                            DominoView(tile, state.selectedDominoId == tile.id, state.preferences.dominoSkin, highlighted = state.tutorialStep == TutorialStep.SELECT || state.tutorialStep == TutorialStep.SPOOF) { actions.selectDomino(tile.id) }
                         }
                         game.dominoHand.find { it.id == state.selectedDominoId }?.let { tile ->
                             val preview = if (state.rotationSteps >= 2) tile.rotated() else tile
                             val orientation = if (state.rotationSteps % 2 == 0) Orientation.HORIZONTAL else Orientation.VERTICAL
                             Text(stringResource(if (orientation == Orientation.HORIZONTAL) R.string.horizontal else R.string.vertical), color = Cyan)
-                            DominoImage(preview, Modifier.align(Alignment.CenterHorizontally).width(if (orientation == Orientation.HORIZONTAL) 96.dp else 48.dp), orientation)
+                            DominoImage(preview, Modifier.align(Alignment.CenterHorizontally).width(if (orientation == Orientation.HORIZONTAL) 96.dp else 48.dp), orientation, skin = state.preferences.dominoSkin)
                         }
                         HorizontalDivider(color = Cyan.copy(alpha = .2f))
                         Column {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 SmallButton(stringResource(R.string.rotate), actions::rotate, Modifier.weight(1f).then(if (state.tutorialStep == TutorialStep.ROTATE) Modifier.border(2.dp, Warning) else Modifier))
-                                HelpButton(HelpTopic.ROTATE, onHelp)
+                                HelpButton(HelpTopic.ROTATE, onHelp, state.preferences.contextHelpEnabled)
                             }
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Button(
@@ -273,7 +293,7 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                                     modifier = Modifier.weight(1f).then(if (state.tutorialStep == TutorialStep.END_TURN) Modifier.border(2.dp, Warning) else Modifier),
                                     colors = ButtonDefaults.buttonColors(containerColor = Terminal, contentColor = Void),
                                 ) { Text(stringResource(R.string.end_turn), fontSize = 10.sp) }
-                                HelpButton(HelpTopic.END_TURN, onHelp)
+                                HelpButton(HelpTopic.END_TURN, onHelp, state.preferences.contextHelpEnabled)
                             }
                         }
                     }
@@ -296,13 +316,21 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
 @Composable
 private fun Board(
     board: BoardState,
+    skin: String = "pcb",
+    dominoSkin: String = "kenney",
     legalOrigins: Set<Position>,
     target: Position? = null,
     modifier: Modifier,
     onCell: (Position) -> Unit,
 ) {
     BoxWithConstraints(
-        modifier.background(Brush.linearGradient(listOf(Panel, Void, Panel)), RoundedCornerShape(10.dp))
+        modifier.background(Brush.linearGradient(when (skin) {
+            "blueprint" -> listOf(Color(0xFF102A4A), Color(0xFF07111F), Color(0xFF164D73))
+            "industrial" -> listOf(Color(0xFF3A2914), Color(0xFF17120B), Color(0xFF60421A))
+            "rust" -> listOf(Color(0xFF572616), Color(0xFF1C0E0A), Color(0xFF873D1E))
+            "ice" -> listOf(Color(0xFF123B56), Color(0xFF071721), Color(0xFF2B7895))
+            else -> listOf(Panel, Void, Panel)
+        }), RoundedCornerShape(10.dp))
             .border(1.dp, Cyan.copy(alpha = .4f), RoundedCornerShape(10.dp)).padding(4.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -322,7 +350,13 @@ private fun Board(
         }
         val margin = if (maxHeight < 250.dp) 12.dp else 20.dp
         val cell = minOf((maxWidth - margin * 2) / board.width, (maxHeight - margin * 2) / board.height).coerceAtLeast(0.dp)
-        Box(Modifier.width(cell * board.width).height(cell * board.height).background(Void).border(1.dp, Muted.copy(alpha = .4f))) {
+            Box(Modifier.width(cell * board.width).height(cell * board.height).background(when (skin) {
+                "blueprint" -> Color(0xFF0B1D31)
+                "industrial" -> Color(0xFF241A0D)
+                "rust" -> Color(0xFF24110C)
+                "ice" -> Color(0xFF0A2635)
+                else -> Void
+            }).border(1.dp, Muted.copy(alpha = .4f))) {
             Canvas(Modifier.fillMaxSize()) {
                 for (x in 0..board.width) drawLine(Muted.copy(alpha = .18f), Offset(x * size.width / board.width, 0f), Offset(x * size.width / board.width, size.height))
                 for (y in 0..board.height) drawLine(Muted.copy(alpha = .18f), Offset(0f, y * size.height / board.height), Offset(size.width, y * size.height / board.height))
@@ -336,6 +370,7 @@ private fun Board(
                         .size(cell * (if (horizontal) 2 else 1), cell * (if (horizontal) 1 else 2)).padding(2.dp),
                     placed.orientation,
                     describe = false,
+                    skin = dominoSkin,
                 )
             }
             for (y in 0 until board.height) for (x in 0 until board.width) {
@@ -431,14 +466,14 @@ private fun ScriptCardView(card: ScriptCard, selected: Boolean, enabled: Boolean
 }
 
 @Composable
-private fun DominoView(tile: Domino, selected: Boolean, highlighted: Boolean = false, onClick: () -> Unit) {
+private fun DominoView(tile: Domino, selected: Boolean, skin: String = "kenney", highlighted: Boolean = false, onClick: () -> Unit) {
     val label = stringResource(R.string.domino_description, tile.first, tile.second)
     Row(
         Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics { contentDescription = label; this.selected = selected }.background(if (selected) Terminal.copy(alpha = .2f) else Void)
             .border(1.dp, if (highlighted) Warning else if (selected) Terminal else Muted).clickable(onClick = onClick).padding(6.dp),
         horizontalArrangement = Arrangement.Center,
     ) {
-        DominoImage(tile, Modifier.width(96.dp), describe = false)
+            DominoImage(tile, Modifier.width(96.dp), describe = false, skin = skin)
     }
 }
 
@@ -456,7 +491,75 @@ private fun SettingsScreen(state: GameUiState, actions: MainViewModel, onBack: (
             SettingSwitch(stringResource(R.string.audio), state.preferences.audioEnabled, actions::setAudio)
             SettingSwitch(stringResource(R.string.vibration), state.preferences.vibrationEnabled, actions::setVibration)
             SettingSwitch(stringResource(R.string.reduced_motion), state.preferences.reducedMotion, actions::setReducedMotion)
+            SettingSwitch(stringResource(R.string.context_help), state.preferences.contextHelpEnabled, actions::setContextHelpEnabled)
             Spacer(Modifier.height(20.dp))
+            SmallButton(stringResource(R.string.back), onBack)
+        }
+    }
+}
+
+@Composable
+private fun SkinScreen(state: GameUiState, actions: MainViewModel, onBack: () -> Unit) {
+    CircuitBackground {
+        Column(Modifier.fillMaxSize().padding(24.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(stringResource(R.string.skins), color = Terminal, fontSize = 30.sp, fontWeight = FontWeight.Black)
+            Text(stringResource(R.string.domino_skin), color = Cyan)
+            listOf(
+                "kenney" to R.string.skin_kenney,
+                "light" to R.string.skin_light,
+                "dark" to R.string.skin_dark,
+                "gingerbread" to R.string.skin_gingerbread,
+                "hearts" to R.string.skin_hearts,
+                "stars" to R.string.skin_stars,
+                "terminal" to R.string.skin_terminal,
+                "neon" to R.string.skin_neon,
+            ).forEach { (id, label) ->
+                TerminalButton(stringResource(label), { actions.setDominoSkin(id) }, primary = state.preferences.dominoSkin == id)
+            }
+            Text(stringResource(R.string.board_skin), color = Cyan, modifier = Modifier.padding(top = 12.dp))
+            listOf("pcb" to R.string.skin_pcb, "blueprint" to R.string.skin_blueprint, "industrial" to R.string.skin_industrial, "rust" to R.string.skin_rust, "ice" to R.string.skin_ice).forEach { (id, label) ->
+                TerminalButton(stringResource(label), { actions.setBoardSkin(id) }, primary = state.preferences.boardSkin == id)
+            }
+            SmallButton(stringResource(R.string.back), onBack)
+        }
+    }
+}
+
+@Composable
+private fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart: () -> Unit, onBack: () -> Unit) {
+    CircuitBackground {
+        Column(Modifier.fillMaxSize().padding(24.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.challenge), color = Terminal, fontSize = 30.sp, fontWeight = FontWeight.Black)
+            Text(stringResource(R.string.challenge_description), color = Color.White)
+            (1..ChallengeCatalog.COUNT).forEach { level ->
+                val unlocked = level <= state.preferences.challengeUnlocked
+                val record = state.preferences.challengeBest[level]
+                val rules = ChallengeCatalog.level(level)?.rules
+                TerminalButton(
+                    stringResource(R.string.challenge_level, level) + (record?.let { " · ${it.turns}T / ${it.trace}%" } ?: ""),
+                    {
+                        actions.startChallenge(level)
+                        onStart()
+                    },
+                    primary = unlocked,
+                    enabled = unlocked,
+                )
+                rules?.let {
+                    val maxTurns = it.maxTurns
+                    val maxTrace = it.maxTrace
+                    Text(
+                        when {
+                            maxTurns != null && maxTrace != null -> stringResource(R.string.challenge_rules_both, maxTurns, maxTrace)
+                            maxTurns != null -> stringResource(R.string.challenge_rules_turns, maxTurns)
+                            else -> stringResource(R.string.challenge_rules_trace, maxTrace ?: 0)
+                        },
+                        color = Warning,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 10.sp,
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
+                }
+            }
             SmallButton(stringResource(R.string.back), onBack)
         }
     }
@@ -497,9 +600,10 @@ private fun ResultDialog(result: GameResult, turns: Int, trace: Int, onRetry: ()
 }
 
 @Composable
-private fun TerminalButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, primary: Boolean = true) {
+private fun TerminalButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, primary: Boolean = true, enabled: Boolean = true) {
     Button(
         onClick = onClick,
+        enabled = enabled,
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(0.dp),
         colors = ButtonDefaults.buttonColors(
@@ -513,12 +617,12 @@ private fun TerminalButton(label: String, onClick: () -> Unit, modifier: Modifie
 @Composable
 private fun SmallButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     OutlinedButton(onClick = onClick, modifier = modifier, shape = RoundedCornerShape(0.dp), border = BorderStroke(1.dp, Muted)) {
-        Text(label, fontSize = 11.sp)
+        Text(label, fontSize = 11.sp, maxLines = 1, softWrap = false)
     }
 }
 
 @Composable
-private fun StatusModule(label: String, tint: Color, topic: HelpTopic, onHelp: (HelpTopic) -> Unit, detail: @Composable () -> Unit = {}) {
+private fun StatusModule(label: String, tint: Color, topic: HelpTopic, onHelp: (HelpTopic) -> Unit, visible: Boolean = true, detail: @Composable () -> Unit = {}) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(
             Modifier.background(Void.copy(alpha = .7f), RoundedCornerShape(4.dp)).padding(horizontal = 10.dp, vertical = 5.dp),
@@ -527,17 +631,17 @@ private fun StatusModule(label: String, tint: Color, topic: HelpTopic, onHelp: (
             Text(label, color = tint, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             detail()
         }
-        HelpButton(topic, onHelp)
+        HelpButton(topic, onHelp, visible)
     }
 }
 
 @Composable
-private fun PanelHeading(label: String, topic: HelpTopic, onHelp: (HelpTopic) -> Unit) {
+private fun PanelHeading(label: String, topic: HelpTopic, onHelp: (HelpTopic) -> Unit, visible: Boolean = true) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Box(Modifier.size(3.dp, 14.dp).background(Cyan))
         Text(label, color = Cyan, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace, fontSize = 12.sp)
         HorizontalDivider(Modifier.weight(1f), color = Cyan.copy(alpha = .25f))
-        HelpButton(topic, onHelp)
+        HelpButton(topic, onHelp, visible)
     }
 }
 
@@ -584,6 +688,7 @@ private fun resultText(result: GameResult): Int = when (result) {
     GameResult.DAEMON_BREACH -> R.string.result_daemon_breach
     GameResult.KERNEL_PANIC -> R.string.result_kernel_panic
     GameResult.MEMORY_EXHAUSTED -> R.string.result_memory_exhausted
+    GameResult.CHALLENGE_LIMIT -> R.string.result_challenge_limit
 }
 
 private fun lessonText(step: TutorialStep): Int = when (step) {
@@ -669,8 +774,12 @@ internal fun BridgeControl(horizontal: Boolean, onToggle: () -> Unit) {
 
 @Composable
 private fun ProtocolContent() {
-    HelpTopic.entries.forEach { topic ->
-        Text(stringResource(topic.title), color = Cyan, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp))
-        HelpBody(topic)
+    Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE7FFF2)), modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp)) {
+            HelpTopic.entries.forEach { topic ->
+                Text(stringResource(topic.title), color = Color.Black, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp))
+                HelpBody(topic, darkText = true)
+            }
+        }
     }
 }

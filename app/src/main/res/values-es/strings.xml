@@ -83,6 +83,7 @@
     <string name="result_daemon_breach">El daemon alcanzó inicio.</string>
     <string name="result_kernel_panic">No hay colocaciones para continuar esta red.</string>
     <string name="result_memory_exhausted">No quedan fichas.</string>
+    <string name="result_challenge_limit">Desafío fallido: superaste el límite de turnos o rastreo.</string>
     <string name="help_description">Ayuda: %1$s</string>
     <string name="help_close">Cerrar</string>
     <string name="help_board_title">Tablero y objetivo</string>
@@ -112,4 +113,27 @@
     <string name="help_script_cost">Coste: %1$d RAM · Ruido: +%2$d</string>
     <string name="spoof_before">Antes</string>
     <string name="spoof_after">Después</string>
+    <string name="skins">SKINS</string>
+    <string name="domino_skin">SKIN DE FICHAS</string>
+    <string name="board_skin">SKIN DE PLACA</string>
+    <string name="skin_kenney">Kenney clara</string>
+    <string name="skin_light">Light</string>
+    <string name="skin_terminal">Terminal verde</string>
+    <string name="skin_neon">Neón cian</string>
+    <string name="skin_dark">Dark</string>
+    <string name="skin_gingerbread">Gingerbread</string>
+    <string name="skin_hearts">Hearts</string>
+    <string name="skin_stars">Stars</string>
+    <string name="skin_pcb">PCB oscura</string>
+    <string name="skin_blueprint">Plano azul</string>
+    <string name="skin_industrial">Industrial ámbar</string>
+    <string name="skin_rust">Óxido rojo</string>
+    <string name="skin_ice">Hielo criogénico</string>
+    <string name="context_help">Botones de ayuda contextual</string>
+    <string name="challenge">DESAFÍO</string>
+    <string name="challenge_description">Diez puzzles deterministas. Gana uno para desbloquear el siguiente.</string>
+    <string name="challenge_level">Puzzle %1$d</string>
+    <string name="challenge_rules_turns">Regla: máximo %1$d turnos</string>
+    <string name="challenge_rules_trace">Regla: máximo %1$d de rastreo</string>
+    <string name="challenge_rules_both">Regla: máximo %1$d turnos y %2$d de rastreo</string>
 </resources>

@@ -41,7 +41,8 @@ internal fun ScriptType.helpTopic(): HelpTopic = when (this) {
 }
 
 @Composable
-internal fun HelpButton(topic: HelpTopic, onHelp: (HelpTopic) -> Unit) {
+internal fun HelpButton(topic: HelpTopic, onHelp: (HelpTopic) -> Unit, visible: Boolean = true) {
+    if (!visible && topic != HelpTopic.BOARD) return
     val label = stringResource(R.string.help_description, stringResource(topic.title))
     TextButton(onClick = { onHelp(topic) }, modifier = Modifier.size(48.dp).semantics { contentDescription = label }) {
         Text("?", color = Cyan)
@@ -49,10 +50,10 @@ internal fun HelpButton(topic: HelpTopic, onHelp: (HelpTopic) -> Unit) {
 }
 
 @Composable
-internal fun HelpBody(topic: HelpTopic) {
+internal fun HelpBody(topic: HelpTopic, darkText: Boolean = false) {
     Column {
-        Text(stringResource(topic.body))
-        topic.script?.let { Text(stringResource(R.string.help_script_cost, it.ramCost, it.traceNoise)) }
+        Text(stringResource(topic.body), color = if (darkText) androidx.compose.ui.graphics.Color.Black else androidx.compose.ui.graphics.Color.Unspecified)
+        topic.script?.let { Text(stringResource(R.string.help_script_cost, it.ramCost, it.traceNoise), color = if (darkText) androidx.compose.ui.graphics.Color.Black else androidx.compose.ui.graphics.Color.Unspecified) }
     }
 }
 

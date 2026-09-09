@@ -173,7 +173,9 @@ object GameEngine {
         val result = when {
             traced >= MAX_TRACE -> GameResult.TRACE_INTERCEPTED
             movedBoard.daemon?.position == movedBoard.start -> GameResult.DAEMON_BREACH
+            state.challengeRules?.maxTrace?.let { traced > it } == true -> GameResult.CHALLENGE_LIMIT
             isExtractionConnected(movedBoard) -> GameResult.VICTORY
+            state.challengeRules?.maxTurns?.let { state.turn >= it } == true -> GameResult.CHALLENGE_LIMIT
             else -> null
         }
         if (result != null) {
