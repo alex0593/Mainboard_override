@@ -91,12 +91,7 @@ internal fun DominoImage(
     val horizontal = orientation == Orientation.HORIZONTAL
     Canvas(modifier.aspectRatio(if (horizontal) 2f else .5f)
         .then(if (describe) Modifier.semantics { contentDescription = label } else Modifier)) {
-        val tint = when (skin) {
-            "terminal" -> Terminal
-            "neon" -> Cyan
-            else -> Color.White
-        }
-        drawRoundRect(tint, cornerRadius = androidx.compose.ui.geometry.CornerRadius(5.dp.toPx()))
+        drawRoundRect(Color.White, cornerRadius = androidx.compose.ui.geometry.CornerRadius(5.dp.toPx()))
         val shortSide = if (horizontal) minOf(size.height, size.width / 2) else minOf(size.width, size.height / 2)
         val spriteSize = Size(shortSide, shortSide * 2)
         withTransform({

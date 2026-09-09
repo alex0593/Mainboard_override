@@ -76,6 +76,20 @@ class GameEngineTest {
         assertEquals(5, result.pendingNoise)
     }
 
+    @Test fun `automatic resolution ends a blocked action phase`() {
+        val blocked = Tutorial.fixture(TutorialStep.FINAL).copy(
+            dominoHand = listOf(Domino("blocked", 1, 1)),
+            dominoBag = listOf(Domino("future", 1, 1)),
+            scriptHand = emptyList(),
+        )
+        val result = GameEngine.resolveForcedResult(blocked)
+        assertEquals(GameResult.KERNEL_PANIC, result.state.result)
+        assertTrue(result.events.any { it == GameEvent.Finished(GameResult.KERNEL_PANIC) })
+
+        val spoofEscape = blocked.copy(scriptHand = listOf(ScriptCard("spoof", ScriptType.SPOOF)))
+        assertEquals(null, GameEngine.resolveForcedResult(spoofEscape).state.result)
+    }
+
     @Test fun `loss takes priority over extraction when trace reaches maximum`() {
         var state = Tutorial.fixture(TutorialStep.FINAL)
         val placements = listOf(
@@ -110,9 +124,57 @@ class GameEngineTest {
         assertEquals(GameResult.CHALLENGE_LIMIT, GameEngine.reduce(placed, GameAction.EndTurn).state.result)
     }
 
-    @Test fun `challenge catalog contains ten constrained levels`() {
-        assertEquals(10, ChallengeCatalog.COUNT)
+    @Test fun `challenge catalog contains thirty constrained solvable levels`() {
+        assertEquals(30, ChallengeCatalog.COUNT)
         assertTrue(ChallengeCatalog.levels.all { it.rules.maxTurns != null || it.rules.maxTrace != null })
-        assertEquals(10, ChallengeCatalog.levels.distinctBy { it.seed }.size)
+        assertEquals(30, ChallengeCatalog.levels.distinctBy { it.seed }.size)
+        for (level in ChallengeCatalog.levels) {
+            val generated = LevelGenerator.generateVerified(level.seed, level.number)
+            var state = generated.state
+            for (action in generated.solution) {
+                state = GameEngine.reduce(GameEngine.reduce(state, action).state, GameAction.EndTurn).state
+            }
+            assertEquals(GameResult.VICTORY, state.result, "challenge ${level.number}")
+        }
+    }
+
+    @Test fun `every scenario is reproducible solvable and respects its profile`() {
+        for (scenario in ScenarioCatalog.all.drop(1)) for (seed in 0L until 100L) {
+            val generated = LevelGenerator.generateVerified(seed, scenarioId = scenario.id)
+            assertEquals(generated, LevelGenerator.generateVerified(seed, scenarioId = scenario.id))
+            assertEquals(scenario.width, generated.state.board.width)
+            assertEquals(scenario.height, generated.state.board.height)
+            assertEquals(scenario.firewalls, generated.state.board.firewalls.size)
+            assertEquals(scenario.traps, generated.state.board.honeypots.size)
+            assertEquals(2, generated.state.board.buffs.size)
+            assertEquals(scenario.route, generated.solution.size)
+            var state = generated.state
+            for (action in generated.solution) {
+                val transition = GameEngine.reduce(state, action)
+                assertTrue(transition.events.none { it is GameEvent.Rejected })
+                state = GameEngine.reduce(transition.state, GameAction.EndTurn).state
+            }
+            assertEquals(GameResult.VICTORY, state.result, "${scenario.id}: $seed")
+        }
+    }
+
+    @Test fun `free mode buffs are collected once and apply bounded effects`() {
+        val base = Tutorial.fixture(TutorialStep.FINAL)
+        val tile = base.dominoHand.first()
+        val target = base.board.start.neighbors().first()
+        val buff = target
+        val state = base.copy(
+            trace = 4,
+            ram = MAX_RAM,
+            board = base.board.copy(buffs = mapOf(buff to BoardBuff.TRACE_COOLER)),
+            dominoHand = listOf(tile.copy(first = 0, second = 0)),
+        )
+        val action = GameAction.PlaceDomino(tile.id, target, Orientation.HORIZONTAL)
+        val transition = GameEngine.reduce(state, action)
+        assertTrue(transition.events.any { it == GameEvent.BuffCollected(BoardBuff.TRACE_COOLER) })
+        assertEquals(0, transition.state.trace)
+        assertTrue(buff in transition.state.board.collectedBuffs)
+        val repeated = GameEngine.reduce(transition.state.copy(tilePlacedThisTurn = false), action)
+        assertTrue(repeated.events.none { it is GameEvent.BuffCollected })
     }
 }

@@ -26,6 +26,10 @@ import kotlinx.coroutines.launch
 import kotlin.random.Random
 import com.aela.mainboardoverride.domain.Tutorial
 import com.aela.mainboardoverride.domain.TutorialStep
+import com.aela.mainboardoverride.domain.ScenarioCatalog
+import com.aela.mainboardoverride.domain.BoardBuff
+import com.aela.mainboardoverride.data.MatchReward
+import java.util.UUID
 
 data class GameUiState(
     val game: GameState? = null,
@@ -41,6 +45,12 @@ data class GameUiState(
     val spoofValue: Int = 0,
     val bridgeHorizontal: Boolean = true,
     val challengeLevel: Int? = null,
+    val scenarioId: String = "classic",
+    val matchId: String = UUID.randomUUID().toString(),
+    val reward: MatchReward? = null,
+    val reviewingBoard: Boolean = false,
+    val endTurnHint: Boolean = false,
+    val lastBuff: BoardBuff? = null,
 )
 
 /** Coordinates navigation-facing selection state, the pure engine and player preferences. */
@@ -54,20 +64,34 @@ class MainViewModel(application: Application, private val repository: PlayerPref
 
     fun start(seed: Long = Random.nextLong(), tutorial: Boolean = false) {
         val actualSeed = if (tutorial) LevelGenerator.TUTORIAL_SEED else seed
-        session.value = GameUiState(game = if (tutorial) Tutorial.fixture(TutorialStep.INTRO) else LevelGenerator.generate(actualSeed), tutorial = tutorial, tutorialStep = if (tutorial) TutorialStep.INTRO else null)
+        val game = if (tutorial) Tutorial.fixture(TutorialStep.INTRO)
+        else GameEngine.resolveForcedResult(LevelGenerator.generate(actualSeed)).state
+        session.value = GameUiState(game = game, tutorial = tutorial, tutorialStep = if (tutorial) TutorialStep.INTRO else null)
         if (!tutorial) viewModelScope.launch { repository.setLastSeed(actualSeed) }
     }
 
     fun startChallenge(level: Int) {
         if (level !in 1..com.aela.mainboardoverride.domain.ChallengeCatalog.COUNT || level > uiState.value.preferences.challengeUnlocked) return
-        session.value = GameUiState(game = LevelGenerator.generateChallenge(level), challengeLevel = level)
+        session.value = GameUiState(game = GameEngine.resolveForcedResult(LevelGenerator.generateChallenge(level)).state, challengeLevel = level)
     }
+
+    fun startScenario(id: String, seed: Long = Random.nextLong()) {
+        val scenario = ScenarioCatalog.get(id)
+        if (scenario.required > uiState.value.preferences.challengeBest.size) return
+        session.value = GameUiState(game = GameEngine.resolveForcedResult(LevelGenerator.generateScenario(seed, scenario.id)).state, scenarioId = scenario.id)
+        viewModelScope.launch { repository.setLastSeed(seed); repository.setLastScenario(scenario.id) }
+    }
+
+    fun retryLast() { uiState.value.preferences.let { prefs -> prefs.lastSeed?.let { startScenario(prefs.lastScenario, it) } } }
+    fun reviewBoard() { session.update { it.copy(reviewingBoard = true, selectedDominoId = null, selectedScriptId = null) } }
+    fun showResult() { session.update { it.copy(reviewingBoard = false) } }
+    fun buySkin(id: String) = viewModelScope.launch { repository.buySkin(id) }
 
     fun retry() {
         if (session.value.tutorial) { restartLesson(); return }
         session.value.challengeLevel?.let { startChallenge(it); return }
         val current = session.value.game ?: return
-        start(current.seed, session.value.tutorial)
+        startScenario(session.value.scenarioId, current.seed)
     }
 
     fun selectDomino(id: String) {
@@ -174,25 +198,36 @@ class MainViewModel(application: Application, private val repository: PlayerPref
             return
         }
         val transition = GameEngine.reduce(current, action)
+        val resolved = if (step == null) GameEngine.resolveForcedResult(transition.state) else transition
         val rejection = transition.events.filterIsInstance<GameEvent.Rejected>().lastOrNull()?.reason
         session.update {
+            val collectedBuff = resolved.events.filterIsInstance<GameEvent.BuffCollected>().lastOrNull()?.buff
             it.copy(
-                game = transition.state,
-                tutorialStep = step?.let { tutorialStep -> Tutorial.after(tutorialStep, action, transition) },
+                game = resolved.state,
+                tutorialStep = step?.let { tutorialStep -> Tutorial.after(tutorialStep, action, resolved) },
                 tutorialBlocked = false,
                 selectedDominoId = if (action is GameAction.PlaceDomino && rejection == null) null else it.selectedDominoId,
                 selectedScriptId = if (action !is GameAction.PlaceDomino && rejection == null) null else it.selectedScriptId,
                 rotationSteps = if (action is GameAction.PlaceDomino && rejection == null) 0 else it.rotationSteps,
                 message = rejection,
+                endTurnHint = when {
+                    action is GameAction.EndTurn && rejection == null -> false
+                    rejection == RejectReason.DOMINO_ALREADY_PLACED -> true
+                    else -> it.endTurnHint
+                },
+                lastBuff = collectedBuff,
             )
         }
-        if (current.result == null && transition.state.result == GameResult.VICTORY) {
+        if (current.result == null && resolved.state.result == GameResult.VICTORY) {
             val isTutorial = session.value.tutorial
             val challengeLevel = session.value.challengeLevel
             val completed = session.value.tutorialStep == TutorialStep.COMPLETE
+            val matchId = session.value.matchId
             viewModelScope.launch {
-                if (challengeLevel != null) repository.recordChallengeVictory(challengeLevel, transition.state.turn, transition.state.trace)
-                else if (!isTutorial) repository.recordVictory(transition.state.turn, transition.state.trace)
+                if (!isTutorial) {
+                    val reward = repository.finishMatch(matchId, challengeLevel, resolved.state.turn, resolved.state.trace)
+                    session.update { if (it.matchId == matchId) it.copy(reward = reward) else it }
+                }
                 else if (completed) repository.markTutorialComplete()
             }
         }

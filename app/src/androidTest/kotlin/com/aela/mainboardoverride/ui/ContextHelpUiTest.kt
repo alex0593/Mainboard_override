@@ -58,7 +58,7 @@ class ContextHelpUiTest {
         compose.setContent {
             val state by vm.uiState.collectAsState()
             // Include every card and a disabled state without adding test hooks to the ViewModel.
-            val display = state.copy(game = state.game?.copy(ram = ram,
+            val display = state.copy(preferences = state.preferences.copy(contextHelpEnabled = false), game = state.game?.copy(ram = ram,
                 scriptHand = ScriptType.entries.map { type -> state.game!!.scriptHand.find { it.type == type } ?: ScriptCard("help-${type.name}", type) }))
             CompositionLocalProvider(LocalContext provides context, LocalConfiguration provides config,
                 LocalDensity provides Density(1f, fontScale = 1.3f)) {
@@ -70,15 +70,19 @@ class ContextHelpUiTest {
         compose.runOnIdle { vm.selectDomino(vm.uiState.value.game!!.dominoHand.first().id); vm.rotate() }
         compose.waitForIdle()
         val before = vm.uiState.value
-        HelpTopic.entries.forEachIndexed { index, topic ->
-            val label = context.getString(R.string.help_description, context.getString(topic.title))
-            val button = compose.onAllNodesWithContentDescription(label)[0]
-            if (topic !in listOf(HelpTopic.BOARD, HelpTopic.RAM, HelpTopic.TRACE, HelpTopic.TURN)) button.performScrollTo()
-            button.assertIsDisplayed().performClick()
-            compose.onNodeWithText(context.getString(topic.body)).assertExists()
+        val header = compose.onNodeWithTag("game-header").fetchSemanticsNode().boundsInRoot
+        val scripts = compose.onNodeWithTag("script-hand").fetchSemanticsNode().boundsInRoot
+        assertTrue(scripts.top >= header.top && scripts.bottom <= header.bottom)
+        val fixed = compose.onNodeWithTag("end-turn").fetchSemanticsNode().boundsInRoot
+        compose.onNodeWithText(context.getString(R.string.seed, before.game!!.seed)).assertDoesNotExist()
+        listOf(R.string.help_board_body, R.string.help_ram_body, R.string.help_hardware_body, R.string.help_spoof_body).forEachIndexed { index, body ->
+            compose.onNodeWithTag("general-help").assertIsDisplayed().performClick()
+            compose.onNodeWithTag("help-section-$index").performScrollTo().performClick()
+            compose.onNodeWithText(context.getString(body), substring = true).assertExists()
             if (index % 2 == 0) compose.onNodeWithText(context.getString(R.string.help_close)).performClick()
             else InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
             compose.runOnIdle { assertEquals(before, vm.uiState.value) }
+            assertEquals(fixed, compose.onNodeWithTag("end-turn").fetchSemanticsNode().boundsInRoot)
         }
     }
 

@@ -2,6 +2,13 @@ package com.aela.mainboardoverride.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -71,6 +78,41 @@ internal fun HelpDialog(topic: HelpTopic, onClose: () -> Unit) {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 Text(body)
                 cost?.let { Text(it) }
+            }
+        },
+        confirmButton = { TextButton(onClick = onClose) { Text(close) } },
+    )
+}
+
+@Composable
+internal fun GeneralGameHelp(onClose: () -> Unit) {
+    val groups = listOf(
+        R.string.help_board_title to listOf(HelpTopic.BOARD),
+        R.string.help_resources to listOf(HelpTopic.TURN, HelpTopic.RAM, HelpTopic.TRACE, HelpTopic.NOISE),
+        R.string.dominoes to listOf(HelpTopic.HARDWARE, HelpTopic.ROTATE, HelpTopic.END_TURN),
+        R.string.scripts to listOf(HelpTopic.SCRIPTS, HelpTopic.PING, HelpTopic.SPOOF, HelpTopic.KILL, HelpTopic.BRIDGE),
+    )
+    var expanded by rememberSaveable { mutableStateOf<Int?>(null) }
+    // Resolve content in the game's locale before entering the dialog window.
+    val titles = groups.map { stringResource(it.first) }
+    val bodies = groups.map { (_, topics) -> topics.map { topic ->
+        stringResource(topic.title) + "\n" + stringResource(topic.body) +
+            (topic.script?.let { "\n" + stringResource(R.string.help_script_cost, it.ramCost, it.traceNoise) } ?: "")
+    }.joinToString("\n\n") }
+    val buffs = stringResource(R.string.help_buffs_body)
+    val title = stringResource(R.string.help_general)
+    val close = stringResource(R.string.help_close)
+    AlertDialog(onDismissRequest = onClose,
+        title = { Text(title) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                groups.indices.forEach { index ->
+                    TextButton(
+                        onClick = { expanded = if (expanded == index) null else index },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("help-section-$index"),
+                    ) { Text((if (expanded == index) "− " else "+ ") + titles[index]) }
+                    if (expanded == index) Text(bodies[index] + if (index == 0) "\n\n$buffs" else "")
+                }
             }
         },
         confirmButton = { TextButton(onClick = onClose) { Text(close) } },

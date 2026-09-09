@@ -72,6 +72,19 @@ object GameEngine {
         }
     }
 
+    /** Resolves a turn that cannot continue without requiring another player action. */
+    fun resolveForcedResult(state: GameState): Transition {
+        if (state.result != null || state.phase != TurnPhase.ACTION || state.tilePlacedThisTurn) return Transition(state)
+        val result = when {
+            state.dominoHand.isEmpty() && state.dominoBag.isEmpty() -> GameResult.MEMORY_EXHAUSTED
+            legalPlacements(state).isEmpty() &&
+                (state.ram < ScriptType.SPOOF.ramCost || state.scriptHand.none { it.type == ScriptType.SPOOF }) -> GameResult.KERNEL_PANIC
+            else -> null
+        } ?: return Transition(state)
+        val finished = state.copy(phase = TurnPhase.FINISHED, result = result)
+        return Transition(finished, listOf(GameEvent.Finished(result)))
+    }
+
     private fun placeDomino(state: GameState, action: GameAction.PlaceDomino): Transition {
         if (state.tilePlacedThisTurn) return rejected(state, RejectReason.DOMINO_ALREADY_PLACED)
         val handTile = state.dominoHand.find { it.id == action.dominoId }
@@ -89,16 +102,21 @@ object GameEngine {
         }
 
         val triggered = setOf(first, second).intersect(state.board.honeypots) - state.board.triggeredHoneypots
+        val collected = setOf(first, second).intersect(state.board.buffs.keys) - state.board.collectedBuffs
+        val collectedEffects = collected.mapNotNull { state.board.buffs[it] }
         val newBoard = state.board.copy(
             placed = state.board.placed + placed,
             triggeredHoneypots = state.board.triggeredHoneypots + triggered,
             revealedHoneypots = state.board.revealedHoneypots + triggered,
+            collectedBuffs = state.board.collectedBuffs + collected,
         )
         val next = state.copy(
             board = newBoard,
             dominoHand = state.dominoHand.filterNot { it.id == handTile.id },
             tilePlacedThisTurn = true,
             pendingNoise = state.pendingNoise + if (triggered.isEmpty()) 0 else 20,
+            trace = (state.trace + collectedEffects.sumOf { it.traceDelta }).coerceAtLeast(0),
+            ram = (state.ram + collectedEffects.sumOf { it.ramDelta }).coerceAtMost(MAX_RAM),
             scriptHand = if (triggered.isEmpty()) state.scriptHand else state.scriptHand.drop(1),
         )
         return Transition(
@@ -106,6 +124,7 @@ object GameEngine {
             buildList {
                 add(GameEvent.DominoPlaced)
                 if (triggered.isNotEmpty()) add(GameEvent.HoneypotTriggered)
+                collectedEffects.forEach { add(GameEvent.BuffCollected(it)) }
             },
         )
     }
@@ -202,15 +221,7 @@ object GameEngine {
             tilePlacedThisTurn = false,
             pingPreview = emptyList(),
         )
-        val noPlacement = legalPlacements(next).isEmpty()
-        val canSpoof = next.ram >= ScriptType.SPOOF.ramCost && next.scriptHand.any { it.type == ScriptType.SPOOF }
-        val forcedResult = when {
-            next.dominoHand.isEmpty() && next.dominoBag.isEmpty() -> GameResult.MEMORY_EXHAUSTED
-            noPlacement && !canSpoof -> GameResult.KERNEL_PANIC
-            else -> null
-        }
-        if (forcedResult != null) next = next.copy(phase = TurnPhase.FINISHED, result = forcedResult)
-        return Transition(next, forcedResult?.let { listOf(GameEvent.Finished(it)) }.orEmpty())
+        return resolveForcedResult(next)
     }
 
     private fun moveDaemon(board: BoardState): BoardState {

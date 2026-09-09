@@ -1,6 +1,18 @@
 # Mainboard Override — GDD y seguimiento
 
-## Visión
+## Progresión local
+
+La campaña contiene 30 desafíos secuenciales. Completar 5, 10, 15, 20, 25 y 30 desafíos distintos desbloquea respectivamente Laboratorio, Centro de datos, Red industrial, Archivo profundo, Núcleo blindado y Red fantasma en modo libre. La red original está disponible desde el inicio. Los escenarios modifican dimensiones, longitud de ruta y densidad de obstáculos; cada generación comprueba una solución con el motor.
+
+Cada victoria concede 20 créditos y la primera victoria de un desafío añade 40. Derrotas, abandonos y tutorial no otorgan créditos. Cobre y Aurora son PCB cosméticas de compra única, por 200 créditos cada una. Los escenarios solo se desbloquean jugando desafíos. No hay créditos retroactivos; los récords existentes sí cuentan para los desbloqueos.
+
+Al finalizar se muestra el desglose y se puede revisar el tablero sin controles de juego, regresar al resumen, reintentar o continuar al siguiente desafío. La galería separa fichas y PCB con vistas previas y estados de equipamiento/compra. El menú anima pulsos de circuitos y respeta movimiento reducido.
+
+Durante la partida los scripts se muestran como cartas compactas en una banda superior, junto a RAM, turno y rastreo. El botón EJECUTAR TURNO conserva una posición estable en el panel de controles y se remarca cuando se intenta colocar una segunda ficha antes de resolver el turno. SPOOF presenta un selector vertical desplazable de valores 0–6 para el puerto elegido.
+
+Los escenarios libres incluyen dos recogidas de tablero: un disipador que resta 8 al rastreo y una reserva que suma 1 RAM. Cada casilla se consume una sola vez y no puede superar los límites de los recursos. Las cartas y los iconos tienen la guía visual en [CARTS spesificationst.md](../CARTS%20spesificationst.md).
+
+## Concepto
 
 Juego móvil de lógica táctica. El jugador es un analista que se infiltra en un sistema cerrado: construye un circuito con fichas de dominó y usa cartas que representan comandos para alterar el tablero. El objetivo es conectar el nodo de inicio con la extracción antes de ser localizado.
 
@@ -13,7 +25,7 @@ Juego móvil de lógica táctica. El jugador es un analista que se infiltra en u
 3. El sistema suma 8 de rastreo más el ruido, activa trampas y mueve el daemon.
 4. Se comprueban primero las derrotas y después la conexión de victoria.
 
-El tablero es una cuadrícula de 9×7 con inicio 0 y extracción 6. Cada dominó ocupa dos celdas ortogonales; sus mitades están conectadas internamente, pero todo contacto externo debe compartir valor. Las redes pueden ramificarse y cada semilla contiene una ruta solucionable.
+El tablero varía entre 8 y 10 columnas y entre 6 y 7 filas, con inicio 0 y extracción 6. Cada dominó ocupa dos celdas ortogonales; sus mitades están conectadas internamente, pero todo contacto externo debe compartir valor. Las redes pueden ramificarse y cada semilla contiene una ruta solucionable.
 
 ### Scripts incluidos
 
@@ -76,10 +88,10 @@ Neobrutalismo de sistema operativo: PCB oscuro, verde terminal, cian, amarillo d
 
 ## Verificación técnica
 
-- `:game-domain:test`: correcto; 12 pruebas ejecutadas (7 del motor y 5 del tutorial).
+- `:game-domain:test`: correcto; 16 pruebas ejecutadas (11 del motor y 5 del tutorial), incluidos los 30 desafíos y 600 combinaciones de escenario/semilla.
 - `:app:assembleDebug`: correcto; APK generado en `app/build/outputs/apk/debug/`.
-- `:app:connectedDebugAndroidTest`: 6 pruebas correctas en CLK-LX3 con Android 14, incluidos español/inglés y texto ampliado.
-- `:app:lintDebug`: correcto; 0 errores y 3 advertencias preexistentes sobre target SDK, Gradle y orientación fija. Sin baselines ni supresiones nuevas.
+- `:app:connectedDebugAndroidTest`: 15 pruebas correctas en CLK-LX3 con Android 14, incluidas 6 de progresión, compras, revisión del tablero y movimiento reducido, además de ayuda y tutorial en español/inglés con texto ampliado.
+- `:app:lintDebug`: correcto; 0 errores y 18 advertencias (versiones, orientación, candidatos a plurales y recursos sin uso). Sin baselines ni supresiones nuevas.
 - Evidencia y límites de la validación: [TUTORIAL.md](TUTORIAL.md#resultado-de-esta-entrega-7-de-septiembre-de-2026).
 
 

@@ -15,7 +15,15 @@ Compose -> GameAction -> GameEngine -> Transition -> StateFlow -> Compose
 
 `LevelGenerator.generate(seed)` es determinista. La semilla y toda la lógica viven en el dominio, por lo que una partida puede reproducirse sin Android.
 
-Campaña, inventario y economía deben introducir repositorios propios y Room sin añadir dependencias Android a `game-domain`.
+La progresión local, el saldo y las compras viven en `PlayerPreferencesRepository` y DataStore. `finishMatch` guarda récord, recompensa e identificador de partida en una sola transacción; repetir el identificador no paga de nuevo. Las compras validan saldo y propiedad dentro de la misma transacción. `ScenarioCatalog` y `Rewards` no dependen de Android. Una economía futura con inventarios más complejos podrá migrar a Room.
+
+`LevelGenerator.generateScenario(seed, scenarioId)` aplica dimensiones, longitud de ruta y obstáculos del escenario y valida la solución mediante el motor. El modo original conserva `generate(seed)`. El ViewModel valida los desbloqueos antes de generar una partida y conserva escenario y semilla al reintentar. La UI deriva los escenarios disponibles del número de desafíos distintos ganados.
+
+`GameUiState` identifica cada partida con UUID y conserva su recompensa y el estado de revisión del tablero. La revisión no altera `GameState`; el motor sigue rechazando acciones después de terminar. La galería comparte `Board` y `DominoImage` con la partida para que las vistas previas coincidan con las skins equipadas.
+
+La partida presenta los scripts en una banda horizontal superior junto a los indicadores de RAM y rastreo. El panel lateral conserva fichas, previsualización y controles; el botón de ejecutar turno se mantiene al final del panel y se resalta con `endTurnHint` cuando se intenta colocar una segunda ficha. SPOOF usa una lista vertical desplazable de valores 0–6 y conserva la selección de mitad y la previsualización.
+
+Los escenarios de modo libre pueden generar `BoardBuff.TRACE_COOLER` y `BoardBuff.RAM_RESERVE`. Cubrir una casilla consume el buff y emite `GameEvent.BuffCollected`; el primero reduce el rastreo ocho puntos y el segundo recupera una RAM, ambos con límites. Desafíos y tutorial no generan buffs.
 
 ## Contratos y mantenimiento
 

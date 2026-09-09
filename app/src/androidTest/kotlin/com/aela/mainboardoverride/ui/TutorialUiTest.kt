@@ -147,13 +147,13 @@ class TutorialUiTest {
         fun localized(id: Int) = context.getString(id)
         compose.onNodeWithText(localized(R.string.continue_lesson)).performScrollTo().performClick()
         compose.onNodeWithContentDescription(context.getString(R.string.domino_description, 0, 2)).performScrollTo().performClick()
-        compose.onNodeWithText(localized(R.string.rotate)).performScrollTo().performClick()
+        compose.onNodeWithText(localized(R.string.rotate)).assertIsDisplayed().performClick()
         val prefix = if (language == "es") "Nodo" else "Node"
         val start = compose.onNode(hasContentDescription("$prefix 1, 4:", substring = true)).fetchSemanticsNode().boundsInRoot
         val target = compose.onNode(hasContentDescription("$prefix 2, 4:", substring = true))
         assertTrue(target.fetchSemanticsNode().boundsInRoot.left > start.left)
         target.performClick()
-        compose.onNodeWithText(localized(R.string.end_turn)).performScrollTo().performClick()
+        compose.onNodeWithText(localized(R.string.end_turn)).assertIsDisplayed().performClick()
         compose.waitForIdle()
         compose.runOnIdle { assertEquals(TutorialStep.SYSTEM, vm.uiState.value.tutorialStep) }
     }

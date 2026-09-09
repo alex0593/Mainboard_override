@@ -13,7 +13,7 @@ data class ChallengeLevel(
 )
 
 object ChallengeCatalog {
-    const val COUNT = 10
+    const val COUNT = 30
     val levels = (1..COUNT).map { number ->
         ChallengeLevel(
             number = number,
@@ -29,7 +29,8 @@ object ChallengeCatalog {
                 7 -> ChallengeRules(maxTurns = 8, maxTrace = 72)
                 8 -> ChallengeRules(maxTrace = 80)
                 9 -> ChallengeRules(maxTurns = 9)
-                else -> ChallengeRules(maxTurns = 9, maxTrace = 80)
+                10 -> ChallengeRules(maxTurns = 9, maxTrace = 80)
+                else -> ChallengeRules(maxTurns = if (number < 20) 10 else 9, maxTrace = if (number < 25) 88 else 80)
             },
         )
     }

@@ -1,5 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="help_general">Game guide</string>
+    <string name="help_resources">Turn and resources</string>
+    <string name="help_buffs_body">Free play pickups: −8 lowers trace by 8 without going below zero. +1R restores one RAM up to the maximum. Cover a pickup with a valid domino placement to consume it once, even when your resource is already at its limit. Script cards show RAM cost (R) and added noise (+).</string>
+    <string name="credit_balance">%1$d credits</string>
+    <string name="result_summary">Results</string>
+    <string name="challenge_progress">%1$d / %2$d challenges completed · scenario every 5</string>
+    <string name="expected_reward">Victory: +%1$d credits</string>
+    <string name="skin_copper">Copper</string>
+    <string name="skin_aurora">Aurora</string>
+    <string name="scenario_classic">Original network</string>
+    <string name="scenario_lab">Laboratory</string>
+    <string name="scenario_data">Data center</string>
+    <string name="scenario_industry">Industrial network</string>
+    <string name="scenario_archive">Deep archive</string>
+    <string name="scenario_core">Armored core</string>
+    <string name="scenario_ghost">Ghost network</string>
+    <string name="equipped">Equipped</string>
+    <string name="equip">Equip</string>
+    <string name="buy_credits">Buy · %1$d credits</string>
+    <string name="missing_credits">Earn %1$d more credits to buy</string>
+    <string name="confirm_skin_purchase">Price: %1$d credits. Remaining balance: %2$d. You can equip this PCB after purchase.</string>
+    <string name="free_scenarios">Free play scenarios</string>
+    <string name="scenario_difficulty">Difficulty %1$d · %2$d × %3$d</string>
+    <string name="scenario_locked">%1$d / %2$d distinct challenges completed</string>
+    <string name="play_scenario">Play</string>
+    <string name="locked_scenario">Locked</string>
+    <string name="saving_reward">Saving reward…</string>
+    <string name="reward_breakdown">Victory: +%1$d · First completion: +%2$d credits</string>
+    <string name="scenario_unlocked">Scenario unlocked: %1$s</string>
+    <string name="next_challenge">Next challenge</string>
+    <string name="review_board">Review board</string>
+    <string name="spoof_scroll_hint">Scroll to choose the replacement value</string>
+    <string name="node_trace_cooler">trace cooler: −8 trace</string>
+    <string name="node_ram_reserve">RAM reserve: +1 RAM</string>
+    <string name="buff_trace_collected">Trace cooled by 8</string>
+    <string name="buff_ram_collected">RAM reserve recovered 1 RAM</string>
     <string name="app_name" translatable="false">Mainboard Override</string>
     <string name="tagline">TACTICAL NETWORK INTRUSION</string>
     <string name="new_network">NEW NETWORK</string>
@@ -119,9 +155,6 @@
     <string name="domino_skin">DOMINO SKIN</string>
     <string name="board_skin">BOARD SKIN</string>
     <string name="skin_kenney">Kenney clear</string>
-    <string name="skin_light">Light</string>
-    <string name="skin_terminal">Terminal green</string>
-    <string name="skin_neon">Neon cyan</string>
     <string name="skin_dark">Dark</string>
     <string name="skin_gingerbread">Gingerbread</string>
     <string name="skin_hearts">Hearts</string>
@@ -133,7 +166,7 @@
     <string name="skin_ice">Cryogenic ice</string>
     <string name="context_help">Contextual help buttons</string>
     <string name="challenge">CHALLENGE</string>
-    <string name="challenge_description">Ten deterministic puzzles. Win one to unlock the next.</string>
+    <string name="challenge_description">Thirty puzzles. Win to unlock the next and earn credits for PCB skins.</string>
     <string name="challenge_level">Puzzle %1$d</string>
     <string name="challenge_rules_turns">Rule: max %1$d turns</string>
     <string name="challenge_rules_trace">Rule: max %1$d trace</string>

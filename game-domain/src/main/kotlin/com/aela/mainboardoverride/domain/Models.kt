@@ -91,6 +91,8 @@ data class BoardState(
     val triggeredHoneypots: Set<Position> = emptySet(),
     val bridges: List<Bridge> = emptyList(),
     val daemon: Daemon? = null,
+    val buffs: Map<Position, BoardBuff> = emptyMap(),
+    val collectedBuffs: Set<Position> = emptySet(),
 ) {
     fun valueAt(position: Position): Int? {
         if (position == start) return 0
@@ -101,6 +103,11 @@ data class BoardState(
     fun isOccupied(position: Position): Boolean =
         position == start || position == extraction ||
             position in firewalls || placed.any { it.valueAt(position) != null }
+}
+
+enum class BoardBuff(val traceDelta: Int = 0, val ramDelta: Int = 0) {
+    TRACE_COOLER(traceDelta = -8),
+    RAM_RESERVE(ramDelta = 1),
 }
 
 /** Complete serializable-in-principle snapshot consumed and produced by [GameEngine]. */
@@ -142,6 +149,7 @@ sealed interface GameEvent {
     data object DominoPlaced : GameEvent
     data class ScriptExecuted(val type: ScriptType) : GameEvent
     data object HoneypotTriggered : GameEvent
+    data class BuffCollected(val buff: BoardBuff) : GameEvent
     data class Rejected(val reason: RejectReason) : GameEvent
     data class Finished(val result: GameResult) : GameEvent
 }

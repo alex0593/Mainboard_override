@@ -23,6 +23,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.platform.testTag
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -53,9 +58,14 @@ import com.aela.mainboardoverride.domain.RejectReason
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
@@ -83,6 +93,9 @@ import com.aela.mainboardoverride.domain.Position
 import com.aela.mainboardoverride.domain.ScriptCard
 import com.aela.mainboardoverride.domain.ScriptType
 import com.aela.mainboardoverride.domain.ChallengeCatalog
+import com.aela.mainboardoverride.domain.BoardBuff
+import androidx.compose.animation.core.*
+import kotlinx.coroutines.delay
 
 private const val MENU = "menu"
 private const val GAME = "game"
@@ -97,9 +110,9 @@ fun MainboardApp(nav: NavHostController, state: GameUiState, actions: MainViewMo
         composable(MENU) {
             MenuScreen(
                 state = state,
-                onNew = { actions.start(); nav.navigate(GAME) },
+                onNew = { nav.navigate("scenarios") },
                 onChallenge = { nav.navigate(CHALLENGE) },
-                onRetry = { state.preferences.lastSeed?.let(actions::start); nav.navigate(GAME) },
+                onRetry = { actions.retryLast(); nav.navigate(GAME) },
                 onSettings = { nav.navigate(SETTINGS) },
                 onSkins = { nav.navigate(SKINS) },
                 onHelp = { nav.navigate(HELP) },
@@ -113,7 +126,8 @@ fun MainboardApp(nav: NavHostController, state: GameUiState, actions: MainViewMo
             )
         }
         composable(SETTINGS) { SettingsScreen(state, actions) { nav.popBackStack() } }
-        composable(SKINS) { SkinScreen(state, actions) { nav.popBackStack() } }
+        composable(SKINS) { SkinGallery(state, actions) { nav.popBackStack() } }
+        composable("scenarios") { ScenarioScreen(state, actions, { nav.navigate(GAME) }, { nav.popBackStack() }) }
         composable(CHALLENGE) {
             ChallengeScreen(
                 state = state,
@@ -136,7 +150,7 @@ private fun MenuScreen(
     onSkins: () -> Unit,
     onHelp: () -> Unit,
 ) {
-    CircuitBackground {
+    CircuitBackground(animated = !state.preferences.reducedMotion) {
         Row(
             Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -152,6 +166,7 @@ private fun MenuScreen(
                     fontFamily = FontFamily.Monospace,
                 )
                 Text(stringResource(R.string.tagline), color = Muted, letterSpacing = 3.sp)
+                Text(stringResource(R.string.credit_balance, state.preferences.credits), color = Warning)
                 Spacer(Modifier.height(22.dp))
                 if (state.preferences.bestTurns != null) {
                     Text(
@@ -187,32 +202,49 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("NO SESSION") }
         return
     }
-    var helpTopic by rememberSaveable { mutableStateOf<HelpTopic?>(null) }
-    val onHelp: (HelpTopic) -> Unit = { helpTopic = it }
+    var helpOpen by rememberSaveable { mutableStateOf(false) }
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(8.dp)) {
-            FlowRow(
-                Modifier.fillMaxWidth().heightIn(min = 44.dp)
+            Row(
+                Modifier.fillMaxWidth().heightIn(min = 64.dp).testTag("game-header")
                     .background(Panel.copy(alpha = .95f), RoundedCornerShape(8.dp))
                     .border(1.dp, Cyan.copy(alpha = .25f), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                TextButton(onClick = onMenu) { Text("< ${stringResource(R.string.main_menu)}") }
-                StatusModule(stringResource(R.string.turn, game.turn), Cyan, HelpTopic.TURN, onHelp, visible = state.preferences.contextHelpEnabled)
-                StatusModule(stringResource(R.string.ram, game.ram, MAX_RAM), Terminal, HelpTopic.RAM, onHelp, visible = state.preferences.contextHelpEnabled) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        repeat(MAX_RAM) { index ->
-                            Box(Modifier.size(22.dp, 4.dp).background(if (index < game.ram) Terminal else Muted.copy(alpha = .2f)))
-                        }
+                TextButton(onClick = onMenu, modifier = Modifier.width(48.dp).semantics { contentDescription = "Menu" }) { Text("‹", fontSize = 24.sp) }
+                if (game.result != null && state.reviewingBoard) {
+                    TextButton(onClick = actions::showResult) { Text(stringResource(R.string.result_summary)) }
+                    TextButton(onClick = actions::retry) { Text(stringResource(R.string.play_again)) }
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(stringResource(R.string.turn, game.turn), color = Cyan, fontSize = 11.sp)
+                    Text(stringResource(R.string.ram, game.ram, MAX_RAM), color = Terminal, fontSize = 11.sp)
+                    Text(stringResource(R.string.trace, game.trace), color = if (game.trace >= 80) Danger else Warning, fontSize = 11.sp)
+                }
+            Row(
+                Modifier.weight(1f).horizontalScroll(rememberScrollState()).testTag("script-hand"),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                game.scriptHand.forEach { card ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        ScriptCardView(
+                            card,
+                            state.selectedScriptId == card.id,
+                            game.ram >= card.type.ramCost && game.result == null,
+                            highlighted = state.tutorialStep?.let { step -> when (card.type) {
+                                ScriptType.PING -> step == TutorialStep.PING
+                                ScriptType.SPOOF -> step == TutorialStep.SPOOF
+                                ScriptType.KILL_PROCESS -> step == TutorialStep.KILL
+                                ScriptType.BRIDGE -> step == TutorialStep.BRIDGE
+                            } } == true,
+                            compact = true,
+                        ) { actions.selectScript(card.id) }
                     }
                 }
-                val traceColor = if (game.trace >= 80) Danger else Warning
-                StatusModule(stringResource(R.string.trace, game.trace), traceColor, HelpTopic.TRACE, onHelp, visible = state.preferences.contextHelpEnabled) {
-                    Box(Modifier.width(96.dp).height(4.dp).background(Muted.copy(alpha = .2f))) {
-                        Box(Modifier.fillMaxWidth(game.trace / 100f).fillMaxHeight().background(traceColor))
-                    }
-                }
-                HelpButton(HelpTopic.BOARD, onHelp, visible = true)
+            }
+                TextButton(onClick = { helpOpen = true }, modifier = Modifier.size(48.dp).testTag("general-help")) { Text("?", color = Cyan) }
             }
             Spacer(Modifier.height(8.dp))
             BoxWithConstraints(Modifier.weight(1f)) {
@@ -232,68 +264,68 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                             target = state.tutorialStep?.let(Tutorial::target),
                             modifier = Modifier.weight(1f).fillMaxHeight(),
                             onCell = actions::placeAt,
+                            animatePlacement = !state.preferences.reducedMotion,
                     )
-                    Column(
+                    if (!state.reviewingBoard) Box(
                         Modifier.width(controlsWidth).fillMaxHeight()
                             .background(Brush.verticalGradient(listOf(Panel, Void)), RoundedCornerShape(8.dp))
                             .border(1.dp, Cyan.copy(alpha = .3f), RoundedCornerShape(8.dp))
-                            .verticalScroll(rememberScrollState()).padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                            .padding(6.dp),
                     ) {
-                        state.tutorialStep?.let { step ->
-                            TutorialPanel(step, state.tutorialBlocked, actions::continueTutorial, actions::restartLesson)
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(stringResource(R.string.seed, game.seed), Modifier.weight(1f), color = Muted, fontSize = 11.sp)
-                            HelpButton(HelpTopic.SEED, onHelp, state.preferences.contextHelpEnabled)
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(stringResource(R.string.pending_noise, game.pendingNoise), Modifier.weight(1f), color = Warning, fontSize = 12.sp)
-                            HelpButton(HelpTopic.NOISE, onHelp, state.preferences.contextHelpEnabled)
-                        }
-                        PanelHeading(stringResource(R.string.scripts), HelpTopic.SCRIPTS, onHelp, state.preferences.contextHelpEnabled)
-                        game.scriptHand.forEach { card ->
+                        Column(Modifier.fillMaxSize().padding(bottom = 88.dp).verticalScroll(rememberScrollState()).testTag("hardware-panel"), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            state.tutorialStep?.let { step -> TutorialPanel(step, state.tutorialBlocked, actions::continueTutorial, actions::restartLesson) }
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(Modifier.weight(1f)) {
-                                    ScriptCardView(card, state.selectedScriptId == card.id, game.ram >= card.type.ramCost && game.result == null, highlighted = state.tutorialStep?.let { step -> when(card.type) { ScriptType.PING -> step == TutorialStep.PING; ScriptType.SPOOF -> step == TutorialStep.SPOOF; ScriptType.KILL_PROCESS -> step == TutorialStep.KILL; ScriptType.BRIDGE -> step == TutorialStep.BRIDGE } } == true) {
-                                        actions.selectScript(card.id)
-                                    }
+                                Text(stringResource(R.string.pending_noise, game.pendingNoise), Modifier.weight(1f), color = Warning, fontSize = 12.sp)
+                            }
+                            state.message?.let { Text(stringResource(rejectionText(it)), color = Danger, fontSize = 11.sp) }
+                            state.lastBuff?.let { buff ->
+                                Text(stringResource(if (buff == BoardBuff.TRACE_COOLER) R.string.buff_trace_collected else R.string.buff_ram_collected), color = Cyan, fontSize = 11.sp)
+                            }
+                            if (game.scriptHand.any { it.id == state.selectedScriptId && it.type == ScriptType.BRIDGE }) BridgeControl(state.bridgeHorizontal, actions::toggleBridge)
+                            if (state.selectedScriptId != null) SmallButton(stringResource(R.string.cancel), actions::cancelScript)
+                            if (game.pingPreview.isNotEmpty()) PingPreview(game.pingPreview)
+                            Text(stringResource(R.string.dominoes), color = Cyan, fontSize = 11.sp)
+                            FlowRow(
+                                Modifier.fillMaxWidth(),
+                                maxItemsInEachRow = 2,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                game.dominoHand.forEach { tile ->
+                                    DominoView(
+                                        tile,
+                                        state.selectedDominoId == tile.id,
+                                        state.preferences.dominoSkin,
+                                        highlighted = state.tutorialStep == TutorialStep.SELECT || state.tutorialStep == TutorialStep.SPOOF,
+                                        modifier = Modifier.fillMaxWidth(.48f),
+                                    ) { actions.selectDomino(tile.id) }
                                 }
-                                HelpButton(card.type.helpTopic(), onHelp, state.preferences.contextHelpEnabled)
+                            }
+                            game.dominoHand.find { it.id == state.selectedDominoId }?.let { tile ->
+                                val preview = if (state.rotationSteps >= 2) tile.rotated() else tile
+                                val orientation = if (state.rotationSteps % 2 == 0) Orientation.HORIZONTAL else Orientation.VERTICAL
+                                Text(stringResource(if (orientation == Orientation.HORIZONTAL) R.string.horizontal else R.string.vertical), color = Cyan)
+                                DominoImage(preview, Modifier.align(Alignment.CenterHorizontally).width(if (orientation == Orientation.HORIZONTAL) 76.dp else 38.dp), orientation, skin = state.preferences.dominoSkin)
                             }
                         }
-                        state.message?.let {
-                            Text(stringResource(rejectionText(it)), color = Danger, fontSize = 11.sp)
-                        }
-                        if (game.scriptHand.any { it.id == state.selectedScriptId && it.type == ScriptType.BRIDGE }) {
-                            BridgeControl(state.bridgeHorizontal, actions::toggleBridge)
-                        }
-                        if (state.selectedScriptId != null) SmallButton(stringResource(R.string.cancel), actions::cancelScript)
-                        if (game.pingPreview.isNotEmpty()) PingPreview(game.pingPreview)
-                        PanelHeading(stringResource(R.string.dominoes), HelpTopic.HARDWARE, onHelp, state.preferences.contextHelpEnabled)
-                        game.dominoHand.forEach { tile ->
-                            DominoView(tile, state.selectedDominoId == tile.id, state.preferences.dominoSkin, highlighted = state.tutorialStep == TutorialStep.SELECT || state.tutorialStep == TutorialStep.SPOOF) { actions.selectDomino(tile.id) }
-                        }
-                        game.dominoHand.find { it.id == state.selectedDominoId }?.let { tile ->
-                            val preview = if (state.rotationSteps >= 2) tile.rotated() else tile
-                            val orientation = if (state.rotationSteps % 2 == 0) Orientation.HORIZONTAL else Orientation.VERTICAL
-                            Text(stringResource(if (orientation == Orientation.HORIZONTAL) R.string.horizontal else R.string.vertical), color = Cyan)
-                            DominoImage(preview, Modifier.align(Alignment.CenterHorizontally).width(if (orientation == Orientation.HORIZONTAL) 96.dp else 48.dp), orientation, skin = state.preferences.dominoSkin)
-                        }
-                        HorizontalDivider(color = Cyan.copy(alpha = .2f))
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                SmallButton(stringResource(R.string.rotate), actions::rotate, Modifier.weight(1f).then(if (state.tutorialStep == TutorialStep.ROTATE) Modifier.border(2.dp, Warning) else Modifier))
-                                HelpButton(HelpTopic.ROTATE, onHelp, state.preferences.contextHelpEnabled)
-                            }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Button(
-                                    onClick = actions::endTurn,
-                                    enabled = game.tilePlacedThisTurn,
-                                    modifier = Modifier.weight(1f).then(if (state.tutorialStep == TutorialStep.END_TURN) Modifier.border(2.dp, Warning) else Modifier),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Terminal, contentColor = Void),
-                                ) { Text(stringResource(R.string.end_turn), fontSize = 10.sp) }
-                                HelpButton(HelpTopic.END_TURN, onHelp, state.preferences.contextHelpEnabled)
+                        Box(
+                            Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(84.dp).background(Panel),
+                        ) {
+                            Column(
+                                Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    SmallButton(stringResource(R.string.rotate), actions::rotate, Modifier.weight(1f).height(36.dp).testTag("rotate").then(if (state.tutorialStep == TutorialStep.ROTATE) Modifier.border(2.dp, Warning) else Modifier))
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Button(
+                                        onClick = actions::endTurn,
+                                        enabled = game.tilePlacedThisTurn && game.result == null,
+                                        modifier = Modifier.weight(1f).height(36.dp).testTag("end-turn").then(if (state.tutorialStep == TutorialStep.END_TURN || state.endTurnHint) Modifier.border(2.dp, Warning) else Modifier),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Terminal, contentColor = Void),
+                                    ) { Text(stringResource(R.string.end_turn), fontSize = 10.sp) }
+                                }
                             }
                         }
                     }
@@ -309,12 +341,12 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                 actions::setSpoofHalf, actions::setSpoofValue, { actions.spoof(state.spoofValue) }, actions::cancelScript)
         }
     }
-    helpTopic?.let { HelpDialog(it) { helpTopic = null } }
-    game.result?.let { ResultDialog(it, game.turn, game.trace, actions::retry, onMenu, state.tutorialStep == TutorialStep.COMPLETE) }
+    if (helpOpen) GeneralGameHelp { helpOpen = false }
+    if (!state.reviewingBoard) game.result?.let { MatchResultDialog(state, actions, onMenu) }
 }
 
 @Composable
-private fun Board(
+internal fun Board(
     board: BoardState,
     skin: String = "pcb",
     dominoSkin: String = "kenney",
@@ -322,9 +354,37 @@ private fun Board(
     target: Position? = null,
     modifier: Modifier,
     onCell: (Position) -> Unit,
+    previewOnly: Boolean = false,
+    animatePlacement: Boolean = true,
 ) {
+    val placementKeys = remember(board.placed) {
+        board.placed.map { placed ->
+            "${placed.domino.id}:${placed.origin.x}:${placed.origin.y}:${placed.orientation}"
+        }.toSet()
+    }
+    var knownPlacementKeys by remember { mutableStateOf<Set<String>?>(null) }
+    var animatedPlacementKeys by remember { mutableStateOf(emptySet<String>()) }
+    LaunchedEffect(placementKeys, animatePlacement, previewOnly) {
+        if (!animatePlacement || previewOnly) {
+            knownPlacementKeys = placementKeys
+            animatedPlacementKeys = emptySet()
+        } else {
+            val previous = knownPlacementKeys
+            knownPlacementKeys = placementKeys
+            if (previous != null) {
+                val added = placementKeys - previous
+                if (added.isNotEmpty()) {
+                    animatedPlacementKeys = animatedPlacementKeys + added
+                    delay(230L)
+                    animatedPlacementKeys = animatedPlacementKeys - added
+                }
+            }
+        }
+    }
     BoxWithConstraints(
         modifier.background(Brush.linearGradient(when (skin) {
+            "copper" -> listOf(Color(0xFF40271B), Color(0xFF130E0B), Color(0xFF9D6336))
+            "aurora" -> listOf(Color(0xFF301550), Color(0xFF100D26), Color(0xFF12646B))
             "blueprint" -> listOf(Color(0xFF102A4A), Color(0xFF07111F), Color(0xFF164D73))
             "industrial" -> listOf(Color(0xFF3A2914), Color(0xFF17120B), Color(0xFF60421A))
             "rust" -> listOf(Color(0xFF572616), Color(0xFF1C0E0A), Color(0xFF873D1E))
@@ -335,6 +395,16 @@ private fun Board(
         contentAlignment = Alignment.Center,
     ) {
         Canvas(Modifier.fillMaxSize()) {
+            if (skin == "copper" || skin == "aurora") {
+                val tint = if (skin == "copper") Color(0xFFE6A466) else Color(0xFF8DEBF0)
+                repeat(16) { index ->
+                    val x = size.width * (index + 1) / 17
+                    val bend = size.height * (.2f + (index % 4) * .17f)
+                    drawLine(tint.copy(alpha = .35f), Offset(x, 0f), Offset(x, bend), 2.dp.toPx())
+                    drawLine(tint.copy(alpha = .35f), Offset(x, bend), Offset(x + 12.dp.toPx(), bend + 12.dp.toPx()), 2.dp.toPx())
+                    drawCircle(tint, 3.dp.toPx(), Offset(x + 12.dp.toPx(), bend + 12.dp.toPx()), style = Stroke(1.dp.toPx()))
+                }
+            }
             val inset = 6.dp.toPx()
             val rail = 15.dp.toPx()
             drawRect(Muted.copy(alpha = .25f), Offset(rail, rail), Size((size.width - rail * 2).coerceAtLeast(0f), (size.height - rail * 2).coerceAtLeast(0f)), style = Stroke(1.dp.toPx()))
@@ -351,6 +421,8 @@ private fun Board(
         val margin = if (maxHeight < 250.dp) 12.dp else 20.dp
         val cell = minOf((maxWidth - margin * 2) / board.width, (maxHeight - margin * 2) / board.height).coerceAtLeast(0.dp)
             Box(Modifier.width(cell * board.width).height(cell * board.height).background(when (skin) {
+                "copper" -> Color(0xFF211710)
+                "aurora" -> Color(0xFF1D1231)
                 "blueprint" -> Color(0xFF0B1D31)
                 "industrial" -> Color(0xFF241A0D)
                 "rust" -> Color(0xFF24110C)
@@ -364,16 +436,58 @@ private fun Board(
             // Sprites sit below the cell hit targets and threat badges.
             board.placed.forEach { placed ->
                 val horizontal = placed.orientation == Orientation.HORIZONTAL
+                val placementKey = "${placed.domino.id}:${placed.origin.x}:${placed.origin.y}:${placed.orientation}"
+                val animating = placementKey in animatedPlacementKeys
+                val scale = remember(placementKey) { Animatable(1f) }
+                LaunchedEffect(placementKey, animating) {
+                    if (animating) {
+                        scale.snapTo(.86f)
+                        scale.animateTo(1.04f, tween(110, easing = FastOutSlowInEasing))
+                        scale.animateTo(1f, tween(100, easing = FastOutSlowInEasing))
+                    } else {
+                        scale.snapTo(1f)
+                    }
+                }
                 DominoImage(
                     placed.domino,
                     Modifier.offset(cell * placed.origin.x, cell * placed.origin.y)
-                        .size(cell * (if (horizontal) 2 else 1), cell * (if (horizontal) 1 else 2)).padding(2.dp),
+                        .size(cell * (if (horizontal) 2 else 1), cell * (if (horizontal) 1 else 2))
+                        .padding(2.dp)
+                        .graphicsLayer {
+                            scaleX = scale.value
+                            scaleY = scale.value
+                        }
+                        .drawBehind {
+                            if (animating) drawCircle(Cyan.copy(alpha = .22f), radius = size.minDimension * .42f)
+                        },
                     placed.orientation,
                     describe = false,
                     skin = dominoSkin,
                 )
             }
-            for (y in 0 until board.height) for (x in 0 until board.width) {
+            if (previewOnly) {
+                val ink = remember { android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                    textAlign = android.graphics.Paint.Align.CENTER
+                    typeface = android.graphics.Typeface.MONOSPACE
+                } }
+                Canvas(Modifier.fillMaxSize()) {
+                    val unit = size.width / board.width
+                    ink.textSize = unit * .5f
+                    ink.color = android.graphics.Color.rgb(57, 231, 224)
+                    for (y in 0 until board.height) for (x in 0 until board.width) {
+                        val p = Position(x, y)
+                        val label = when {
+                            p == board.start -> "S0"
+                            p == board.extraction -> "X6"
+                            p in board.firewalls -> "■"
+                            p in board.revealedHoneypots -> "HP"
+                            p in board.buffs -> if (board.buffs[p] == BoardBuff.TRACE_COOLER) "−8" else "+R"
+                            else -> null
+                        }
+                        if (label != null) drawContext.canvas.nativeCanvas.drawText(label, (x + .5f) * unit, (y + .65f) * unit, ink)
+                    }
+                }
+            } else for (y in 0 until board.height) for (x in 0 until board.width) {
                 val position = Position(x, y)
                 BoardCell(board, position, cell, position in legalOrigins, position == target, onCell)
             }
@@ -389,6 +503,7 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
     val isExit = position == board.extraction
     val firewall = position in board.firewalls
     val trap = position in board.revealedHoneypots
+    val buff = board.buffs[position]?.takeUnless { position in board.collectedBuffs }
     val daemon = board.daemon?.position == position
     val bridge = board.bridges.find { it.center == position }
     val description = listOfNotNull(
@@ -396,6 +511,7 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
         if (isExit) stringResource(R.string.node_exit) else null,
         if (firewall) stringResource(R.string.node_firewall) else null,
         if (trap) stringResource(R.string.node_trap) else null,
+        buff?.let { stringResource(if (it == BoardBuff.TRACE_COOLER) R.string.node_trace_cooler else R.string.node_ram_reserve) },
         if (daemon) stringResource(R.string.node_daemon) else null,
         bridge?.let { stringResource(R.string.bridge_label, stringResource(if (it.horizontal) R.string.horizontal else R.string.vertical)) },
         value?.let { stringResource(R.string.node_value, it) },
@@ -406,6 +522,7 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
     val placedColor = when {
         firewall -> Danger
         trap -> Warning
+        buff != null -> Cyan
         isStart || isExit -> Cyan
         value != null -> Terminal
         legal -> Terminal.copy(alpha = .16f)
@@ -416,7 +533,7 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
             .offset(x = size * position.x, y = size * position.y)
             .size(size)
             .padding(2.dp)
-            .background(if (isPlaced) Color.Transparent else placedColor.copy(alpha = if (value != null || firewall || trap) .22f else placedColor.alpha))
+            .background(if (isPlaced) Color.Transparent else placedColor.copy(alpha = if (value != null || firewall || trap || buff != null) .22f else placedColor.alpha))
             .then(if (target) Modifier.border(3.dp, Warning) else if (legal) Modifier.border(1.dp, Terminal) else Modifier)
             .clickable { onCell(position) }
             .semantics { contentDescription = label },
@@ -437,6 +554,7 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
                 isStart -> "S0"
                 isExit -> "X6"
                 trap -> "HP"
+                buff != null -> if (buff == BoardBuff.TRACE_COOLER) "−8" else "+1R"
                 value != null -> "$value"
                 else -> "·"
             },
@@ -448,32 +566,32 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
 }
 
 @Composable
-private fun ScriptCardView(card: ScriptCard, selected: Boolean, enabled: Boolean, highlighted: Boolean = false, onClick: () -> Unit) {
+private fun ScriptCardView(card: ScriptCard, selected: Boolean, enabled: Boolean, highlighted: Boolean = false, compact: Boolean = false, onClick: () -> Unit) {
     Card(
-        Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics { this.selected = selected }.alpha(if (enabled) 1f else .4f).clickable(enabled = enabled, onClick = onClick),
+        (if (compact) Modifier.width(88.dp) else Modifier.fillMaxWidth()).heightIn(min = 48.dp).testTag("script-${card.id}").semantics { this.selected = selected }.alpha(if (enabled) 1f else .4f).clickable(enabled = enabled, onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = if (selected) Cyan.copy(alpha = .22f) else Void),
         border = BorderStroke(1.dp, if (highlighted) Warning else if (selected) Cyan else Muted),
         shape = RoundedCornerShape(0.dp),
     ) {
-        Row(Modifier.padding(7.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("> ${card.type.name}", color = Cyan, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                Text(stringResource(R.string.noise, card.type.traceNoise), color = Muted, fontSize = 9.sp)
+        Column(Modifier.padding(4.dp)) {
+            Column {
+                Text(if (card.type == ScriptType.KILL_PROCESS) "KILL" else card.type.name, color = Cyan, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1)
             }
-            Text("${card.type.ramCost}R", color = Terminal, fontWeight = FontWeight.Black)
+            Text("${card.type.ramCost}R · +${card.type.traceNoise}", color = Terminal, fontSize = 10.sp)
         }
     }
 }
 
 @Composable
-private fun DominoView(tile: Domino, selected: Boolean, skin: String = "kenney", highlighted: Boolean = false, onClick: () -> Unit) {
+private fun DominoView(tile: Domino, selected: Boolean, skin: String = "kenney", highlighted: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val label = stringResource(R.string.domino_description, tile.first, tile.second)
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics { contentDescription = label; this.selected = selected }.background(if (selected) Terminal.copy(alpha = .2f) else Void)
-            .border(1.dp, if (highlighted) Warning else if (selected) Terminal else Muted).clickable(onClick = onClick).padding(6.dp),
+        modifier.heightIn(min = 48.dp).semantics { contentDescription = label; this.selected = selected }.background(if (selected) Terminal.copy(alpha = .2f) else Void)
+            .border(1.dp, if (highlighted) Warning else if (selected) Terminal else Muted).clickable(onClick = onClick).padding(3.dp),
         horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-            DominoImage(tile, Modifier.width(96.dp), describe = false, skin = skin)
+            DominoImage(tile, Modifier.width(60.dp), describe = false, skin = skin)
     }
 }
 
@@ -499,42 +617,17 @@ private fun SettingsScreen(state: GameUiState, actions: MainViewModel, onBack: (
 }
 
 @Composable
-private fun SkinScreen(state: GameUiState, actions: MainViewModel, onBack: () -> Unit) {
-    CircuitBackground {
-        Column(Modifier.fillMaxSize().padding(24.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(stringResource(R.string.skins), color = Terminal, fontSize = 30.sp, fontWeight = FontWeight.Black)
-            Text(stringResource(R.string.domino_skin), color = Cyan)
-            listOf(
-                "kenney" to R.string.skin_kenney,
-                "light" to R.string.skin_light,
-                "dark" to R.string.skin_dark,
-                "gingerbread" to R.string.skin_gingerbread,
-                "hearts" to R.string.skin_hearts,
-                "stars" to R.string.skin_stars,
-                "terminal" to R.string.skin_terminal,
-                "neon" to R.string.skin_neon,
-            ).forEach { (id, label) ->
-                TerminalButton(stringResource(label), { actions.setDominoSkin(id) }, primary = state.preferences.dominoSkin == id)
-            }
-            Text(stringResource(R.string.board_skin), color = Cyan, modifier = Modifier.padding(top = 12.dp))
-            listOf("pcb" to R.string.skin_pcb, "blueprint" to R.string.skin_blueprint, "industrial" to R.string.skin_industrial, "rust" to R.string.skin_rust, "ice" to R.string.skin_ice).forEach { (id, label) ->
-                TerminalButton(stringResource(label), { actions.setBoardSkin(id) }, primary = state.preferences.boardSkin == id)
-            }
-            SmallButton(stringResource(R.string.back), onBack)
-        }
-    }
-}
-
-@Composable
 private fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart: () -> Unit, onBack: () -> Unit) {
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(24.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.challenge), color = Terminal, fontSize = 30.sp, fontWeight = FontWeight.Black)
             Text(stringResource(R.string.challenge_description), color = Color.White)
+            Text(stringResource(R.string.challenge_progress, state.preferences.challengeBest.size, ChallengeCatalog.COUNT), color = Cyan)
             (1..ChallengeCatalog.COUNT).forEach { level ->
                 val unlocked = level <= state.preferences.challengeUnlocked
                 val record = state.preferences.challengeBest[level]
                 val rules = ChallengeCatalog.level(level)?.rules
+                Text(stringResource(R.string.expected_reward, com.aela.mainboardoverride.domain.Rewards.VICTORY + if (record == null) com.aela.mainboardoverride.domain.Rewards.FIRST_CHALLENGE else 0), color = Warning)
                 TerminalButton(
                     stringResource(R.string.challenge_level, level) + (record?.let { " · ${it.turns}T / ${it.trace}%" } ?: ""),
                     {
@@ -588,18 +681,6 @@ private fun InfoScreen(onBack: () -> Unit) {
 }
 
 @Composable
-private fun ResultDialog(result: GameResult, turns: Int, trace: Int, onRetry: () -> Unit, onMenu: () -> Unit, tutorialComplete: Boolean = false) {
-    val victory = result == GameResult.VICTORY
-    AlertDialog(
-        onDismissRequest = {},
-        title = { Text(stringResource(if (victory) R.string.victory else R.string.defeat), color = if (victory) Terminal else Danger) },
-        text = { Text("${if (tutorialComplete) stringResource(R.string.lesson_complete) else stringResource(resultText(result))}\n${stringResource(R.string.turn, turns)} · ${stringResource(R.string.trace, trace)}") },
-        confirmButton = { Button(onClick = onRetry) { Text(stringResource(R.string.play_again)) } },
-        dismissButton = { TextButton(onClick = onMenu) { Text(stringResource(R.string.main_menu)) } },
-    )
-}
-
-@Composable
 private fun TerminalButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, primary: Boolean = true, enabled: Boolean = true) {
     Button(
         onClick = onClick,
@@ -646,7 +727,12 @@ private fun PanelHeading(label: String, topic: HelpTopic, onHelp: (HelpTopic) ->
 }
 
 @Composable
-private fun CircuitBackground(content: @Composable () -> Unit) {
+internal fun CircuitBackground(animated: Boolean = false, content: @Composable () -> Unit) {
+    val progress = if (animated) {
+        val transition = rememberInfiniteTransition(label = "menu circuits")
+        val phase by transition.animateFloat(0f, 1f, infiniteRepeatable(tween(6000, easing = LinearEasing)), label = "pulse")
+        phase
+    } else 0f
     Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Void, Panel, Void)))) {
         Canvas(Modifier.fillMaxSize()) {
             val step = 48.dp.toPx()
@@ -659,6 +745,16 @@ private fun CircuitBackground(content: @Composable () -> Unit) {
                 drawLine(tint, Offset(x, bend), Offset(x + step / 2, bend + step / 2), 1.dp.toPx())
                 drawLine(tint, Offset(x + step / 2, bend + step / 2), Offset(x + step / 2, size.height), 1.dp.toPx())
                 drawCircle(tint, 3.dp.toPx(), Offset(x, bend), style = Stroke(1.dp.toPx()))
+                if (animated) {
+                    val distance = ((progress + index * .13f) % 1f) * (size.height + step / 2)
+                    val point = when {
+                        distance < bend -> Offset(x, distance)
+                        distance < bend + step / 2 -> Offset(x + distance - bend, distance)
+                        else -> Offset(x + step / 2, distance)
+                    }
+                    drawCircle(Cyan.copy(alpha = .12f), 8.dp.toPx(), point)
+                    drawCircle(Cyan.copy(alpha = .6f), 2.dp.toPx(), point)
+                }
                 x += step
                 index++
             }
@@ -682,7 +778,7 @@ internal fun rejectionText(reason: RejectReason): Int = when (reason) {
     RejectReason.MUST_PLACE_DOMINO -> R.string.error_must_place_domino
 }
 
-private fun resultText(result: GameResult): Int = when (result) {
+internal fun resultText(result: GameResult): Int = when (result) {
     GameResult.VICTORY -> R.string.result_victory
     GameResult.TRACE_INTERCEPTED -> R.string.result_trace_intercepted
     GameResult.DAEMON_BREACH -> R.string.result_daemon_breach
@@ -753,9 +849,18 @@ internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?, block
                         OutlinedButton(onClick = { onHalf(index) }, modifier = Modifier.semantics { selected = half == index }) { Text(stringResource(label)) }
                     }
                 }
-                FlowRow {
-                    (0..6).forEach { candidate ->
-                        OutlinedButton(onClick = { onValue(candidate) }, modifier = Modifier.semantics { selected = value == candidate }) { Text("$candidate") }
+                Text(stringResource(R.string.spoof_scroll_hint), color = Cyan, fontSize = 11.sp)
+                val valueList = rememberLazyListState(initialFirstVisibleItemIndex = value.coerceIn(0, 6))
+                LazyColumn(
+                    state = valueList,
+                    modifier = Modifier.fillMaxWidth().height(196.dp).border(1.dp, Cyan.copy(alpha = .35f)),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    items((0..6).toList()) { candidate ->
+                        TextButton(
+                            onClick = { onValue(candidate) },
+                            modifier = Modifier.fillMaxWidth().height(28.dp).semantics { selected = value == candidate },
+                        ) { Text("$candidate", color = if (value == candidate) Terminal else Muted, fontSize = if (value == candidate) 22.sp else 14.sp) }
                     }
                 }
                 error?.let { Text(stringResource(it), color = Danger) }
