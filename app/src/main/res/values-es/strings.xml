@@ -38,6 +38,10 @@
     <string name="confirm_match_loss">La partida no se guarda. ¿Estás seguro?</string>
     <string name="confirm_exit">Salir</string>
     <string name="confirm_restart">Reiniciar</string>
+    <string name="exit_app">SALIR DE LA APP</string>
+    <string name="confirm_app_exit_title">¿Salir de la aplicación?</string>
+    <string name="confirm_app_exit_message">La partida actual no se guarda. ¿Seguro que quieres cerrar la aplicación?</string>
+    <string name="confirm_app_exit">Salir de la app</string>
     <string name="review_board">Revisar tablero</string>
     <string name="spoof_scroll_hint">Desliza para elegir el valor nuevo</string>
     <string name="node_trace_cooler">disipador: −8 rastreo</string>

@@ -38,6 +38,10 @@
     <string name="confirm_match_loss">This match is not saved. Are you sure?</string>
     <string name="confirm_exit">Leave</string>
     <string name="confirm_restart">Restart</string>
+    <string name="exit_app">EXIT APP</string>
+    <string name="confirm_app_exit_title">Exit application?</string>
+    <string name="confirm_app_exit_message">Your current match is not saved. Are you sure you want to close the application?</string>
+    <string name="confirm_app_exit">Exit app</string>
     <string name="review_board">Review board</string>
     <string name="spoof_scroll_hint">Scroll to choose the replacement value</string>
     <string name="node_trace_cooler">trace cooler: −8 trace</string>

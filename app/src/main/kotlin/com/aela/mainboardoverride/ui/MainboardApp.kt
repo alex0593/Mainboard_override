@@ -112,7 +112,12 @@ private const val CHALLENGE = "challenge"
 private enum class GameExitAction { EXIT, RESTART }
 
 @Composable
-fun MainboardApp(nav: NavHostController, state: GameUiState, actions: MainViewModel) {
+fun MainboardApp(
+    nav: NavHostController,
+    state: GameUiState,
+    actions: MainViewModel,
+    onExitApp: () -> Unit = {},
+) {
     NavHost(navController = nav, startDestination = MENU) {
         composable(MENU) {
             MenuScreen(
@@ -123,6 +128,7 @@ fun MainboardApp(nav: NavHostController, state: GameUiState, actions: MainViewMo
                 onSettings = { nav.navigate(SETTINGS) },
                 onSkins = { nav.navigate(SKINS) },
                 onHelp = { nav.navigate(HELP) },
+                onExitApp = onExitApp,
             )
         }
         composable(GAME) {
@@ -156,7 +162,10 @@ private fun MenuScreen(
     onSettings: () -> Unit,
     onSkins: () -> Unit,
     onHelp: () -> Unit,
+    onExitApp: () -> Unit,
 ) {
+    var exitRequested by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = !exitRequested) { exitRequested = true }
     CircuitBackground(animated = !state.preferences.reducedMotion) {
         Row(
             Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 16.dp),
@@ -196,6 +205,34 @@ private fun MenuScreen(
                     SmallButton(stringResource(R.string.skins), onSkins, Modifier.weight(1f))
                     SmallButton(stringResource(R.string.help), onHelp, Modifier.weight(1.35f))
                 }
+                SmallButton(stringResource(R.string.exit_app), { exitRequested = true }, Modifier.fillMaxWidth().testTag("exit-app"))
+            }
+        }
+    }
+    if (exitRequested) {
+        Dialog(onDismissRequest = { exitRequested = false }) {
+            Box(Modifier.fillMaxWidth().widthIn(max = 380.dp).padding(8.dp)) {
+                Image(
+                    painter = painterResource(R.drawable.dialog_panel_frame),
+                    contentDescription = null,
+                    modifier = Modifier.matchParentSize(),
+                )
+                Column(
+                    Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 28.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(
+                        stringResource(R.string.confirm_app_exit_title),
+                        color = Warning,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(stringResource(R.string.confirm_app_exit_message), color = Color.White)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = { exitRequested = false }) { Text(stringResource(R.string.cancel)) }
+                        Button(onClick = onExitApp) { Text(stringResource(R.string.confirm_app_exit)) }
+                    }
+                }
             }
         }
     }
@@ -214,41 +251,35 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
     BackHandler(enabled = pendingExitAction == null) { pendingExitAction = GameExitAction.EXIT }
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(8.dp)) {
-            Column(
-                Modifier.fillMaxWidth().testTag("game-header")
+            Row(
+                Modifier.fillMaxWidth().heightIn(min = 64.dp).testTag("game-header")
                     .background(Panel.copy(alpha = .95f), RoundedCornerShape(8.dp))
-                    .border(1.dp, Cyan.copy(alpha = .25f), RoundedCornerShape(8.dp)).padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .border(1.dp, Cyan.copy(alpha = .25f), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    SmallButton(stringResource(R.string.exit_match), { pendingExitAction = GameExitAction.EXIT }, Modifier.weight(1f).testTag("exit-game"))
-                    if (game.result == null || state.reviewingBoard) {
-                        SmallButton(stringResource(R.string.restart_network), { pendingExitAction = GameExitAction.RESTART }, Modifier.weight(1f).testTag("restart-game"))
-                    }
-                    if (game.result != null && state.reviewingBoard) {
-                        TextButton(onClick = actions::showResult) { Text(stringResource(R.string.result_summary)) }
-                        TextButton(onClick = actions::retry) { Text(stringResource(R.string.play_again)) }
-                    }
-                    TextButton(onClick = { helpOpen = true }, modifier = Modifier.size(42.dp).testTag("general-help")) { Text("?", color = Cyan) }
+                SmallButton(stringResource(R.string.exit_match), { pendingExitAction = GameExitAction.EXIT }, Modifier.testTag("exit-game"))
+                SmallButton("↻", { pendingExitAction = GameExitAction.RESTART }, Modifier.size(44.dp).testTag("restart-game"))
+                if (game.result != null && state.reviewingBoard) {
+                    TextButton(onClick = actions::showResult) { Text(stringResource(R.string.result_summary)) }
+                    TextButton(onClick = actions::retry) { Text(stringResource(R.string.play_again)) }
                 }
-                FlowRow(Modifier.fillMaxWidth(), maxItemsInEachRow = 5, horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    StatusBox(stringResource(R.string.status_turn), game.turn.toString(), Cyan)
-                    StatusBox(stringResource(R.string.status_ram), "${game.ram}/$MAX_RAM", Terminal)
-                    StatusBox(stringResource(R.string.status_trace), "${game.trace}%", if (game.trace >= 80) Danger else Warning)
-                    StatusBox(stringResource(R.string.status_noise), game.pendingNoise.toString(), Warning)
-                    StatusBox(stringResource(R.string.status_seed), game.seed.toString(), Cyan, wide = true)
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(stringResource(R.string.turn, game.turn), color = Cyan, fontSize = 11.sp)
+                    Text(stringResource(R.string.ram, game.ram, MAX_RAM), color = Terminal, fontSize = 11.sp)
+                    Text(stringResource(R.string.trace, game.trace), color = if (game.trace >= 80) Danger else Warning, fontSize = 11.sp)
                 }
-                Column(Modifier.fillMaxWidth().testTag("script-hand"), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Text(stringResource(R.string.scripts), color = Cyan, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
-                    game.scriptHand.chunked(2).forEach { pair ->
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                            pair.forEach { card ->
-                                ScriptCardView(card, state.selectedScriptId == card.id, game.ram >= card.type.ramCost && game.result == null, compact = false, modifier = Modifier.weight(1f)) { actions.selectScript(card.id) }
-                            }
-                            if (pair.size == 1) Spacer(Modifier.weight(1f))
-                        }
+                FlowRow(
+                    Modifier.weight(1f).testTag("script-hand"),
+                    maxItemsInEachRow = 4,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    game.scriptHand.forEach { card ->
+                        ScriptCardView(card, state.selectedScriptId == card.id, game.ram >= card.type.ramCost && game.result == null, compact = true) { actions.selectScript(card.id) }
                     }
                 }
+                TextButton(onClick = { helpOpen = true }, modifier = Modifier.size(42.dp).testTag("general-help")) { Text("?", color = Cyan) }
             }
             Spacer(Modifier.height(8.dp))
             BoxWithConstraints(Modifier.weight(1f)) {

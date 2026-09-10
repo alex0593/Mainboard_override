@@ -28,7 +28,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
             MainboardTheme {
-                MainboardApp(rememberNavController(), state, viewModel)
+                MainboardApp(
+                    nav = rememberNavController(),
+                    state = state,
+                    actions = viewModel,
+                    onExitApp = { finishAndRemoveTask() },
+                )
             }
         }
     }
