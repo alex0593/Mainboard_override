@@ -9,7 +9,17 @@ object LevelGenerator {
 
     fun generate(seed: Long): GameState = generateVerified(seed).state
     fun generateScenario(seed: Long, scenarioId: String): GameState = generateVerified(seed, scenarioId = scenarioId).state
-    fun generateChallenge(level: Int, seed: Long = ChallengeCatalog.level(level)?.seed ?: error("Unknown challenge level $level")): GameState = generateVerified(seed, level).state
+    fun generateChallenge(level: Int, seed: Long = ChallengeCatalog.level(level)?.seed ?: error("Unknown challenge level $level")): GameState {
+        val fallback = ChallengeCatalog.level(level)?.seed ?: error("Unknown challenge level $level")
+        var candidate = seed
+        // A challenge keeps its rules and level, while a fresh seed may need a few
+        // deterministic retries to find a verified witness in the generated geometry.
+        repeat(64) {
+            runCatching { generateVerified(candidate, level) }.getOrNull()?.let { return it.state }
+            candidate += 7919L
+        }
+        return generateVerified(fallback, level).state
+    }
 
     internal fun generateVerified(seed: Long, challengeLevel: Int? = null, scenarioId: String = "classic"): GeneratedLevel {
         val scenario = ScenarioCatalog.get(scenarioId).takeIf { it.id != "classic" }

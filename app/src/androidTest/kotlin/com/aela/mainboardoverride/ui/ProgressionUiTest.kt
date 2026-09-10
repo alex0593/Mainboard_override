@@ -141,9 +141,25 @@ class ProgressionUiTest {
         compose.runOnIdle { vm.startChallenge(1) }
         compose.waitUntil(5000) { vm.uiState.value.game != null }
         val firstSeed = vm.uiState.value.game!!.seed
-        compose.onNodeWithTag("restart-challenge").performClick()
+        compose.onNodeWithTag("restart-game").performClick()
         compose.waitForIdle()
         assertEquals(1, vm.uiState.value.challengeLevel)
+        assertNotEquals(firstSeed, vm.uiState.value.game!!.seed)
+    }
+
+    @Test fun restartingFreeNetworkKeepsModeAndGeneratesNewSeed() {
+        val vm = MainViewModel(app, repository)
+        compose.setContent {
+            val state by vm.uiState.collectAsState()
+            MainboardTheme { GameScreen(state, vm) {} }
+        }
+        compose.runOnIdle { vm.startScenario("classic", 42L) }
+        compose.waitUntil(5000) { vm.uiState.value.game != null }
+        val firstSeed = vm.uiState.value.game!!.seed
+        compose.onNodeWithTag("restart-game").performClick()
+        compose.waitForIdle()
+        assertEquals("classic", vm.uiState.value.scenarioId)
+        assertNull(vm.uiState.value.challengeLevel)
         assertNotEquals(firstSeed, vm.uiState.value.game!!.seed)
     }
 

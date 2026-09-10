@@ -31,6 +31,7 @@
     <string name="scenario_unlocked">Escenario desbloqueado: %1$s</string>
     <string name="next_challenge">Siguiente desafío</string>
     <string name="restart_level">Reiniciar nivel</string>
+    <string name="restart_network">Reiniciar red</string>
     <string name="review_board">Revisar tablero</string>
     <string name="spoof_scroll_hint">Desliza para elegir el valor nuevo</string>
     <string name="node_trace_cooler">disipador: −8 rastreo</string>

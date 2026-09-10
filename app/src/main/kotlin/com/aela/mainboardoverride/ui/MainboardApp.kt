@@ -205,6 +205,7 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("NO SESSION") }
         return
     }
+    val restartDescription = stringResource(R.string.restart_network)
     var helpOpen by rememberSaveable { mutableStateOf(false) }
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(8.dp)) {
@@ -216,9 +217,14 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 TextButton(onClick = onMenu, modifier = Modifier.width(48.dp).semantics { contentDescription = "Menu" }) { Text("‹", fontSize = 24.sp) }
-                if (state.challengeLevel != null && game.result == null) {
-                    TextButton(onClick = actions::restartChallenge, modifier = Modifier.testTag("restart-challenge")) {
-                        Text(stringResource(R.string.restart_level), fontSize = 11.sp)
+                if (!state.tutorial && game.result == null) {
+                    TextButton(
+                        onClick = actions::restartNetwork,
+                        modifier = Modifier.size(48.dp).testTag("restart-game")
+                            .semantics { contentDescription = restartDescription },
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+                    ) {
+                        Text("↻", color = Cyan, fontSize = 25.sp, fontFamily = FontFamily.Monospace)
                     }
                 }
                 if (game.result != null && state.reviewingBoard) {

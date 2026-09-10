@@ -108,6 +108,22 @@ class MainViewModel(application: Application, private val repository: PlayerPref
         startChallenge(level, seed)
     }
 
+    /** Restarts the active network with a fresh seed while preserving its mode. */
+    fun restartNetwork() {
+        if (session.value.tutorial) {
+            restartLesson()
+            return
+        }
+        session.value.challengeLevel?.let {
+            restartChallenge()
+            return
+        }
+        val current = session.value.game ?: return
+        var seed = Random.nextLong()
+        while (seed == current.seed) seed = Random.nextLong()
+        startScenario(session.value.scenarioId, seed)
+    }
+
     fun selectDomino(id: String) {
         if (!allowControl(TutorialStep.SELECT, TutorialStep.ROTATE, TutorialStep.PLACE, TutorialStep.SPOOF)) return
         if (session.value.game?.dominoHand?.none { it.id == id } != false) return

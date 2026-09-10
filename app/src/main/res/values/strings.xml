@@ -31,6 +31,7 @@
     <string name="scenario_unlocked">Scenario unlocked: %1$s</string>
     <string name="next_challenge">Next challenge</string>
     <string name="restart_level">Restart level</string>
+    <string name="restart_network">Restart network</string>
     <string name="review_board">Review board</string>
     <string name="spoof_scroll_hint">Scroll to choose the replacement value</string>
     <string name="node_trace_cooler">trace cooler: −8 trace</string>
