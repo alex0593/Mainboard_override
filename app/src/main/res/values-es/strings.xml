@@ -73,6 +73,11 @@
     <string name="vertical">Vertical</string>
     <string name="ping_preview">PING: próximas fichas</string>
     <string name="noise">Ruido +%1$d</string>
+    <string name="status_turn">TURNO</string>
+    <string name="status_ram">RAM</string>
+    <string name="status_trace">RASTREO</string>
+    <string name="status_noise">RUIDO</string>
+    <string name="status_seed">SEMILLA</string>
     <string name="pending_noise">Próximo rastreo: 8 + ruido (%1$d)</string>
     <string name="lesson_progress">Tutorial · %1$d / %2$d</string>
     <string name="follow_step">Sigue el objetivo resaltado o reinicia esta lección.</string>
@@ -159,11 +164,15 @@
     <string name="skin_gingerbread">Gingerbread</string>
     <string name="skin_hearts">Hearts</string>
     <string name="skin_stars">Stars</string>
+    <string name="skin_circuit">Circuito personalizado</string>
     <string name="skin_pcb">PCB oscura</string>
     <string name="skin_blueprint">Plano azul</string>
     <string name="skin_industrial">Industrial ámbar</string>
     <string name="skin_rust">Óxido rojo</string>
     <string name="skin_ice">Hielo criogénico</string>
+    <string name="skin_graphite">Relé grafito</string>
+    <string name="skin_signal">Ámbar señal</string>
+    <string name="skin_price">Precio: %1$d créditos</string>
     <string name="context_help">Botones de ayuda contextual</string>
     <string name="challenge">DESAFÍO</string>
     <string name="challenge_description">Treinta desafíos. Gana para desbloquear el siguiente y conseguir créditos para skins PCB.</string>

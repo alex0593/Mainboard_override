@@ -26,11 +26,13 @@ internal data class SkinOption(val id: String, val label: Int)
 internal val dominoSkins = listOf(
     SkinOption("kenney", R.string.skin_kenney), SkinOption("dark", R.string.skin_dark),
     SkinOption("gingerbread", R.string.skin_gingerbread), SkinOption("hearts", R.string.skin_hearts), SkinOption("stars", R.string.skin_stars),
+    SkinOption("circuit", R.string.skin_circuit),
 )
 internal val boardSkins = listOf(
     SkinOption("pcb", R.string.skin_pcb), SkinOption("blueprint", R.string.skin_blueprint),
     SkinOption("industrial", R.string.skin_industrial), SkinOption("rust", R.string.skin_rust),
-    SkinOption("ice", R.string.skin_ice), SkinOption("copper", R.string.skin_copper), SkinOption("aurora", R.string.skin_aurora),
+    SkinOption("ice", R.string.skin_ice), SkinOption("graphite", R.string.skin_graphite), SkinOption("signal", R.string.skin_signal),
+    SkinOption("copper", R.string.skin_copper), SkinOption("aurora", R.string.skin_aurora),
 )
 
 internal fun scenarioLabel(id: String) = when (id) {
@@ -71,6 +73,7 @@ internal fun ProgressionHeader(
 internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () -> Unit) {
     var pcb by rememberSaveable { mutableStateOf(false) }
     var purchase by rememberSaveable { mutableStateOf<String?>(null) }
+    var locallyPurchased by remember { mutableStateOf(emptySet<String>()) }
     val prefs = state.preferences
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -83,7 +86,9 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
             }
             LazyVerticalGrid(columns = GridCells.Adaptive(210.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(if (pcb) boardSkins else dominoSkins, key = { it.id }) { skin ->
-                    val owned = !pcb || skin.id !in Rewards.premiumSkins || skin.id in prefs.ownedSkins
+                    val paid = pcb && skin.id in Rewards.purchasableSkins
+                    val price = Rewards.skinPrice(skin.id)
+                    val owned = !paid || skin.id in prefs.ownedSkins || skin.id in locallyPurchased
                     val equipped = skin.id == if (pcb) prefs.boardSkin else prefs.dominoSkin
                     Card {
                         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -94,15 +99,16 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                             }
                             Text(stringResource(skin.label), color = Cyan)
                             Button(
-                                enabled = !equipped && (owned || prefs.credits >= Rewards.SKIN_PRICE),
+                                enabled = !equipped && (owned || prefs.credits >= price),
                                 onClick = {
                                     if (!owned) purchase = skin.id
                                     else if (pcb) actions.setBoardSkin(skin.id) else actions.setDominoSkin(skin.id)
                                 }, modifier = Modifier.fillMaxWidth().testTag("skin-action-${skin.id}"),
                             ) {
-                                Text(if (equipped) stringResource(R.string.equipped) else if (owned) stringResource(R.string.equip) else stringResource(R.string.buy_credits, Rewards.SKIN_PRICE))
+                                Text(if (equipped) stringResource(R.string.equipped) else if (owned) stringResource(R.string.equip) else stringResource(R.string.buy_credits, price))
                             }
-                            if (!owned && prefs.credits < Rewards.SKIN_PRICE) Text(stringResource(R.string.missing_credits, Rewards.SKIN_PRICE - prefs.credits), color = Muted)
+                            if (paid) Text(stringResource(R.string.skin_price, price), color = Warning, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 10.sp)
+                            if (!owned && prefs.credits < price) Text(stringResource(R.string.missing_credits, price - prefs.credits), color = Muted)
                         }
                     }
                 }
@@ -112,8 +118,8 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
     purchase?.let { id ->
         AlertDialog(onDismissRequest = { purchase = null },
             title = { Text(stringResource(boardSkins.first { it.id == id }.label)) },
-            text = { Text(stringResource(R.string.confirm_skin_purchase, Rewards.SKIN_PRICE, prefs.credits - Rewards.SKIN_PRICE)) },
-            confirmButton = { Button(modifier = Modifier.testTag("confirm-purchase"), enabled = prefs.credits >= Rewards.SKIN_PRICE && id !in prefs.ownedSkins, onClick = { actions.buySkin(id); purchase = null }) { Text(stringResource(R.string.buy_credits, Rewards.SKIN_PRICE)) } },
+            text = { Text(stringResource(R.string.confirm_skin_purchase, Rewards.skinPrice(id), prefs.credits - Rewards.skinPrice(id))) },
+            confirmButton = { Button(modifier = Modifier.testTag("confirm-purchase"), enabled = prefs.credits >= Rewards.skinPrice(id) && id !in prefs.ownedSkins, onClick = { locallyPurchased = locallyPurchased + id; actions.buySkin(id); purchase = null }) { Text(stringResource(R.string.buy_credits, Rewards.skinPrice(id))) } },
             dismissButton = { TextButton(onClick = { purchase = null }) { Text(stringResource(R.string.cancel)) } },
         )
     }

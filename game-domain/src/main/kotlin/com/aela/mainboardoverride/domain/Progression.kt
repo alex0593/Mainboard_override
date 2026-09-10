@@ -19,5 +19,9 @@ object Rewards {
     const val VICTORY = 20
     const val FIRST_CHALLENGE = 40
     const val SKIN_PRICE = 200
+    const val ENTRY_SKIN_PRICE = 80
     val premiumSkins = setOf("copper", "aurora")
+    val affordableSkins = setOf("graphite", "signal")
+    val purchasableSkins = premiumSkins + affordableSkins
+    fun skinPrice(id: String) = if (id in affordableSkins) ENTRY_SKIN_PRICE else SKIN_PRICE
 }

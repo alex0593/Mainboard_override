@@ -110,17 +110,18 @@ class DataStorePlayerPreferencesRepository(
 
     override suspend fun setDominoSkin(value: String) { store.edit { it[DOMINO_SKIN] = value } }
     override suspend fun setBoardSkin(value: String) { store.edit {
-        if (value !in Rewards.premiumSkins || value in (it[OWNED_SKINS] ?: emptySet())) it[BOARD_SKIN] = value
+        if (value !in Rewards.purchasableSkins || value in (it[OWNED_SKINS] ?: emptySet())) it[BOARD_SKIN] = value
     } }
     override suspend fun setLastScenario(id: String) { store.edit { it[LAST_SCENARIO] = id } }
     override suspend fun buySkin(id: String): Boolean {
-        if (id !in Rewards.premiumSkins) return false
+        if (id !in Rewards.purchasableSkins) return false
         var purchased = false
         store.edit { values ->
             val owned = values[OWNED_SKINS] ?: emptySet()
             val balance = values[CREDITS] ?: 0
-            if (id !in owned && balance >= Rewards.SKIN_PRICE) {
-                values[CREDITS] = balance - Rewards.SKIN_PRICE
+            val price = Rewards.skinPrice(id)
+            if (id !in owned && balance >= price) {
+                values[CREDITS] = balance - price
                 values[OWNED_SKINS] = owned + id
                 purchased = true
             }

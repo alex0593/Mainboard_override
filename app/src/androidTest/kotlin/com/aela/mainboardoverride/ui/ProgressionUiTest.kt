@@ -92,6 +92,9 @@ class ProgressionUiTest {
         compose.onNodeWithText(app.getString(R.string.confirm_skin_purchase, 200, 40)).assertIsDisplayed()
         compose.onNodeWithTag("confirm-purchase").performClick()
         compose.waitUntil(5000) { runBlocking { "copper" in repository.preferences.first().ownedSkins } }
+        // Wait for the collected UI state to reflect the repository update before equipping.
+        compose.waitUntil(5000) { "copper" in vm.uiState.value.preferences.ownedSkins }
+        compose.waitForIdle()
         compose.onNodeWithTag("skin-action-copper").performClick()
         compose.waitUntil(5000) { runBlocking { repository.preferences.first().boardSkin == "copper" } }
         assertEquals(40, runBlocking { repository.preferences.first().credits })

@@ -72,6 +72,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.Image
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
@@ -209,56 +211,61 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
     var helpOpen by rememberSaveable { mutableStateOf(false) }
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(8.dp)) {
-            Row(
-                Modifier.fillMaxWidth().heightIn(min = 64.dp).testTag("game-header")
+            Column(
+                Modifier.fillMaxWidth().heightIn(min = 108.dp).testTag("game-header")
                     .background(Panel.copy(alpha = .95f), RoundedCornerShape(8.dp))
                     .border(1.dp, Cyan.copy(alpha = .25f), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                TextButton(onClick = onMenu, modifier = Modifier.width(48.dp).semantics { contentDescription = "Menu" }) { Text("‹", fontSize = 24.sp) }
-                if (!state.tutorial && game.result == null) {
-                    TextButton(
-                        onClick = actions::restartNetwork,
-                        modifier = Modifier.size(48.dp).testTag("restart-game")
-                            .semantics { contentDescription = restartDescription },
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+                Row(
+                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(onClick = onMenu, modifier = Modifier.width(42.dp).semantics { contentDescription = "Menu" }) { Text("‹", fontSize = 24.sp) }
+                    if (game.result != null && state.reviewingBoard) {
+                        TextButton(onClick = actions::showResult) { Text(stringResource(R.string.result_summary)) }
+                        TextButton(onClick = actions::retry) { Text(stringResource(R.string.play_again)) }
+                    }
+                    if (!state.tutorial && game.result == null) {
+                        TextButton(
+                            onClick = actions::restartNetwork,
+                            modifier = Modifier.size(42.dp).testTag("restart-game")
+                                .semantics { contentDescription = restartDescription },
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+                        ) { Text("↻", color = Cyan, fontSize = 25.sp, fontFamily = FontFamily.Monospace) }
+                    }
+                    StatusBox(stringResource(R.string.status_turn), game.turn.toString(), Cyan)
+                    StatusBox(stringResource(R.string.status_ram), "${game.ram}/$MAX_RAM", Terminal)
+                    StatusBox(stringResource(R.string.status_trace), "${game.trace}%", if (game.trace >= 80) Danger else Warning)
+                    StatusBox(stringResource(R.string.status_noise), game.pendingNoise.toString(), Warning)
+                    StatusBox(stringResource(R.string.status_seed), game.seed.toString(), Cyan, wide = true)
+                    TextButton(onClick = { helpOpen = true }, modifier = Modifier.size(42.dp).testTag("general-help")) { Text("?", color = Cyan) }
+                }
+                HorizontalDivider(color = Cyan.copy(alpha = .22f))
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.scripts), color = Cyan, fontSize = 10.sp, fontFamily = FontFamily.Monospace, modifier = Modifier.width(58.dp))
+                    Row(
+                        Modifier.weight(1f).horizontalScroll(rememberScrollState()).testTag("script-hand"),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("↻", color = Cyan, fontSize = 25.sp, fontFamily = FontFamily.Monospace)
+                        game.scriptHand.forEach { card ->
+                            ScriptCardView(
+                                card,
+                                state.selectedScriptId == card.id,
+                                game.ram >= card.type.ramCost && game.result == null,
+                                highlighted = state.tutorialStep?.let { step -> when (card.type) {
+                                    ScriptType.PING -> step == TutorialStep.PING
+                                    ScriptType.SPOOF -> step == TutorialStep.SPOOF
+                                    ScriptType.KILL_PROCESS -> step == TutorialStep.KILL
+                                    ScriptType.BRIDGE -> step == TutorialStep.BRIDGE
+                                } } == true,
+                                compact = true,
+                            ) { actions.selectScript(card.id) }
+                        }
                     }
                 }
-                if (game.result != null && state.reviewingBoard) {
-                    TextButton(onClick = actions::showResult) { Text(stringResource(R.string.result_summary)) }
-                    TextButton(onClick = actions::retry) { Text(stringResource(R.string.play_again)) }
-                }
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(stringResource(R.string.turn, game.turn), color = Cyan, fontSize = 11.sp)
-                    Text(stringResource(R.string.ram, game.ram, MAX_RAM), color = Terminal, fontSize = 11.sp)
-                    Text(stringResource(R.string.trace, game.trace), color = if (game.trace >= 80) Danger else Warning, fontSize = 11.sp)
-                }
-            Row(
-                Modifier.weight(1f).horizontalScroll(rememberScrollState()).testTag("script-hand"),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                game.scriptHand.forEach { card ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        ScriptCardView(
-                            card,
-                            state.selectedScriptId == card.id,
-                            game.ram >= card.type.ramCost && game.result == null,
-                            highlighted = state.tutorialStep?.let { step -> when (card.type) {
-                                ScriptType.PING -> step == TutorialStep.PING
-                                ScriptType.SPOOF -> step == TutorialStep.SPOOF
-                                ScriptType.KILL_PROCESS -> step == TutorialStep.KILL
-                                ScriptType.BRIDGE -> step == TutorialStep.BRIDGE
-                            } } == true,
-                            compact = true,
-                        ) { actions.selectScript(card.id) }
-                    }
-                }
-            }
-                TextButton(onClick = { helpOpen = true }, modifier = Modifier.size(48.dp).testTag("general-help")) { Text("?", color = Cyan) }
             }
             Spacer(Modifier.height(8.dp))
             BoxWithConstraints(Modifier.weight(1f)) {
@@ -288,9 +295,6 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                     ) {
                         Column(Modifier.fillMaxSize().padding(bottom = 88.dp).verticalScroll(rememberScrollState()).testTag("hardware-panel"), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             state.tutorialStep?.let { step -> TutorialPanel(step, state.tutorialBlocked, actions::continueTutorial, actions::restartLesson) }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(stringResource(R.string.pending_noise, game.pendingNoise), Modifier.weight(1f), color = Warning, fontSize = 12.sp)
-                            }
                             state.message?.let { Text(stringResource(rejectionText(it)), color = Danger, fontSize = 11.sp) }
                             state.lastBuff?.let { buff ->
                                 Text(stringResource(if (buff == BoardBuff.TRACE_COOLER) R.string.buff_trace_collected else R.string.buff_ram_collected), color = Cyan, fontSize = 11.sp)
@@ -403,6 +407,8 @@ internal fun Board(
             "industrial" -> listOf(Color(0xFF3A2914), Color(0xFF17120B), Color(0xFF60421A))
             "rust" -> listOf(Color(0xFF572616), Color(0xFF1C0E0A), Color(0xFF873D1E))
             "ice" -> listOf(Color(0xFF123B56), Color(0xFF071721), Color(0xFF2B7895))
+            "graphite" -> listOf(Color(0xFF34404A), Color(0xFF111820), Color(0xFF53636B))
+            "signal" -> listOf(Color(0xFF4A2C18), Color(0xFF1A1110), Color(0xFF177A78))
             else -> listOf(Panel, Void, Panel)
         }), RoundedCornerShape(10.dp))
             .border(1.dp, Cyan.copy(alpha = .4f), RoundedCornerShape(10.dp)).padding(4.dp),
@@ -441,6 +447,8 @@ internal fun Board(
                 "industrial" -> Color(0xFF241A0D)
                 "rust" -> Color(0xFF24110C)
                 "ice" -> Color(0xFF0A2635)
+                "graphite" -> Color(0xFF151E26)
+                "signal" -> Color(0xFF221813)
                 else -> Void
             }).border(1.dp, Muted.copy(alpha = .4f))) {
             Canvas(Modifier.fillMaxSize()) {
@@ -612,13 +620,28 @@ private fun ScriptCardView(card: ScriptCard, selected: Boolean, enabled: Boolean
         border = BorderStroke(1.dp, if (highlighted) Warning else if (selected) Cyan else Muted),
         shape = RoundedCornerShape(0.dp),
     ) {
-        Column(Modifier.padding(4.dp)) {
+        Row(Modifier.padding(4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+            scriptArtwork(card.type)?.let { artwork ->
+                Image(
+                    painter = painterResource(artwork),
+                    contentDescription = null,
+                    modifier = Modifier.size(if (compact) 26.dp else 34.dp),
+                )
+            }
             Column {
                 Text(if (card.type == ScriptType.KILL_PROCESS) "KILL" else card.type.name, color = Cyan, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text("${card.type.ramCost}R · +${card.type.traceNoise}", color = Terminal, fontSize = 10.sp)
             }
-            Text("${card.type.ramCost}R · +${card.type.traceNoise}", color = Terminal, fontSize = 10.sp)
         }
     }
+}
+
+private fun scriptArtwork(type: ScriptType): Int? = when (type) {
+    ScriptType.PING -> R.drawable.script_card_ping
+    ScriptType.SPOOF -> R.drawable.script_card_spoof
+    ScriptType.KILL_PROCESS -> R.drawable.script_card_kill
+    ScriptType.BRIDGE -> R.drawable.script_card_bridge
+    else -> null
 }
 
 @Composable
@@ -741,6 +764,20 @@ private fun InfoScreen(onBack: () -> Unit) {
             Spacer(Modifier.height(22.dp))
             SmallButton(stringResource(R.string.back), onBack)
         }
+    }
+}
+
+@Composable
+private fun StatusBox(label: String, value: String, color: Color, wide: Boolean = false) {
+    Column(
+        Modifier.width(if (wide) 88.dp else 64.dp).height(42.dp)
+            .background(Void.copy(alpha = .65f), RoundedCornerShape(4.dp))
+            .border(1.dp, color.copy(alpha = .38f), RoundedCornerShape(4.dp))
+            .padding(horizontal = 5.dp, vertical = 3.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(label, color = Muted, fontSize = 8.sp, fontFamily = FontFamily.Monospace, maxLines = 1)
+        Text(value, color = color, fontSize = if (wide) 9.sp else 13.sp, fontFamily = FontFamily.Monospace, maxLines = 1)
     }
 }
 
