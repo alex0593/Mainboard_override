@@ -11,3 +11,7 @@ captures/
 .kotlin/
 .agents/
 .codex/
+
+# Artwork drafts kept at the repository root while they are being edited.
+/*.jpg
+/*.jpeg
