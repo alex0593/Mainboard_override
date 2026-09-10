@@ -20,7 +20,6 @@ data class PlayerPreferences(
     val audioEnabled: Boolean = true,
     val vibrationEnabled: Boolean = true,
     val reducedMotion: Boolean = false,
-    val tutorialComplete: Boolean = false,
     val lastSeed: Long? = null,
     val bestTurns: Int? = null,
     val bestTrace: Int? = null,
@@ -44,7 +43,6 @@ interface PlayerPreferencesRepository {
     suspend fun setAudio(value: Boolean)
     suspend fun setVibration(value: Boolean)
     suspend fun setReducedMotion(value: Boolean)
-    suspend fun markTutorialComplete()
     suspend fun setLastSeed(seed: Long)
     suspend fun recordVictory(turns: Int, trace: Int)
     suspend fun setDominoSkin(value: String)
@@ -71,7 +69,6 @@ class DataStorePlayerPreferencesRepository(
             audioEnabled = values[AUDIO] ?: true,
             vibrationEnabled = values[VIBRATION] ?: true,
             reducedMotion = values[REDUCED_MOTION] ?: false,
-            tutorialComplete = values[TUTORIAL] ?: false,
             lastSeed = values[LAST_SEED],
             bestTurns = values[BEST_TURNS],
             bestTrace = values[BEST_TRACE],
@@ -95,7 +92,6 @@ class DataStorePlayerPreferencesRepository(
     override suspend fun setAudio(value: Boolean) { store.edit { it[AUDIO] = value } }
     override suspend fun setVibration(value: Boolean) { store.edit { it[VIBRATION] = value } }
     override suspend fun setReducedMotion(value: Boolean) { store.edit { it[REDUCED_MOTION] = value } }
-    override suspend fun markTutorialComplete() { store.edit { it[TUTORIAL] = true } }
     override suspend fun setLastSeed(seed: Long) { store.edit { it[LAST_SEED] = seed } }
     override suspend fun recordVictory(turns: Int, trace: Int) {
         store.edit { values ->
@@ -182,7 +178,6 @@ class DataStorePlayerPreferencesRepository(
         val AUDIO = booleanPreferencesKey("audio")
         val VIBRATION = booleanPreferencesKey("vibration")
         val REDUCED_MOTION = booleanPreferencesKey("reduced_motion")
-        val TUTORIAL = booleanPreferencesKey("tutorial_complete")
         val LAST_SEED = longPreferencesKey("last_seed")
         val BEST_TURNS = intPreferencesKey("best_turns")
         val BEST_TRACE = intPreferencesKey("best_trace")

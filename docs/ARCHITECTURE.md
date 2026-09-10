@@ -23,7 +23,7 @@ La progresión local, el saldo y las compras viven en `PlayerPreferencesReposito
 
 La partida presenta los scripts en una banda horizontal superior junto a los indicadores de RAM y rastreo. El panel lateral conserva fichas, previsualización y controles; el botón de ejecutar turno se mantiene al final del panel y se resalta con `endTurnHint` cuando se intenta colocar una segunda ficha. SPOOF usa una lista vertical desplazable de valores 0–6 y conserva la selección de mitad y la previsualización.
 
-Los escenarios de modo libre pueden generar `BoardBuff.TRACE_COOLER` y `BoardBuff.RAM_RESERVE`. Cubrir una casilla consume el buff y emite `GameEvent.BuffCollected`; el primero reduce el rastreo ocho puntos y el segundo recupera una RAM, ambos con límites. Desafíos y tutorial no generan buffs.
+Los escenarios de modo libre pueden generar `BoardBuff.TRACE_COOLER` y `BoardBuff.RAM_RESERVE`. Cubrir una casilla consume el buff y emite `GameEvent.BuffCollected`; el primero reduce el rastreo ocho puntos y el segundo recupera una RAM, ambos con límites. Los desafíos no generan buffs.
 
 ## Contratos y mantenimiento
 
@@ -38,10 +38,8 @@ El proyecto fija AGP, Kotlin, Compose BOM y Gradle para que una semilla y una re
 
 `DominoImage` usa los 28 PNG claros de Kenney en `drawable-nodpi`: normaliza el par para elegir imagen y transforma el dibujo para conservar el primer puerto a la izquierda o arriba. Las imágenes colocadas se dibujan bajo las celdas táctiles y sus insignias; las descripciones de celda siguen usando los valores del motor. La licencia viaja en los assets del APK.
 
-El tutorial ya no tiene entrada en el menú. Sus escenarios y componentes permanecen para las pruebas internas. `TutorialStep` y `Tutorial` viven en `game-domain`: definen escenarios deterministas, objetivos permitidos, transiciones tras acciones aceptadas y puntos de reinicio. `GameState` y `GameAction` conservan sus contratos. La colocación y ejecución de scripts siguen pasando por `GameEngine.reduce`; la guía no aplica efectos directamente al tablero.
+Las partidas usan directamente el generador de escenarios y el reductor del dominio. `GameState` y `GameAction` conservan sus contratos para partidas libres y desafíos.
 
-`GameUiState` incorpora paso, aviso de acción ajena a la guía, puerto/valor de SPOOF y orientación de BRIDGE. El ViewModel valida selecciones y rotación, filtra acciones según el paso y llama a `Tutorial.after` con la transición del motor. Las explicaciones avanzan mediante `continueTutorial`; cada ejercicio nuevo carga su escenario, mientras que los resultados conservan el tablero para inspección. La práctica final utiliza el generador habitual sin filtrar sus acciones.
+`MainViewModel` conserva el constructor Android con `Application` y añade uno con `PlayerPreferencesRepository` inyectable para pruebas. Captura el tipo de sesión antes de iniciar la escritura asíncrona de resultados y solo persiste una transición inicial a victoria.
 
-`MainViewModel` conserva el constructor Android con `Application` y añade uno con `PlayerPreferencesRepository` inyectable para pruebas. Captura el tipo de sesión antes de iniciar la escritura asíncrona de resultados y solo persiste una transición inicial a victoria. Las sesiones tutoriales no escriben récords ni última semilla normal; la finalización se guarda únicamente tras la práctica final.
-
-Compose presenta `TutorialPanel`, `SpoofDialog`, `BridgeControl` y `PingPreview`. Las asignaciones exhaustivas de enums a recursos obligan a considerar los textos al añadir pasos, errores o resultados. Las descripciones accesibles se construyen desde información visible del tablero. Ver [TUTORIAL.md](TUTORIAL.md) para recorrido, restricciones y mantenimiento.
+Compose presenta `SpoofDialog`, `BridgeControl` y `PingPreview`. Las asignaciones exhaustivas de enums a recursos obligan a considerar los textos al añadir errores o resultados. Las descripciones accesibles se construyen desde información visible del tablero.

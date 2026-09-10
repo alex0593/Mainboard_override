@@ -170,14 +170,12 @@ internal fun MatchResultDialog(state: GameUiState, actions: MainViewModel, onMen
         title = { Text(stringResource(if (victory) R.string.victory else R.string.defeat), color = if (victory) Terminal else Danger) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(if (state.tutorialStep == TutorialStep.COMPLETE) R.string.lesson_complete else resultText(result)))
+                Text(stringResource(resultText(result)))
                 Text("${stringResource(R.string.turn, game.turn)} · ${stringResource(R.string.trace, game.trace)}")
-                if (!state.tutorial) {
-                    if (victory && state.reward == null) Text(stringResource(R.string.saving_reward))
-                    else Text(stringResource(R.string.reward_breakdown, state.reward?.base ?: 0, state.reward?.bonus ?: 0))
-                    Text(stringResource(R.string.credit_balance, state.preferences.credits), color = Warning)
-                    state.reward?.unlockedScenario?.let { Text(stringResource(R.string.scenario_unlocked, stringResource(scenarioLabel(it))), color = Cyan) }
-                }
+                if (victory && state.reward == null) Text(stringResource(R.string.saving_reward))
+                else Text(stringResource(R.string.reward_breakdown, state.reward?.base ?: 0, state.reward?.bonus ?: 0))
+                Text(stringResource(R.string.credit_balance, state.preferences.credits), color = Warning)
+                state.reward?.unlockedScenario?.let { Text(stringResource(R.string.scenario_unlocked, stringResource(scenarioLabel(it))), color = Cyan) }
                 TextButton(onClick = actions::retry) { Text(stringResource(R.string.play_again)) }
                 if (next != null) TextButton(onClick = { actions.startChallenge(next) }) { Text(stringResource(R.string.next_challenge)) }
             }

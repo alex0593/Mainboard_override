@@ -77,7 +77,7 @@ class GameEngineTest {
     }
 
     @Test fun `automatic resolution ends a blocked action phase`() {
-        val blocked = Tutorial.fixture(TutorialStep.FINAL).copy(
+        val blocked = routeFixture().copy(
             dominoHand = listOf(Domino("blocked", 1, 1)),
             dominoBag = listOf(Domino("future", 1, 1)),
             scriptHand = emptyList(),
@@ -91,7 +91,7 @@ class GameEngineTest {
     }
 
     @Test fun `loss takes priority over extraction when trace reaches maximum`() {
-        var state = Tutorial.fixture(TutorialStep.FINAL)
+        var state = routeFixture()
         val placements = listOf(
             Position(1, 3) to Orientation.HORIZONTAL,
             Position(3, 3) to Orientation.HORIZONTAL,
@@ -108,7 +108,7 @@ class GameEngineTest {
 
     @Test fun `challenge rules allow the exact limit and fail when trace is exceeded`() {
         val rules = ChallengeRules(maxTrace = 48)
-        val state = Tutorial.fixture(TutorialStep.FINAL).copy(challengeRules = rules, trace = 40)
+        val state = routeFixture().copy(challengeRules = rules, trace = 40)
         val placed = GameEngine.reduce(state, GameAction.PlaceDomino("route-1", Position(1, 3), Orientation.HORIZONTAL)).state
         val result = GameEngine.reduce(placed, GameAction.EndTurn).state
         assertNotEquals(GameResult.CHALLENGE_LIMIT, result.result)
@@ -119,7 +119,7 @@ class GameEngineTest {
 
     @Test fun `challenge turn limit fails only when extraction is not reached`() {
         val rules = ChallengeRules(maxTurns = 1)
-        val state = Tutorial.fixture(TutorialStep.FINAL).copy(challengeRules = rules)
+        val state = routeFixture().copy(challengeRules = rules)
         val placed = GameEngine.reduce(state, GameAction.PlaceDomino("route-1", Position(1, 3), Orientation.HORIZONTAL)).state
         assertEquals(GameResult.CHALLENGE_LIMIT, GameEngine.reduce(placed, GameAction.EndTurn).state.result)
     }
@@ -159,7 +159,7 @@ class GameEngineTest {
     }
 
     @Test fun `free mode buffs are collected once and apply bounded effects`() {
-        val base = Tutorial.fixture(TutorialStep.FINAL)
+        val base = routeFixture()
         val tile = base.dominoHand.first()
         val target = base.board.start.neighbors().first()
         val buff = target
@@ -177,4 +177,22 @@ class GameEngineTest {
         val repeated = GameEngine.reduce(transition.state.copy(tilePlacedThisTurn = false), action)
         assertTrue(repeated.events.none { it is GameEvent.BuffCollected })
     }
+
+    private fun routeFixture(): GameState = GameState(
+        seed = 42L,
+        board = BoardState(
+            firewalls = setOf(Position(4, 1), Position(4, 5)),
+            honeypots = setOf(Position(2, 1), Position(6, 5)),
+            daemon = Daemon(Position(BOARD_WIDTH - 1, BOARD_HEIGHT / 2)),
+        ),
+        dominoHand = listOf(
+            Domino("route-1", 0, 1),
+            Domino("route-2", 1, 2),
+            Domino("route-3", 2, 6),
+            Domino("route-4", 3, 6),
+        ),
+        dominoBag = emptyList(),
+        scriptHand = emptyList(),
+        scriptDeck = emptyList(),
+    )
 }

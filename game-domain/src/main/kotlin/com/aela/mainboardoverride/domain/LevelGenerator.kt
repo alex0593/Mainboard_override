@@ -4,7 +4,6 @@ import kotlin.random.Random
 
 /** Reproducible networks, with a reducer-verified witness kept outside the game state. */
 object LevelGenerator {
-    const val TUTORIAL_SEED = 0x4D41494EL
     internal data class GeneratedLevel(val state: GameState, val solution: List<GameAction.PlaceDomino>)
 
     fun generate(seed: Long): GameState = generateVerified(seed).state

@@ -1,5 +1,6 @@
 package com.aela.mainboardoverride.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -55,8 +56,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.LiveRegionMode
-import com.aela.mainboardoverride.domain.Tutorial
-import com.aela.mainboardoverride.domain.TutorialStep
 import com.aela.mainboardoverride.domain.RejectReason
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -82,6 +81,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -108,6 +108,8 @@ private const val SETTINGS = "settings"
 private const val HELP = "help"
 private const val SKINS = "skins"
 private const val CHALLENGE = "challenge"
+
+private enum class GameExitAction { EXIT, RESTART }
 
 @Composable
 fun MainboardApp(nav: NavHostController, state: GameUiState, actions: MainViewModel) {
@@ -207,53 +209,44 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("NO SESSION") }
         return
     }
-    val restartDescription = stringResource(R.string.restart_network)
     var helpOpen by rememberSaveable { mutableStateOf(false) }
+    var pendingExitAction by rememberSaveable { mutableStateOf<GameExitAction?>(null) }
+    BackHandler(enabled = pendingExitAction == null) { pendingExitAction = GameExitAction.EXIT }
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(8.dp)) {
             Column(
-                Modifier.fillMaxWidth().heightIn(min = 64.dp).testTag("game-header")
+                Modifier.fillMaxWidth().testTag("game-header")
                     .background(Panel.copy(alpha = .95f), RoundedCornerShape(8.dp))
-                    .border(1.dp, Cyan.copy(alpha = .25f), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp),
+                    .border(1.dp, Cyan.copy(alpha = .25f), RoundedCornerShape(8.dp)).padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Row(
-                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag("script-hand"),
-                    horizontalArrangement = Arrangement.spacedBy(5.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    TextButton(onClick = onMenu, modifier = Modifier.width(42.dp).semantics { contentDescription = "Menu" }) { Text("‹", fontSize = 24.sp) }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    SmallButton(stringResource(R.string.exit_match), { pendingExitAction = GameExitAction.EXIT }, Modifier.weight(1f).testTag("exit-game"))
+                    if (game.result == null || state.reviewingBoard) {
+                        SmallButton(stringResource(R.string.restart_network), { pendingExitAction = GameExitAction.RESTART }, Modifier.weight(1f).testTag("restart-game"))
+                    }
                     if (game.result != null && state.reviewingBoard) {
                         TextButton(onClick = actions::showResult) { Text(stringResource(R.string.result_summary)) }
                         TextButton(onClick = actions::retry) { Text(stringResource(R.string.play_again)) }
                     }
-                    if (!state.tutorial && game.result == null) {
-                        TextButton(
-                            onClick = actions::restartNetwork,
-                            modifier = Modifier.size(42.dp).testTag("restart-game")
-                                .semantics { contentDescription = restartDescription },
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
-                        ) { Text("↻", color = Cyan, fontSize = 25.sp, fontFamily = FontFamily.Monospace) }
-                    }
+                    TextButton(onClick = { helpOpen = true }, modifier = Modifier.size(42.dp).testTag("general-help")) { Text("?", color = Cyan) }
+                }
+                FlowRow(Modifier.fillMaxWidth(), maxItemsInEachRow = 5, horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     StatusBox(stringResource(R.string.status_turn), game.turn.toString(), Cyan)
                     StatusBox(stringResource(R.string.status_ram), "${game.ram}/$MAX_RAM", Terminal)
                     StatusBox(stringResource(R.string.status_trace), "${game.trace}%", if (game.trace >= 80) Danger else Warning)
                     StatusBox(stringResource(R.string.status_noise), game.pendingNoise.toString(), Warning)
                     StatusBox(stringResource(R.string.status_seed), game.seed.toString(), Cyan, wide = true)
-                    TextButton(onClick = { helpOpen = true }, modifier = Modifier.size(42.dp).testTag("general-help")) { Text("?", color = Cyan) }
+                }
+                Column(Modifier.fillMaxWidth().testTag("script-hand"), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                     Text(stringResource(R.string.scripts), color = Cyan, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
-                    game.scriptHand.forEach { card ->
-                        ScriptCardView(
-                            card,
-                            state.selectedScriptId == card.id,
-                            game.ram >= card.type.ramCost && game.result == null,
-                            highlighted = state.tutorialStep?.let { step -> when (card.type) {
-                                ScriptType.PING -> step == TutorialStep.PING
-                                ScriptType.SPOOF -> step == TutorialStep.SPOOF
-                                ScriptType.KILL_PROCESS -> step == TutorialStep.KILL
-                                ScriptType.BRIDGE -> step == TutorialStep.BRIDGE
-                            } } == true,
-                            compact = true,
-                        ) { actions.selectScript(card.id) }
+                    game.scriptHand.chunked(2).forEach { pair ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                            pair.forEach { card ->
+                                ScriptCardView(card, state.selectedScriptId == card.id, game.ram >= card.type.ramCost && game.result == null, compact = false, modifier = Modifier.weight(1f)) { actions.selectScript(card.id) }
+                            }
+                            if (pair.size == 1) Spacer(Modifier.weight(1f))
+                        }
                     }
                 }
             }
@@ -272,7 +265,7 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                                         (it.rotated == (state.rotationSteps >= 2) || game.dominoHand.any { tile -> tile.id == id && tile.first == tile.second })
                                 }.map { it.origin }.toSet()
                             }.orEmpty(),
-                            target = state.tutorialStep?.let(Tutorial::target),
+                            target = null,
                             modifier = Modifier.weight(1f).fillMaxHeight(),
                             onCell = actions::placeAt,
                             animatePlacement = !state.preferences.reducedMotion,
@@ -284,7 +277,6 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                             .padding(6.dp),
                     ) {
                         Column(Modifier.fillMaxSize().padding(bottom = 88.dp).verticalScroll(rememberScrollState()).testTag("hardware-panel"), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            state.tutorialStep?.let { step -> TutorialPanel(step, state.tutorialBlocked, actions::continueTutorial, actions::restartLesson) }
                             state.message?.let { Text(stringResource(rejectionText(it)), color = Danger, fontSize = 11.sp) }
                             state.lastBuff?.let { buff ->
                                 Text(stringResource(if (buff == BoardBuff.TRACE_COOLER) R.string.buff_trace_collected else R.string.buff_ram_collected), color = Cyan, fontSize = 11.sp)
@@ -304,7 +296,7 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                                         tile,
                                         state.selectedDominoId == tile.id,
                                         state.preferences.dominoSkin,
-                                        highlighted = state.tutorialStep == TutorialStep.SELECT || state.tutorialStep == TutorialStep.SPOOF,
+                                        highlighted = false,
                                         modifier = Modifier.fillMaxWidth(.48f),
                                     ) { actions.selectDomino(tile.id) }
                                 }
@@ -324,13 +316,13 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                                 verticalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    SmallButton(stringResource(R.string.rotate), actions::rotate, Modifier.weight(1f).height(36.dp).testTag("rotate").then(if (state.tutorialStep == TutorialStep.ROTATE) Modifier.border(2.dp, Warning) else Modifier))
+                                    SmallButton(stringResource(R.string.rotate), actions::rotate, Modifier.weight(1f).height(36.dp).testTag("rotate"))
                                 }
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Button(
                                         onClick = actions::endTurn,
                                         enabled = game.tilePlacedThisTurn && game.result == null,
-                                        modifier = Modifier.weight(1f).height(36.dp).testTag("end-turn").then(if (state.tutorialStep == TutorialStep.END_TURN || state.endTurnHint) Modifier.border(2.dp, Warning) else Modifier),
+                                        modifier = Modifier.weight(1f).height(36.dp).testTag("end-turn").then(if (state.endTurnHint) Modifier.border(2.dp, Warning) else Modifier),
                                         colors = ButtonDefaults.buttonColors(containerColor = Terminal, contentColor = Void),
                                     ) { Text(stringResource(R.string.end_turn), fontSize = 10.sp) }
                                 }
@@ -345,11 +337,33 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
     val selected = game.scriptHand.find { it.id == state.selectedScriptId }
     if (selected?.type == ScriptType.SPOOF && state.selectedDominoId != null) {
         game.dominoHand.find { it.id == state.selectedDominoId }?.let { tile ->
-            SpoofDialog(tile, state.spoofHalf, state.spoofValue, state.message?.let { rejectionText(it) }, state.tutorialBlocked,
+            SpoofDialog(tile, state.spoofHalf, state.spoofValue, state.message?.let { rejectionText(it) },
                 actions::setSpoofHalf, actions::setSpoofValue, { actions.spoof(state.spoofValue) }, actions::cancelScript)
         }
     }
     if (helpOpen) GeneralGameHelp { helpOpen = false }
+    pendingExitAction?.let { action ->
+        Dialog(onDismissRequest = { pendingExitAction = null }) {
+            Box(Modifier.fillMaxWidth().widthIn(max = 380.dp).padding(8.dp)) {
+                Image(
+                    painter = painterResource(R.drawable.dialog_panel_frame),
+                    contentDescription = null,
+                    modifier = Modifier.matchParentSize(),
+                )
+                Column(Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(if (action == GameExitAction.EXIT) R.string.confirm_exit_title else R.string.confirm_restart_title), color = Warning, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.confirm_match_loss), color = Color.White)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = { pendingExitAction = null }) { Text(stringResource(R.string.cancel)) }
+                        Button(onClick = {
+                            pendingExitAction = null
+                            if (action == GameExitAction.EXIT) onMenu() else actions.restartNetwork()
+                        }) { Text(stringResource(if (action == GameExitAction.EXIT) R.string.confirm_exit else R.string.confirm_restart)) }
+                    }
+                }
+            }
+        }
+    }
     if (!state.reviewingBoard) game.result?.let { MatchResultDialog(state, actions, onMenu) }
 }
 
@@ -603,9 +617,9 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
 }
 
 @Composable
-private fun ScriptCardView(card: ScriptCard, selected: Boolean, enabled: Boolean, highlighted: Boolean = false, compact: Boolean = false, onClick: () -> Unit) {
+private fun ScriptCardView(card: ScriptCard, selected: Boolean, enabled: Boolean, highlighted: Boolean = false, compact: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Card(
-        (if (compact) Modifier.width(88.dp) else Modifier.fillMaxWidth()).heightIn(min = 48.dp).testTag("script-${card.id}").semantics { this.selected = selected }.alpha(if (enabled) 1f else .4f).clickable(enabled = enabled, onClick = onClick),
+        modifier.then((if (compact) Modifier.width(88.dp) else Modifier.fillMaxWidth()).heightIn(min = 48.dp).testTag("script-${card.id}").semantics { this.selected = selected }.alpha(if (enabled) 1f else .4f).clickable(enabled = enabled, onClick = onClick)),
         colors = CardDefaults.cardColors(containerColor = if (selected) Cyan.copy(alpha = .22f) else Void),
         border = BorderStroke(1.dp, if (highlighted) Warning else if (selected) Cyan else Muted),
         shape = RoundedCornerShape(0.dp),
@@ -878,36 +892,6 @@ internal fun resultText(result: GameResult): Int = when (result) {
     GameResult.CHALLENGE_LIMIT -> R.string.result_challenge_limit
 }
 
-private fun lessonText(step: TutorialStep): Int = when (step) {
-    TutorialStep.INTRO -> R.string.lesson_intro
-    TutorialStep.SELECT -> R.string.lesson_select
-    TutorialStep.ROTATE -> R.string.lesson_rotate
-    TutorialStep.PLACE -> R.string.lesson_place
-    TutorialStep.END_TURN -> R.string.lesson_end_turn
-    TutorialStep.SYSTEM -> R.string.lesson_system
-    TutorialStep.PING -> R.string.lesson_ping
-    TutorialStep.PING_RESULT -> R.string.lesson_ping_result
-    TutorialStep.SPOOF -> R.string.lesson_spoof
-    TutorialStep.SPOOF_RESULT -> R.string.lesson_spoof_result
-    TutorialStep.KILL -> R.string.lesson_kill
-    TutorialStep.KILL_RESULT -> R.string.lesson_kill_result
-    TutorialStep.BRIDGE -> R.string.lesson_bridge
-    TutorialStep.BRIDGE_RESULT -> R.string.lesson_bridge_result
-    TutorialStep.FINAL -> R.string.lesson_final
-    TutorialStep.COMPLETE -> R.string.lesson_complete
-}
-
-@Composable
-internal fun TutorialPanel(step: TutorialStep, blocked: Boolean, onContinue: () -> Unit, onRestart: () -> Unit) {
-    Column(Modifier.fillMaxWidth().border(2.dp, Warning).padding(8.dp).semantics { liveRegion = LiveRegionMode.Polite }) {
-        Text(stringResource(R.string.lesson_progress, step.ordinal + 1, TutorialStep.entries.size), color = Cyan)
-        Text(stringResource(lessonText(step)), color = Color.White)
-        if (blocked) Text(stringResource(R.string.follow_step), color = Warning)
-        if (step.explanation) SmallButton(stringResource(R.string.continue_lesson), onContinue)
-        SmallButton(stringResource(R.string.restart_lesson), onRestart)
-    }
-}
-
 @Composable
 internal fun PingPreview(tiles: List<Domino>) {
     Column {
@@ -918,7 +902,7 @@ internal fun PingPreview(tiles: List<Domino>) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?, blocked: Boolean,
+internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?,
     onHalf: (Int) -> Unit, onValue: (Int) -> Unit, onApply: () -> Unit, onCancel: () -> Unit) {
     AlertDialog(
         onDismissRequest = onCancel,
@@ -955,7 +939,6 @@ internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?, block
                     }
                 }
                 error?.let { Text(stringResource(it), color = Danger) }
-                if (blocked) Text(stringResource(R.string.lesson_spoof), color = Warning)
             }
         },
         confirmButton = { TextButton(onClick = onApply) { Text(stringResource(R.string.apply)) } },

@@ -144,7 +144,6 @@ class ContextHelpUiTest {
         override suspend fun setAudio(value: Boolean) {}
         override suspend fun setVibration(value: Boolean) {}
         override suspend fun setReducedMotion(value: Boolean) {}
-        override suspend fun markTutorialComplete() {}
         override suspend fun setLastSeed(seed: Long) {}
         override suspend fun recordVictory(turns: Int, trace: Int) {}
         override suspend fun setDominoSkin(value: String) {}

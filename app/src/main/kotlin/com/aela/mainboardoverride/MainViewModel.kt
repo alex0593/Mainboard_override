@@ -24,8 +24,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.random.Random
-import com.aela.mainboardoverride.domain.Tutorial
-import com.aela.mainboardoverride.domain.TutorialStep
 import com.aela.mainboardoverride.domain.ScenarioCatalog
 import com.aela.mainboardoverride.domain.ChallengeCatalog
 import com.aela.mainboardoverride.domain.BoardBuff
@@ -39,9 +37,6 @@ data class GameUiState(
     val rotationSteps: Int = 0,
     val selectedScriptId: String? = null,
     val message: RejectReason? = null,
-    val tutorial: Boolean = false,
-    val tutorialStep: TutorialStep? = null,
-    val tutorialBlocked: Boolean = false,
     val spoofHalf: Int = 0,
     val spoofValue: Int = 0,
     val bridgeHorizontal: Boolean = true,
@@ -63,12 +58,10 @@ class MainViewModel(application: Application, private val repository: PlayerPref
         game.copy(preferences = preferences)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GameUiState())
 
-    fun start(seed: Long = Random.nextLong(), tutorial: Boolean = false) {
-        val actualSeed = if (tutorial) LevelGenerator.TUTORIAL_SEED else seed
-        val game = if (tutorial) Tutorial.fixture(TutorialStep.INTRO)
-        else GameEngine.resolveForcedResult(LevelGenerator.generate(actualSeed)).state
-        session.value = GameUiState(game = game, tutorial = tutorial, tutorialStep = if (tutorial) TutorialStep.INTRO else null)
-        if (!tutorial) viewModelScope.launch { repository.setLastSeed(actualSeed) }
+    fun start(seed: Long = Random.nextLong()) {
+        val game = GameEngine.resolveForcedResult(LevelGenerator.generate(seed)).state
+        session.value = GameUiState(game = game)
+        viewModelScope.launch { repository.setLastSeed(seed) }
     }
 
     fun startChallenge(level: Int) {
@@ -93,7 +86,6 @@ class MainViewModel(application: Application, private val repository: PlayerPref
     fun buySkin(id: String) = viewModelScope.launch { repository.buySkin(id) }
 
     fun retry() {
-        if (session.value.tutorial) { restartLesson(); return }
         session.value.challengeLevel?.let { restartChallenge(); return }
         val current = session.value.game ?: return
         startScenario(session.value.scenarioId, current.seed)
@@ -109,10 +101,6 @@ class MainViewModel(application: Application, private val repository: PlayerPref
 
     /** Restarts the active network while preserving its mode; free play gets a fresh seed. */
     fun restartNetwork() {
-        if (session.value.tutorial) {
-            restartLesson()
-            return
-        }
         session.value.challengeLevel?.let {
             restartChallenge()
             return
@@ -124,9 +112,8 @@ class MainViewModel(application: Application, private val repository: PlayerPref
     }
 
     fun selectDomino(id: String) {
-        if (!allowControl(TutorialStep.SELECT, TutorialStep.ROTATE, TutorialStep.PLACE, TutorialStep.SPOOF)) return
+        if (session.value.game?.result != null) return
         if (session.value.game?.dominoHand?.none { it.id == id } != false) return
-        if (session.value.tutorialStep == TutorialStep.SELECT) session.update { it.copy(tutorialStep = TutorialStep.ROTATE) }
         val selectedScript = session.value.selectedScriptId
         val script = session.value.game?.scriptHand?.find { it.id == selectedScript }
         if (script?.type == ScriptType.SPOOF) {
@@ -139,34 +126,14 @@ class MainViewModel(application: Application, private val repository: PlayerPref
     }
 
     fun rotate() {
-        if (!allowControl(TutorialStep.ROTATE, TutorialStep.PLACE)) return
-        session.update { it.copy(rotationSteps = (it.rotationSteps + 1) % 4, tutorialStep = if (it.tutorialStep == TutorialStep.ROTATE) TutorialStep.PLACE else it.tutorialStep) }
-    }
-
-    private fun allowControl(vararg steps: TutorialStep): Boolean {
-        if (session.value.game?.result != null) return false
-        val step = session.value.tutorialStep
-        val allowed = step == null || step == TutorialStep.FINAL || step in steps
-        session.update { it.copy(tutorialBlocked = !allowed) }
-        return allowed
+        if (session.value.game?.result != null) return
+        session.update { it.copy(rotationSteps = (it.rotationSteps + 1) % 4) }
     }
 
     fun cancelScript() = session.update { it.copy(selectedScriptId = null, selectedDominoId = null, message = null) }
     fun setSpoofHalf(half: Int) { if (half in 0..1) session.update { it.copy(spoofHalf = half) } }
     fun setSpoofValue(value: Int) { if (value in 0..6) session.update { it.copy(spoofValue = value) } }
     fun toggleBridge() = session.update { it.copy(bridgeHorizontal = !it.bridgeHorizontal) }
-    fun continueTutorial() {
-        val step = session.value.tutorialStep ?: return
-        val next = Tutorial.continueFrom(step)
-        if (next == step) return
-        if (next == TutorialStep.SELECT) session.update { it.copy(tutorialStep = next, tutorialBlocked = false) }
-        else loadLesson(next)
-    }
-    fun restartLesson() { session.value.tutorialStep?.let { loadLesson(Tutorial.lessonStart(it)) } }
-    private fun loadLesson(step: TutorialStep) {
-        session.value = GameUiState(game = Tutorial.fixture(step), tutorial = true, tutorialStep = step)
-    }
-
     fun placeAt(position: Position) {
         val ui = session.value
         val game = ui.game ?: return
@@ -191,13 +158,7 @@ class MainViewModel(application: Application, private val repository: PlayerPref
     fun selectScript(id: String) {
         val game = session.value.game ?: return
         val card = game.scriptHand.find { it.id == id } ?: return
-        val expected = when (card.type) {
-            ScriptType.PING -> TutorialStep.PING
-            ScriptType.SPOOF -> TutorialStep.SPOOF
-            ScriptType.KILL_PROCESS -> TutorialStep.KILL
-            ScriptType.BRIDGE -> TutorialStep.BRIDGE
-        }
-        if (!allowControl(expected)) return
+        if (session.value.game?.result != null) return
         if (card.type == ScriptType.PING) dispatch(GameAction.PlayPing(id))
         else session.update { it.copy(selectedScriptId = id, selectedDominoId = null, message = null, spoofHalf = 0, spoofValue = 0, bridgeHorizontal = true) }
     }
@@ -221,20 +182,13 @@ class MainViewModel(application: Application, private val repository: PlayerPref
 
     private fun dispatch(action: GameAction) {
         val current = session.value.game ?: return
-        val step = session.value.tutorialStep
-        if (step != null && !Tutorial.allows(step, action)) {
-            session.update { it.copy(tutorialBlocked = true) }
-            return
-        }
         val transition = GameEngine.reduce(current, action)
-        val resolved = if (step == null) GameEngine.resolveForcedResult(transition.state) else transition
+        val resolved = GameEngine.resolveForcedResult(transition.state)
         val rejection = transition.events.filterIsInstance<GameEvent.Rejected>().lastOrNull()?.reason
         session.update {
             val collectedBuff = resolved.events.filterIsInstance<GameEvent.BuffCollected>().lastOrNull()?.buff
             it.copy(
                 game = resolved.state,
-                tutorialStep = step?.let { tutorialStep -> Tutorial.after(tutorialStep, action, resolved) },
-                tutorialBlocked = false,
                 selectedDominoId = if (action is GameAction.PlaceDomino && rejection == null) null else it.selectedDominoId,
                 selectedScriptId = if (action !is GameAction.PlaceDomino && rejection == null) null else it.selectedScriptId,
                 rotationSteps = if (action is GameAction.PlaceDomino && rejection == null) 0 else it.rotationSteps,
@@ -248,16 +202,11 @@ class MainViewModel(application: Application, private val repository: PlayerPref
             )
         }
         if (current.result == null && resolved.state.result == GameResult.VICTORY) {
-            val isTutorial = session.value.tutorial
             val challengeLevel = session.value.challengeLevel
-            val completed = session.value.tutorialStep == TutorialStep.COMPLETE
             val matchId = session.value.matchId
             viewModelScope.launch {
-                if (!isTutorial) {
-                    val reward = repository.finishMatch(matchId, challengeLevel, resolved.state.turn, resolved.state.trace)
-                    session.update { if (it.matchId == matchId) it.copy(reward = reward) else it }
-                }
-                else if (completed) repository.markTutorialComplete()
+                val reward = repository.finishMatch(matchId, challengeLevel, resolved.state.turn, resolved.state.trace)
+                session.update { if (it.matchId == matchId) it.copy(reward = reward) else it }
             }
         }
     }

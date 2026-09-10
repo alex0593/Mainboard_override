@@ -4,7 +4,7 @@
 
 La campaña contiene 30 desafíos secuenciales. Completar 5, 10, 15, 20, 25 y 30 desafíos distintos desbloquea respectivamente Laboratorio, Centro de datos, Red industrial, Archivo profundo, Núcleo blindado y Red fantasma en modo libre. La red original está disponible desde el inicio. Los escenarios modifican dimensiones, longitud de ruta y densidad de obstáculos; cada generación comprueba una solución con el motor.
 
-Cada victoria concede 20 créditos y la primera victoria de un desafío añade 40. Derrotas, abandonos y tutorial no otorgan créditos. Cobre y Aurora son PCB cosméticas de compra única, por 200 créditos cada una. Los escenarios solo se desbloquean jugando desafíos. No hay créditos retroactivos; los récords existentes sí cuentan para los desbloqueos.
+Cada victoria concede 20 créditos y la primera victoria de un desafío añade 40. Derrotas y abandonos no otorgan créditos. Cobre y Aurora son PCB cosméticas de compra única, por 200 créditos cada una. Los escenarios solo se desbloquean jugando desafíos. No hay créditos retroactivos; los récords existentes sí cuentan para los desbloqueos.
 
 Al finalizar se muestra el desglose y se puede revisar el tablero sin controles de juego, regresar al resumen, reintentar o continuar al siguiente desafío. La galería separa fichas y PCB con vistas previas y estados de equipamiento/compra. El menú anima pulsos de circuitos y respeta movimiento reducido.
 
@@ -43,11 +43,11 @@ Las derrotas posibles son rastreo al 100 %, daemon en el inicio, kernel panic si
 - [x] Proyecto Android modular con Kotlin y Jetpack Compose.
 - [x] Motor puro con estado inmutable y acciones/rechazos explícitos.
 - [x] Colocación, cuatro rotaciones, ramificación y búsqueda de conectividad.
-- [x] Semillas reproducibles con ruta garantizada y semilla tutorial.
+- [x] Semillas reproducibles con ruta garantizada.
 - [x] Cuatro scripts, RAM renovable, ruido, rastreo y amenazas.
 - [x] Menú, ayuda, ajustes, tablero, mano y resultado en horizontal.
 - [x] Textos en español e inglés.
-- [x] Persistencia de ajustes, tutorial, última semilla y mejor resultado.
+- [x] Persistencia de ajustes, última semilla y mejor resultado.
 - [x] Pruebas unitarias de reglas esenciales y una partida completa.
 - [x] Wrapper Gradle reproducible y APK de depuración compilado con Android API 37.
 
@@ -58,10 +58,10 @@ Las derrotas posibles son rastreo al 100 %, daemon en el inicio, kernel panic si
 - [ ] Conectar audio original, vibración y VFX a los ajustes ya persistidos.
 - [ ] Añadir arrastre real; la interacción accesible por selección y pulsación ya está implementada.
 - [x] Elegir visualmente orientación de `BRIDGE` y ambas mitades de `SPOOF`, con previsualización y cancelación.
-- [x] Ayuda contextual con «?» durante la partida; sustituye el tutorial del menú. Sus ejercicios deterministas se conservan para pruebas; ver [guía completa](TUTORIAL.md).
+- [x] Ayuda contextual con «?» durante la partida.
 - [x] Fichas claras de Kenney con puntos en mano, tablero y vistas previas.
 - [ ] Completar validación manual de TalkBack, texto ampliado y pantallas pequeñas.
-- [x] Añadir pruebas instrumentadas Compose del tutorial y los controles de scripts.
+- [x] Añadir pruebas instrumentadas Compose de los controles de scripts.
 - [ ] Añadir pruebas masivas de semillas y perfiles en dispositivos reales.
 - [ ] Sustituir símbolos procedurales por arte y sonido originales de fidelidad final ligera.
 
@@ -88,18 +88,17 @@ Neobrutalismo de sistema operativo: PCB oscuro, verde terminal, cian, amarillo d
 
 ## Verificación técnica
 
-- `:game-domain:test`: correcto; 16 pruebas ejecutadas (11 del motor y 5 del tutorial), incluidos los 30 desafíos y 600 combinaciones de escenario/semilla.
+- `:game-domain:test`: correcto; pruebas del motor, los 30 desafíos y 600 combinaciones de escenario/semilla.
 - `:app:assembleDebug`: correcto; APK generado en `app/build/outputs/apk/debug/`.
-- `:app:connectedDebugAndroidTest`: 15 pruebas correctas en CLK-LX3 con Android 14, incluidas 6 de progresión, compras, revisión del tablero y movimiento reducido, además de ayuda y tutorial en español/inglés con texto ampliado.
+- `:app:connectedDebugAndroidTest`: pruebas correctas en CLK-LX3 con Android 14, incluidas progresión, compras, revisión del tablero, ayuda y movimiento reducido.
 - `:app:lintDebug`: correcto; 0 errores y 18 advertencias (versiones, orientación, candidatos a plurales y recursos sin uso). Sin baselines ni supresiones nuevas.
-- Evidencia y límites de la validación: [TUTORIAL.md](TUTORIAL.md#resultado-de-esta-entrega-7-de-septiembre-de-2026).
+- Evidencia y límites de la validación: los informes de Gradle en `app/build/reports/`.
 
 
-## Mejoras del tutorial y controles
+## Mejoras de controles
 
-- Guía con objetivos comprobados por el motor, resultado visible de cada script y reinicio por lección.
+- Ayuda contextual con objetivos, resultado visible de cada script y reinicio de red.
 - PING muestra su vista de fichas; BRIDGE se dibuja en el tablero; SPOOF permite cancelar sin coste.
 - Orientación y orden de puertos visibles, destinos legales ocultos tras colocar y soporte de fichas dobles en las cuatro rotaciones.
 - Errores y resultados traducidos, ayuda dentro de partida, paneles desplazables y semántica accesible sin revelar trampas ocultas.
 - Posición explícita de cada celda para evitar superposición en el origen del tablero.
-- Finalización tutorial separada de récords y última semilla normales; sin cambios de reglas ni migración de preferencias.
