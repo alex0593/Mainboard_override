@@ -102,13 +102,12 @@ class MainViewModel(application: Application, private val repository: PlayerPref
     /** Restarts the same challenge with a fresh generated network and seed. */
     fun restartChallenge() {
         val level = session.value.challengeLevel ?: return
-        val previousSeed = session.value.game?.seed
-        var seed = Random.nextLong()
-        while (seed == previousSeed) seed = Random.nextLong()
-        startChallenge(level, seed)
+        // Challenge levels are fixed puzzles: restart restores the catalog seed
+        // so the player can retry the exact same network and rules.
+        startChallenge(level)
     }
 
-    /** Restarts the active network with a fresh seed while preserving its mode. */
+    /** Restarts the active network while preserving its mode; free play gets a fresh seed. */
     fun restartNetwork() {
         if (session.value.tutorial) {
             restartLesson()

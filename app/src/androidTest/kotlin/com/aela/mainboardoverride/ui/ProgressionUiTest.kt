@@ -132,7 +132,7 @@ class ProgressionUiTest {
         assertEquals("lab", vm.uiState.value.scenarioId)
     }
 
-    @Test fun restartingChallengeKeepsLevelAndGeneratesNewSeed() {
+    @Test fun restartingChallengeKeepsTheExactSamePuzzle() {
         val vm = MainViewModel(app, repository)
         compose.setContent {
             val state by vm.uiState.collectAsState()
@@ -144,7 +144,7 @@ class ProgressionUiTest {
         compose.onNodeWithTag("restart-game").performClick()
         compose.waitForIdle()
         assertEquals(1, vm.uiState.value.challengeLevel)
-        assertNotEquals(firstSeed, vm.uiState.value.game!!.seed)
+        assertEquals(firstSeed, vm.uiState.value.game!!.seed)
     }
 
     @Test fun restartingFreeNetworkKeepsModeAndGeneratesNewSeed() {

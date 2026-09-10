@@ -1,6 +1,6 @@
 # Ayuda durante la partida
 
-La experiencia normal usa botones «?» junto a turno, RAM, rastreo, ruido, semilla, scripts, hardware, rotación y ejecución de turno. El botón ↻ reinicia la red conservando el modo; en desafíos mantiene el nivel y en modo libre genera una semilla nueva. Cada carta tiene su propia ayuda, accesible aunque no alcance la RAM. El «?» del tablero explica conexiones, inicio/extracción, colocaciones válidas, firewalls, honeypots, daemon, puentes y condiciones de fin de partida. PROTOCOLO en el menú reúne estos mismos temas.
+La experiencia normal usa botones «?» junto a turno, RAM, rastreo, ruido, semilla, scripts, hardware, rotación y ejecución de turno. El botón ↻ reinicia la red conservando el modo; en desafíos restaura exactamente el mismo puzzle y en modo libre genera una semilla nueva. Cada carta tiene su propia ayuda, accesible aunque no alcance la RAM. El «?» del tablero explica conexiones, inicio/extracción, colocaciones válidas, firewalls, honeypots, daemon, puentes y condiciones de fin de partida. PROTOCOLO en el menú reúne estos mismos temas.
 
 Cada diálogo muestra una explicación en español o inglés y los costes vigentes del script. Se cierra con Cerrar, atrás o tocando fuera. Abrir y cerrar ayuda conserva selección, orientación, recursos y estado del juego; no ejecuta acciones ni revela trampas ocultas.
 
