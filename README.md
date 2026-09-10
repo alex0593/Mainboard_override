@@ -4,7 +4,7 @@ Vertical slice de un juego táctico de lógica para Android. El jugador conecta 
 
 ## Estado
 
-Versión actual: **0.1.0-alpha.7**.
+Versión actual: **0.1.0-alpha.8**.
 
 El repositorio contiene el motor Kotlin puro, una aplicación Jetpack Compose horizontal, generación determinista por semillas, persistencia local de ajustes y récords, recursos en español e inglés y pruebas unitarias del bucle principal.
 

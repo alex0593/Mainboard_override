@@ -212,13 +212,12 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(8.dp)) {
             Column(
-                Modifier.fillMaxWidth().heightIn(min = 108.dp).testTag("game-header")
+                Modifier.fillMaxWidth().heightIn(min = 64.dp).testTag("game-header")
                     .background(Panel.copy(alpha = .95f), RoundedCornerShape(8.dp))
                     .border(1.dp, Cyan.copy(alpha = .25f), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Row(
-                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).testTag("script-hand"),
                     horizontalArrangement = Arrangement.spacedBy(5.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -241,29 +240,20 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                     StatusBox(stringResource(R.string.status_noise), game.pendingNoise.toString(), Warning)
                     StatusBox(stringResource(R.string.status_seed), game.seed.toString(), Cyan, wide = true)
                     TextButton(onClick = { helpOpen = true }, modifier = Modifier.size(42.dp).testTag("general-help")) { Text("?", color = Cyan) }
-                }
-                HorizontalDivider(color = Cyan.copy(alpha = .22f))
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.scripts), color = Cyan, fontSize = 10.sp, fontFamily = FontFamily.Monospace, modifier = Modifier.width(58.dp))
-                    Row(
-                        Modifier.weight(1f).horizontalScroll(rememberScrollState()).testTag("script-hand"),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        game.scriptHand.forEach { card ->
-                            ScriptCardView(
-                                card,
-                                state.selectedScriptId == card.id,
-                                game.ram >= card.type.ramCost && game.result == null,
-                                highlighted = state.tutorialStep?.let { step -> when (card.type) {
-                                    ScriptType.PING -> step == TutorialStep.PING
-                                    ScriptType.SPOOF -> step == TutorialStep.SPOOF
-                                    ScriptType.KILL_PROCESS -> step == TutorialStep.KILL
-                                    ScriptType.BRIDGE -> step == TutorialStep.BRIDGE
-                                } } == true,
-                                compact = true,
-                            ) { actions.selectScript(card.id) }
-                        }
+                    Text(stringResource(R.string.scripts), color = Cyan, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
+                    game.scriptHand.forEach { card ->
+                        ScriptCardView(
+                            card,
+                            state.selectedScriptId == card.id,
+                            game.ram >= card.type.ramCost && game.result == null,
+                            highlighted = state.tutorialStep?.let { step -> when (card.type) {
+                                ScriptType.PING -> step == TutorialStep.PING
+                                ScriptType.SPOOF -> step == TutorialStep.SPOOF
+                                ScriptType.KILL_PROCESS -> step == TutorialStep.KILL
+                                ScriptType.BRIDGE -> step == TutorialStep.BRIDGE
+                            } } == true,
+                            compact = true,
+                        ) { actions.selectScript(card.id) }
                     }
                 }
             }
