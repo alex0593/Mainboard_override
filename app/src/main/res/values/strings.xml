@@ -30,6 +30,7 @@
     <string name="reward_breakdown">Victory: +%1$d · First completion: +%2$d credits</string>
     <string name="scenario_unlocked">Scenario unlocked: %1$s</string>
     <string name="next_challenge">Next challenge</string>
+    <string name="restart_level">Restart level</string>
     <string name="review_board">Review board</string>
     <string name="spoof_scroll_hint">Scroll to choose the replacement value</string>
     <string name="node_trace_cooler">trace cooler: −8 trace</string>
@@ -125,7 +126,7 @@
     <string name="help_description">Help: %1$s</string>
     <string name="help_close">Close</string>
     <string name="help_board_title">Board and objective</string>
-    <string name="help_board_body">Connect S0 (start, value 0) to X6 (extraction, value 6), then execute the turn. Match every outside contact; the two halves inside a domino connect automatically. Green outlines mark valid origins for the selected domino. Tap an origin to place its first port there; the other goes right or down.\n\n██: firewall, blocks placement. HP: revealed honeypot; covering a hidden or revealed trap adds 20 noise and discards a script (once per placement, only for new traps). D!: daemon, moves one connected cell toward start each turn; reaching start ends the match. ═ / ║: horizontal / vertical bridge across a firewall.\n\nAt 100 trace you lose. Running out of hardware or having no legal placements without an available SPOOF also ends the match. Defeats from trace or daemon are checked before victory.</string>
+    <string name="help_board_body">Connect S0 (start, value 0) to X6 (extraction, value 6), then execute the turn. Match every outside contact; the two halves inside a domino connect automatically. Green outlines mark valid origins for the selected domino. Tap an origin to place its first port there; the other goes right or down.\n\nGreen circuit chip: firewall, blocks placement. Circuit icon with a downward arrow: revealed honeypot (shown as a small badge on hardware); covering a hidden or revealed trap adds 20 noise and discards a script (once per placement, only for new traps). D!: daemon, moves one connected cell toward start each turn; reaching start ends the match. ═ / ║: horizontal / vertical bridge across a firewall.\n\nAt 100 trace you lose. Running out of hardware or having no legal placements without an available SPOOF also ends the match. Defeats from trace or daemon are checked before victory.</string>
     <string name="help_ram_title">RAM</string>
     <string name="help_ram_body">Scripts spend RAM when executed successfully. You have up to 3 RAM, restored after executing the turn. Placing and rotating hardware cost no RAM. You can read help even when a script is unavailable.</string>
     <string name="help_trace_title">Trace</string>

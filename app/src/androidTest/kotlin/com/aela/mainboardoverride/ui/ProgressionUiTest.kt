@@ -132,6 +132,21 @@ class ProgressionUiTest {
         assertEquals("lab", vm.uiState.value.scenarioId)
     }
 
+    @Test fun restartingChallengeKeepsLevelAndGeneratesNewSeed() {
+        val vm = MainViewModel(app, repository)
+        compose.setContent {
+            val state by vm.uiState.collectAsState()
+            MainboardTheme { GameScreen(state, vm) {} }
+        }
+        compose.runOnIdle { vm.startChallenge(1) }
+        compose.waitUntil(5000) { vm.uiState.value.game != null }
+        val firstSeed = vm.uiState.value.game!!.seed
+        compose.onNodeWithTag("restart-challenge").performClick()
+        compose.waitForIdle()
+        assertEquals(1, vm.uiState.value.challengeLevel)
+        assertNotEquals(firstSeed, vm.uiState.value.game!!.seed)
+    }
+
     @Test fun menuPulsesStopWithReducedMotion() {
         val reduced = mutableStateOf(false)
         compose.mainClock.autoAdvance = false

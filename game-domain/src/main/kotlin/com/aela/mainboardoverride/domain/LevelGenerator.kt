@@ -9,9 +9,7 @@ object LevelGenerator {
 
     fun generate(seed: Long): GameState = generateVerified(seed).state
     fun generateScenario(seed: Long, scenarioId: String): GameState = generateVerified(seed, scenarioId = scenarioId).state
-    fun generateChallenge(level: Int): GameState = generateVerified(
-        ChallengeCatalog.level(level)?.seed ?: error("Unknown challenge level $level"), level
-    ).state
+    fun generateChallenge(level: Int, seed: Long = ChallengeCatalog.level(level)?.seed ?: error("Unknown challenge level $level")): GameState = generateVerified(seed, level).state
 
     internal fun generateVerified(seed: Long, challengeLevel: Int? = null, scenarioId: String = "classic"): GeneratedLevel {
         val scenario = ScenarioCatalog.get(scenarioId).takeIf { it.id != "classic" }

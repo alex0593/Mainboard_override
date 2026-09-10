@@ -28,6 +28,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -213,6 +216,11 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 TextButton(onClick = onMenu, modifier = Modifier.width(48.dp).semantics { contentDescription = "Menu" }) { Text("‹", fontSize = 24.sp) }
+                if (state.challengeLevel != null && game.result == null) {
+                    TextButton(onClick = actions::restartChallenge, modifier = Modifier.testTag("restart-challenge")) {
+                        Text(stringResource(R.string.restart_level), fontSize = 11.sp)
+                    }
+                }
                 if (game.result != null && state.reviewingBoard) {
                     TextButton(onClick = actions::showResult) { Text(stringResource(R.string.result_summary)) }
                     TextButton(onClick = actions::retry) { Text(stringResource(R.string.play_again)) }
@@ -479,12 +487,30 @@ internal fun Board(
                         val label = when {
                             p == board.start -> "S0"
                             p == board.extraction -> "X6"
-                            p in board.firewalls -> "■"
-                            p in board.revealedHoneypots -> "HP"
+                            p in board.firewalls || p in board.revealedHoneypots -> null
                             p in board.buffs -> if (board.buffs[p] == BoardBuff.TRACE_COOLER) "−8" else "+R"
                             else -> null
                         }
                         if (label != null) drawContext.canvas.nativeCanvas.drawText(label, (x + .5f) * unit, (y + .65f) * unit, ink)
+                    }
+                }
+                (board.firewalls + board.revealedHoneypots).forEach { position ->
+                    val isPlaced = board.placed.any { it.valueAt(position) != null }
+                    Box(Modifier.offset(cell * position.x, cell * position.y).size(cell).padding(2.dp)) {
+                        BoardThreatImage(
+                            firewall = position in board.firewalls,
+                            modifier = if (isPlaced) Modifier.align(Alignment.TopEnd).size(cell * .4f)
+                                .background(Void.copy(alpha = .9f), RoundedCornerShape(2.dp))
+                            else Modifier.fillMaxSize().padding(1.dp),
+                        )
+                        board.bridges.find { it.center == position }?.let { bridge ->
+                            Text(
+                                if (bridge.horizontal) "═" else "║",
+                                modifier = Modifier.align(Alignment.Center).background(Void.copy(alpha = .85f)),
+                                color = Warning,
+                                fontWeight = FontWeight.Black,
+                            )
+                        }
                     }
                 }
             } else for (y in 0 until board.height) for (x in 0 until board.width) {
@@ -542,18 +568,25 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
         if (isPlaced) {
             if (trap || daemon) {
                 Row(Modifier.align(Alignment.TopEnd).background(Void.copy(alpha = .9f), RoundedCornerShape(2.dp))) {
-                    if (trap) Text("HP", color = Warning, fontSize = 9.sp)
+                    if (trap) BoardThreatImage(firewall = false, modifier = Modifier.size(size * .4f))
                     if (daemon) Text("D!", color = Danger, fontSize = 9.sp)
                 }
             }
+        } else if (firewall || (trap && !daemon && !isStart && !isExit)) {
+            BoardThreatImage(firewall, Modifier.fillMaxSize().padding(1.dp))
+            if (bridge != null) Text(
+                if (bridge.horizontal) "═" else "║",
+                modifier = Modifier.background(Void.copy(alpha = .85f)),
+                color = Warning,
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.Black,
+            )
         } else Text(
             when {
                 bridge != null -> if (bridge.horizontal) "═" else "║"
-                firewall -> "██"
                 daemon -> "D!"
                 isStart -> "S0"
                 isExit -> "X6"
-                trap -> "HP"
                 buff != null -> if (buff == BoardBuff.TRACE_COOLER) "−8" else "+1R"
                 value != null -> "$value"
                 else -> "·"
@@ -619,41 +652,66 @@ private fun SettingsScreen(state: GameUiState, actions: MainViewModel, onBack: (
 @Composable
 private fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart: () -> Unit, onBack: () -> Unit) {
     CircuitBackground {
-        Column(Modifier.fillMaxSize().padding(24.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.challenge), color = Terminal, fontSize = 30.sp, fontWeight = FontWeight.Black)
-            Text(stringResource(R.string.challenge_description), color = Color.White)
-            Text(stringResource(R.string.challenge_progress, state.preferences.challengeBest.size, ChallengeCatalog.COUNT), color = Cyan)
-            (1..ChallengeCatalog.COUNT).forEach { level ->
-                val unlocked = level <= state.preferences.challengeUnlocked
-                val record = state.preferences.challengeBest[level]
-                val rules = ChallengeCatalog.level(level)?.rules
-                Text(stringResource(R.string.expected_reward, com.aela.mainboardoverride.domain.Rewards.VICTORY + if (record == null) com.aela.mainboardoverride.domain.Rewards.FIRST_CHALLENGE else 0), color = Warning)
-                TerminalButton(
-                    stringResource(R.string.challenge_level, level) + (record?.let { " · ${it.turns}T / ${it.trace}%" } ?: ""),
-                    {
-                        actions.startChallenge(level)
-                        onStart()
-                    },
-                    primary = unlocked,
-                    enabled = unlocked,
-                )
-                rules?.let {
-                    val maxTurns = it.maxTurns
-                    val maxTrace = it.maxTrace
-                    Text(
-                        when {
-                            maxTurns != null && maxTrace != null -> stringResource(R.string.challenge_rules_both, maxTurns, maxTrace)
-                            maxTurns != null -> stringResource(R.string.challenge_rules_turns, maxTurns)
-                            else -> stringResource(R.string.challenge_rules_trace, maxTrace ?: 0)
-                        },
-                        color = Warning,
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 10.sp,
-                        modifier = Modifier.padding(start = 8.dp),
-                    )
+        Column(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            ProgressionHeader(stringResource(R.string.challenge), onBack) {
+                Text("${state.preferences.challengeBest.size}/${ChallengeCatalog.COUNT}", color = Warning, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
+            }
+            Text(stringResource(R.string.challenge_description), color = Color.White, modifier = Modifier.padding(horizontal = 4.dp))
+            Text(stringResource(R.string.challenge_progress, state.preferences.challengeBest.size, ChallengeCatalog.COUNT), color = Cyan, modifier = Modifier.padding(horizontal = 4.dp))
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(220.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.weight(1f),
+            ) {
+                items(ChallengeCatalog.levels, key = { it.number }) { challenge ->
+                    val level = challenge.number
+                    val unlocked = level <= state.preferences.challengeUnlocked
+                    val record = state.preferences.challengeBest[level]
+                    val rules = challenge.rules
+                    val maxTurns = rules.maxTurns
+                    val maxTrace = rules.maxTrace
+                    val ruleText = when {
+                        maxTurns != null && maxTrace != null -> stringResource(R.string.challenge_rules_both, maxTurns, maxTrace)
+                        maxTurns != null -> stringResource(R.string.challenge_rules_turns, maxTurns)
+                        else -> stringResource(R.string.challenge_rules_trace, maxTrace ?: 0)
+                    }
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = if (unlocked) Panel.copy(alpha = .94f) else Void.copy(alpha = .72f)),
+                        border = BorderStroke(1.dp, if (record != null) Terminal.copy(alpha = .8f) else if (unlocked) Cyan.copy(alpha = .35f) else Muted.copy(alpha = .35f)),
+                        shape = RoundedCornerShape(8.dp),
+                    ) {
+                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("%02d".format(level), color = if (unlocked) Terminal else Muted, fontSize = 26.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace)
+                                Spacer(Modifier.width(8.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(stringResource(R.string.challenge_level, level), color = if (unlocked) Cyan else Muted, fontWeight = FontWeight.Bold)
+                                    Text("DIFFICULTY ${challenge.difficulty}", color = if (unlocked) Warning else Muted, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
+                                }
+                                Text(if (record != null) "✓" else if (unlocked) "•" else "▣", color = if (record != null) Terminal else if (unlocked) Cyan else Muted, fontSize = 20.sp)
+                            }
+                            Box(Modifier.fillMaxWidth().height(3.dp).background(if (record != null) Terminal else if (unlocked) Cyan.copy(alpha = .35f) else Muted.copy(alpha = .25f), RoundedCornerShape(2.dp)))
+                            Text(ruleText, color = if (unlocked) Warning else Muted, fontFamily = FontFamily.Monospace, fontSize = 10.sp)
+                            Text(
+                                record?.let { "BEST  ${it.turns}T / ${it.trace}%" } ?: stringResource(R.string.expected_reward, com.aela.mainboardoverride.domain.Rewards.VICTORY + if (record == null) com.aela.mainboardoverride.domain.Rewards.FIRST_CHALLENGE else 0),
+                                color = if (record != null) Terminal else Warning,
+                                fontFamily = FontFamily.Monospace,
+                                fontSize = 10.sp,
+                            )
+                            Button(
+                                enabled = unlocked,
+                                onClick = { actions.startChallenge(level); onStart() },
+                                modifier = Modifier.fillMaxWidth().testTag("challenge-$level"),
+                                colors = ButtonDefaults.buttonColors(containerColor = if (unlocked) Terminal else Muted.copy(alpha = .25f), contentColor = if (unlocked) Void else Muted),
+                            ) {
+                                Text(stringResource(if (unlocked) R.string.play_scenario else R.string.locked_scenario), fontSize = 11.sp)
+                            }
+                        }
+                    }
                 }
             }
-            SmallButton(stringResource(R.string.back), onBack)
         }
     }
 }

@@ -30,6 +30,7 @@
     <string name="reward_breakdown">Victoria: +%1$d · Primera victoria: +%2$d créditos</string>
     <string name="scenario_unlocked">Escenario desbloqueado: %1$s</string>
     <string name="next_challenge">Siguiente desafío</string>
+    <string name="restart_level">Reiniciar nivel</string>
     <string name="review_board">Revisar tablero</string>
     <string name="spoof_scroll_hint">Desliza para elegir el valor nuevo</string>
     <string name="node_trace_cooler">disipador: −8 rastreo</string>
@@ -123,7 +124,7 @@
     <string name="help_description">Ayuda: %1$s</string>
     <string name="help_close">Cerrar</string>
     <string name="help_board_title">Tablero y objetivo</string>
-    <string name="help_board_body">Conecta S0 (inicio, valor 0) con X6 (extracción, valor 6) y ejecuta el turno. Todos los contactos externos deben coincidir; las dos mitades de una ficha se conectan automáticamente. Los bordes verdes marcan orígenes válidos para la ficha seleccionada. Toca un origen para colocar allí su primer puerto; el otro queda a la derecha o abajo.\n\n██: firewall, bloquea la colocación. HP: honeypot revelado; cubrir una trampa oculta o revelada añade 20 de ruido y descarta un script (una vez por colocación, solo para trampas nuevas). D!: daemon, avanza una celda conectada hacia inicio por turno; si llega, pierdes. ═ / ║: puente horizontal / vertical sobre un firewall.\n\nPierdes al llegar a 100 de rastreo, al agotar las fichas o al quedarte sin colocaciones y sin SPOOF disponible. Las derrotas por rastreo o daemon se comprueban antes de la victoria.</string>
+    <string name="help_board_body">Conecta S0 (inicio, valor 0) con X6 (extracción, valor 6) y ejecuta el turno. Todos los contactos externos deben coincidir; las dos mitades de una ficha se conectan automáticamente. Los bordes verdes marcan orígenes válidos para la ficha seleccionada. Toca un origen para colocar allí su primer puerto; el otro queda a la derecha o abajo.\n\nChip verde con circuitos: firewall, bloquea la colocación. Icono de circuitos con flecha hacia abajo: honeypot revelado (aparece como insignia pequeña sobre una ficha); cubrir una trampa oculta o revelada añade 20 de ruido y descarta un script (una vez por colocación, solo para trampas nuevas). D!: daemon, avanza una celda conectada hacia inicio por turno; si llega, pierdes. ═ / ║: puente horizontal / vertical sobre un firewall.\n\nPierdes al llegar a 100 de rastreo, al agotar las fichas o al quedarte sin colocaciones y sin SPOOF disponible. Las derrotas por rastreo o daemon se comprueban antes de la victoria.</string>
     <string name="help_ram_title">RAM</string>
     <string name="help_ram_body">Los scripts gastan RAM al ejecutarse correctamente. Dispones de hasta 3 RAM, que se reponen al ejecutar el turno. Colocar y rotar fichas no consume RAM. Puedes consultar la ayuda aunque un script no esté disponible.</string>
     <string name="help_trace_title">Rastreo</string>

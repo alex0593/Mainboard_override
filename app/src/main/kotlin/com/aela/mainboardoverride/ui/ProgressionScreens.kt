@@ -44,7 +44,7 @@ internal fun scenarioLabel(id: String) = when (id) {
 }
 
 @Composable
-private fun ProgressionHeader(
+internal fun ProgressionHeader(
     title: String,
     onBack: () -> Unit,
     trailing: (@Composable () -> Unit)? = null,

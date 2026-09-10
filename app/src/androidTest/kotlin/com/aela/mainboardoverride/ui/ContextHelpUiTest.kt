@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
@@ -49,6 +50,26 @@ class ContextHelpUiTest {
 
     @Test fun allHelpTopicsInSpanishPreserveSelectionAndResources() = checkHelp("es", 3)
     @Test fun allHelpTopicsInEnglishWithNoRamRemainAvailable() = checkHelp("en", 0)
+
+    @Test fun threatArtworkFillsCellsAndSmallBadgesDespiteExportMargins() {
+        val firewall = mutableStateOf(true)
+        val edge = mutableStateOf(32.dp)
+        compose.setContent {
+            BoardThreatImage(firewall.value, Modifier.size(edge.value).testTag("threat-art"))
+        }
+        for (isFirewall in listOf(true, false)) for (size in listOf(32.dp, 12.dp)) {
+            compose.runOnIdle { firewall.value = isFirewall; edge.value = size }
+            val pixels = compose.onNodeWithTag("threat-art").captureToImage().toPixelMap()
+            var circuitPixels = 0
+            for (x in 0 until pixels.width) for (y in 0 until pixels.height) {
+                val color = pixels[x, y]
+                if (color.alpha > .5f && color.green > .2f && color.green > color.red * 1.1f) circuitPixels++
+            }
+            // Untrimmed exports occupy only a few percent of the cell; both icons must stay legible.
+            assertTrue("Visible artwork: firewall=$isFirewall, size=$size",
+                circuitPixels > pixels.width * pixels.height * .12f)
+        }
+    }
 
     private fun checkHelp(language: String, ram: Int) {
         val config = Configuration(app.resources.configuration).apply { setLocale(Locale.forLanguageTag(language)) }

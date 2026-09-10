@@ -27,6 +27,7 @@ import kotlin.random.Random
 import com.aela.mainboardoverride.domain.Tutorial
 import com.aela.mainboardoverride.domain.TutorialStep
 import com.aela.mainboardoverride.domain.ScenarioCatalog
+import com.aela.mainboardoverride.domain.ChallengeCatalog
 import com.aela.mainboardoverride.domain.BoardBuff
 import com.aela.mainboardoverride.data.MatchReward
 import java.util.UUID
@@ -71,8 +72,12 @@ class MainViewModel(application: Application, private val repository: PlayerPref
     }
 
     fun startChallenge(level: Int) {
+        startChallenge(level, ChallengeCatalog.level(level)?.seed ?: return)
+    }
+
+    fun startChallenge(level: Int, seed: Long) {
         if (level !in 1..com.aela.mainboardoverride.domain.ChallengeCatalog.COUNT || level > uiState.value.preferences.challengeUnlocked) return
-        session.value = GameUiState(game = GameEngine.resolveForcedResult(LevelGenerator.generateChallenge(level)).state, challengeLevel = level)
+        session.value = GameUiState(game = GameEngine.resolveForcedResult(LevelGenerator.generateChallenge(level, seed)).state, challengeLevel = level)
     }
 
     fun startScenario(id: String, seed: Long = Random.nextLong()) {
@@ -89,9 +94,18 @@ class MainViewModel(application: Application, private val repository: PlayerPref
 
     fun retry() {
         if (session.value.tutorial) { restartLesson(); return }
-        session.value.challengeLevel?.let { startChallenge(it); return }
+        session.value.challengeLevel?.let { restartChallenge(); return }
         val current = session.value.game ?: return
         startScenario(session.value.scenarioId, current.seed)
+    }
+
+    /** Restarts the same challenge with a fresh generated network and seed. */
+    fun restartChallenge() {
+        val level = session.value.challengeLevel ?: return
+        val previousSeed = session.value.game?.seed
+        var seed = Random.nextLong()
+        while (seed == previousSeed) seed = Random.nextLong()
+        startChallenge(level, seed)
     }
 
     fun selectDomino(id: String) {
