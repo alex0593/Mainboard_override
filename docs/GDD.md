@@ -25,18 +25,22 @@ Juego móvil de lógica táctica. El jugador es un analista que se infiltra en u
 3. El sistema suma 8 de rastreo más el ruido, activa trampas y mueve el daemon.
 4. Se comprueban primero las derrotas y después la conexión de victoria.
 
-El tablero varía entre 8 y 10 columnas y entre 6 y 7 filas, con inicio 0 y extracción 6. Cada dominó ocupa dos celdas ortogonales; sus mitades están conectadas internamente, pero todo contacto externo debe compartir valor. Las redes pueden ramificarse y cada semilla contiene una ruta solucionable.
+El modo libre tiene 6 filas: Red original 8 columnas, Laboratorio y Centro de datos 9, Red industrial y Archivo profundo 10, Núcleo blindado y Red fantasma 11. Los desafíos conservan su geometría anterior. El inicio usa 0 y la extracción 6. Cada dominó ocupa dos celdas ortogonales; sus mitades están conectadas internamente, pero todo contacto externo debe compartir valor. Las redes pueden ramificarse y cada semilla contiene una ruta solucionable. Las semillas antiguas del modo libre generan mapas distintos tras este cambio.
 
 ### Scripts incluidos
 
 | Script | RAM | Ruido | Efecto actual |
 |---|---:|---:|---|
-| `PING` | 1 | 0 | Revela honeypots y las tres fichas siguientes. |
+| `PING` | 1 | 0 | Revela un honeypot oculto sin activar al azar y muestra solo la siguiente ficha, sin robarla. |
 | `SPOOF` | 2 | 5 | Reescribe permanentemente un puerto de una ficha en mano. |
 | `KILL_PROCESS` | 3 | 15 | Elimina el firewall seleccionado. |
-| `BRIDGE` | 2 | 10 | Conecta valores iguales a ambos lados de un firewall. |
+| `BRIDGE` | 2 | 10 | Copia un puerto de una ficha adyacente a través del firewall; la salida queda libre para colocar una ficha compatible. |
 
-Las derrotas posibles son rastreo al 100 %, daemon en el inicio, kernel panic sin acciones habilitables o bolsa de hardware agotada. La victoria requiere una ruta continua hasta extracción después de resolver la fase del sistema.
+Las derrotas posibles son rastreo al 100 %, daemon en el inicio, kernel panic sin acciones habilitables o bolsa de hardware agotada. BRIDGE y KILL_PROCESS pueden evitar kernel panic si abren una colocación legal. La victoria requiere una ruta continua hasta extracción después de resolver la fase del sistema.
+
+PING conserva descubrimientos anteriores y selecciona entre trampas ocultas sin activar con azar reproducible por semilla y carta. La vista de la siguiente ficha se limpia al terminar el turno. Si faltan trampas o fichas, muestra la información disponible y mantiene su coste.
+
+BRIDGE requiere al menos una ficha junto al firewall en el eje seleccionado. Si ambos puertos existen, deben coincidir. Rechaza otra pared en la salida, extremos fuera del mapa y puentes duplicados sin gastar recursos. Conserva el firewall, guarda y muestra el número copiado y solo conecta extremos ocupados compatibles. KILL_PROCESS elimina también el puente del firewall destruido.
 
 ## Qué se lleva implementado
 
@@ -88,7 +92,7 @@ Neobrutalismo de sistema operativo: PCB oscuro, verde terminal, cian, amarillo d
 
 ## Verificación técnica
 
-- `:game-domain:test`: correcto; pruebas del motor, los 30 desafíos y 600 combinaciones de escenario/semilla.
+- `:game-domain:test`: correcto; pruebas del motor, los 30 desafíos y 700 combinaciones de escenario/semilla.
 - `:app:assembleDebug`: correcto; APK generado en `app/build/outputs/apk/debug/`.
 - `:app:connectedDebugAndroidTest`: pruebas correctas en CLK-LX3 con Android 14, incluidas progresión, compras, revisión del tablero, ayuda y movimiento reducido.
 - `:app:lintDebug`: correcto; 0 errores y 18 advertencias (versiones, orientación, candidatos a plurales y recursos sin uso). Sin baselines ni supresiones nuevas.

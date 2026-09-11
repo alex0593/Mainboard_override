@@ -4,13 +4,13 @@ data class Scenario(val id: String, val required: Int, val width: Int, val heigh
 
 object ScenarioCatalog {
     val all = listOf(
-        Scenario("classic", 0, 9, 7, 6, 6, 2),
-        Scenario("lab", 5, 8, 6, 5, 4, 2),
+        Scenario("classic", 0, 8, 6, 5, 3, 1),
+        Scenario("lab", 5, 9, 6, 5, 4, 2),
         Scenario("data", 10, 9, 6, 6, 6, 2),
-        Scenario("industry", 15, 9, 7, 7, 8, 3),
-        Scenario("archive", 20, 10, 7, 7, 10, 4),
-        Scenario("core", 25, 10, 7, 8, 12, 4),
-        Scenario("ghost", 30, 10, 7, 9, 14, 5),
+        Scenario("industry", 15, 10, 6, 7, 8, 3),
+        Scenario("archive", 20, 10, 6, 7, 10, 4),
+        Scenario("core", 25, 11, 6, 8, 12, 4),
+        Scenario("ghost", 30, 11, 6, 9, 14, 5),
     )
     fun get(id: String) = all.firstOrNull { it.id == id } ?: all.first()
 }

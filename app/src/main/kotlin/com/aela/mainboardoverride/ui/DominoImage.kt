@@ -78,6 +78,32 @@ private fun pipPositions(value: Int): List<Pair<Float, Float>> = when (value.coe
     else -> emptyList()
 }
 
+// Reuse these small immutable lists instead of allocating them on every draw.
+private val cachedPips = (0..6).map(::pipPositions)
+
+/** High-contrast pip colors keep the light ice and aurora faces readable at game size. */
+internal fun dominoPipColor(skin: String): Color = when (skin) {
+    "ceramic" -> Color(0xFF084F3B)
+    "obsidian" -> Cyan
+    "blueprint" -> Color(0xFFB7E8FF)
+    "copper" -> Color(0xFFFFD1A1)
+    "ice" -> Color(0xFF075985)
+    // Golden yellow remains visibly distinct from the aurora's white face and violet rim.
+    "aurora" -> Color(0xFFFFC107)
+    else -> Terminal
+}
+
+internal fun dominoShellResource(skin: String, previewOnly: Boolean = false): Int? = when (skin) {
+    "circuit" -> if (previewOnly) R.drawable.domino_circuit_preview else R.drawable.domino_circuit
+    "obsidian" -> if (previewOnly) R.drawable.domino_obsidian_preview else R.drawable.domino_obsidian
+    "ceramic" -> if (previewOnly) R.drawable.domino_ceramic_preview else R.drawable.domino_ceramic
+    "blueprint" -> if (previewOnly) R.drawable.domino_blueprint_preview else R.drawable.domino_blueprint
+    "copper" -> if (previewOnly) R.drawable.domino_copper_preview else R.drawable.domino_copper
+    "ice" -> if (previewOnly) R.drawable.domino_ice_preview else R.drawable.domino_ice
+    "aurora" -> if (previewOnly) R.drawable.domino_aurora_preview else R.drawable.domino_aurora
+    else -> null
+}
+
 internal fun dominoResource(first: Int, second: Int, skin: String = "kenney"): Int {
     val low = minOf(first, second)
     val resources = themedDominoResources[skin] ?: kenneyDominoResources
@@ -96,14 +122,16 @@ internal fun DominoImage(
     orientation: Orientation = Orientation.HORIZONTAL,
     describe: Boolean = true,
     skin: String = "kenney",
+    previewOnly: Boolean = false,
 ) {
     val customCircuit = skin == "circuit"
-    val painter = painterResource(if (customCircuit) R.drawable.domino_circuit else dominoResource(tile.first, tile.second, skin))
+    val shell = dominoShellResource(skin, previewOnly)
+    val painter = painterResource(shell ?: dominoResource(tile.first, tile.second, skin))
     val label = stringResource(R.string.domino_description, tile.first, tile.second)
     val horizontal = orientation == Orientation.HORIZONTAL
     Canvas(modifier.aspectRatio(if (horizontal) 2f else .5f)
         .then(if (describe) Modifier.semantics { contentDescription = label } else Modifier)) {
-        drawRoundRect(Color.White, cornerRadius = androidx.compose.ui.geometry.CornerRadius(5.dp.toPx()))
+        if (shell == null) drawRoundRect(Color.White, cornerRadius = androidx.compose.ui.geometry.CornerRadius(5.dp.toPx()))
         val shortSide = if (horizontal) minOf(size.height, size.width / 2) else minOf(size.width, size.height / 2)
         val spriteSize = Size(shortSide, shortSide * 2)
         withTransform({
@@ -112,26 +140,20 @@ internal fun DominoImage(
             translate(-spriteSize.width / 2, -spriteSize.height / 2)
         }) {
             with(painter) { draw(spriteSize) }
-            if (customCircuit) {
-                // The generated circuit shell is reused for every value. Mask its
-                // decorative pips, then paint the real engine values on top.
-                val mask = Color(0xFF20292A)
+            if (shell != null) {
                 val pipRadius = spriteSize.width * .072f
-                val maskRadius = spriteSize.width * .105f
-                val slots = listOf(.28f, .5f, .72f)
-                for (half in 0..1) {
-                    for (x in slots) for (y in slots) {
-                        drawCircle(mask, maskRadius, Offset(spriteSize.width * x, spriteSize.height * (half * .5f + y * .5f)))
-                    }
-                }
+                val pipColor = dominoPipColor(skin)
                 fun drawPips(value: Int, half: Int) {
-                    pipPositions(value).forEach { (x, y) ->
-                        drawCircle(Cyan, pipRadius * 1.18f, Offset(spriteSize.width * x, spriteSize.height * (half * .5f + y * .5f)))
-                        drawCircle(Terminal, pipRadius, Offset(spriteSize.width * x, spriteSize.height * (half * .5f + y * .5f)))
+                    cachedPips[value].forEach { (x, y) ->
+                        val center = Offset(spriteSize.width * x, spriteSize.height * (half * .5f + y * .5f))
+                        if (customCircuit) drawCircle(Cyan, pipRadius * 1.18f, center)
+                        if (skin == "aurora") drawCircle(Color(0xFF704500), pipRadius * 1.16f, center)
+                        drawCircle(pipColor, pipRadius, center)
                     }
                 }
-                drawPips(tile.first, 0)
-                drawPips(tile.second, 1)
+                // dominoAngle already swaps the ports for descending pairs.
+                drawPips(minOf(tile.first, tile.second), 0)
+                drawPips(maxOf(tile.first, tile.second), 1)
             }
         }
     }

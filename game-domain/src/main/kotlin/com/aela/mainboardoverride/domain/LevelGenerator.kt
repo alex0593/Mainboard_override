@@ -21,7 +21,7 @@ object LevelGenerator {
     }
 
     internal fun generateVerified(seed: Long, challengeLevel: Int? = null, scenarioId: String = "classic"): GeneratedLevel {
-        val scenario = ScenarioCatalog.get(scenarioId).takeIf { it.id != "classic" }
+        val scenario = ScenarioCatalog.get(scenarioId).takeIf { challengeLevel == null }
         val random = Random(seed)
         if (scenario != null) {
             repeat(512) {

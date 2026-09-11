@@ -32,22 +32,24 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
@@ -60,12 +62,14 @@ import com.aela.mainboardoverride.domain.RejectReason
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.zIndex
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.geometry.Size
@@ -81,7 +85,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -118,16 +121,17 @@ fun MainboardApp(
     actions: MainViewModel,
     onExitApp: () -> Unit = {},
 ) {
+    val transition = LocalWindowTransition.current
     NavHost(navController = nav, startDestination = MENU) {
         composable(MENU) {
             MenuScreen(
                 state = state,
-                onNew = { nav.navigate("scenarios") },
-                onChallenge = { nav.navigate(CHALLENGE) },
-                onRetry = { actions.retryLast(); nav.navigate(GAME) },
-                onSettings = { nav.navigate(SETTINGS) },
-                onSkins = { nav.navigate(SKINS) },
-                onHelp = { nav.navigate(HELP) },
+                onNew = { transition { nav.navigate("scenarios") } },
+                onChallenge = { transition { nav.navigate(CHALLENGE) } },
+                onRetry = { transition { actions.retryLast(); nav.navigate(GAME) } },
+                onSettings = { transition { nav.navigate(SETTINGS) } },
+                onSkins = { transition { nav.navigate(SKINS) } },
+                onHelp = { transition { nav.navigate(HELP) } },
                 onExitApp = onExitApp,
             )
         }
@@ -135,21 +139,21 @@ fun MainboardApp(
             GameScreen(
                 state = state,
                 actions = actions,
-                onMenu = { nav.popBackStack(MENU, inclusive = false) },
+                onMenu = { transition { nav.popBackStack(MENU, inclusive = false) } },
             )
         }
-        composable(SETTINGS) { SettingsScreen(state, actions) { nav.popBackStack() } }
-        composable(SKINS) { SkinGallery(state, actions) { nav.popBackStack() } }
-        composable("scenarios") { ScenarioScreen(state, actions, { nav.navigate(GAME) }, { nav.popBackStack() }) }
+        composable(SETTINGS) { SettingsScreen(state, actions) { transition { nav.popBackStack() } } }
+        composable(SKINS) { SkinGallery(state, actions) { transition { nav.popBackStack() } } }
+        composable("scenarios") { ScenarioScreen(state, actions, { nav.navigate(GAME) }, { transition { nav.popBackStack() } }) }
         composable(CHALLENGE) {
             ChallengeScreen(
                 state = state,
                 actions = actions,
                 onStart = { nav.navigate(GAME) },
-                onBack = { nav.popBackStack() },
+                onBack = { transition { nav.popBackStack() } },
             )
         }
-        composable(HELP) { InfoScreen { nav.popBackStack() } }
+        composable(HELP) { InfoScreen { transition { nav.popBackStack() } } }
     }
 }
 
@@ -166,13 +170,17 @@ private fun MenuScreen(
 ) {
     var exitRequested by rememberSaveable { mutableStateOf(false) }
     BackHandler(enabled = !exitRequested) { exitRequested = true }
-    CircuitBackground(animated = !state.preferences.reducedMotion) {
+    MenuArtworkBackground(reducedMotion = state.preferences.reducedMotion) {
         Row(
             Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                Image(
+                    painterResource(R.drawable.menu_module_v1), contentDescription = null,
+                    modifier = Modifier.size(88.dp).padding(bottom = 8.dp),
+                )
                 Text("> ROOT://MAINBOARD", color = Cyan, fontFamily = FontFamily.Monospace)
                 Text(
                     "OVERRIDE",
@@ -197,50 +205,32 @@ private fun MenuScreen(
                 }
             }
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                TerminalButton(stringResource(R.string.new_network), onNew)
-                TerminalButton(stringResource(R.string.challenge), onChallenge, primary = false)
-                if (state.preferences.lastSeed != null) TerminalButton(stringResource(R.string.retry_seed), onRetry, primary = false)
+                MenuArtworkButton(stringResource(R.string.new_network), onNew, primary = true)
+                MenuArtworkButton(stringResource(R.string.challenge), onChallenge)
+                if (state.preferences.lastSeed != null) MenuArtworkButton(stringResource(R.string.retry_seed), onRetry)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    SmallButton(stringResource(R.string.settings), onSettings, Modifier.weight(1f))
-                    SmallButton(stringResource(R.string.skins), onSkins, Modifier.weight(1f))
-                    SmallButton(stringResource(R.string.help), onHelp, Modifier.weight(1.35f))
+                    MenuArtworkButton(stringResource(R.string.settings), onSettings, Modifier.weight(1f), compact = true)
+                    MenuArtworkButton(stringResource(R.string.skins), onSkins, Modifier.weight(1f), compact = true)
+                    MenuArtworkButton(stringResource(R.string.help), onHelp, Modifier.weight(1.35f), compact = true)
                 }
-                SmallButton(stringResource(R.string.exit_app), { exitRequested = true }, Modifier.fillMaxWidth().testTag("exit-app"))
             }
         }
     }
     if (exitRequested) {
-        Dialog(onDismissRequest = { exitRequested = false }) {
-            Box(Modifier.fillMaxWidth().widthIn(max = 380.dp).padding(8.dp)) {
-                Image(
-                    painter = painterResource(R.drawable.dialog_panel_frame),
-                    contentDescription = null,
-                    modifier = Modifier.matchParentSize(),
-                )
-                Column(
-                    Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 28.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Text(
-                        stringResource(R.string.confirm_app_exit_title),
-                        color = Warning,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(stringResource(R.string.confirm_app_exit_message), color = Color.White)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = { exitRequested = false }) { Text(stringResource(R.string.cancel)) }
-                        Button(onClick = onExitApp) { Text(stringResource(R.string.confirm_app_exit)) }
-                    }
-                }
-            }
-        }
+        ConfirmGameDialog(
+            title = stringResource(R.string.confirm_app_exit_title),
+            message = stringResource(R.string.confirm_app_exit_message),
+            confirmLabel = stringResource(R.string.confirm_app_exit),
+            onDismiss = { exitRequested = false },
+            onConfirm = { exitRequested = false; onExitApp() },
+        )
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -> Unit) {
+    val transition = LocalWindowTransition.current
     val game = state.game
     if (game == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("NO SESSION") }
@@ -251,19 +241,20 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
     BackHandler(enabled = pendingExitAction == null) { pendingExitAction = GameExitAction.EXIT }
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(8.dp)) {
-            Row(
-                Modifier.fillMaxWidth().heightIn(min = 64.dp).testTag("game-header")
-                    .background(Panel.copy(alpha = .95f), RoundedCornerShape(8.dp))
-                    .border(1.dp, Cyan.copy(alpha = .25f), RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                SmallButton(stringResource(R.string.exit_match), { pendingExitAction = GameExitAction.EXIT }, Modifier.testTag("exit-game"))
-                SmallButton("↻", { pendingExitAction = GameExitAction.RESTART }, Modifier.size(44.dp).testTag("restart-game"))
-                if (game.result != null && state.reviewingBoard) {
-                    TextButton(onClick = actions::showResult) { Text(stringResource(R.string.result_summary)) }
-                    TextButton(onClick = actions::retry) { Text(stringResource(R.string.play_again)) }
-                }
+            Box(Modifier.fillMaxWidth().heightIn(min = 64.dp).testTag("game-header").clip(RoundedCornerShape(10.dp))) {
+                Image(
+                    painterResource(R.drawable.menu_header_v1), contentDescription = null,
+                    modifier = Modifier.matchParentSize(), contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
+                )
+                Row(
+                    Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 9.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                LevelActionButton(stringResource(R.string.exit_match), R.drawable.ic_leave_level,
+                    { pendingExitAction = GameExitAction.EXIT }, Modifier.align(Alignment.CenterVertically).testTag("exit-game"))
+                LevelActionButton(stringResource(R.string.retry_level), R.drawable.ic_retry_level,
+                    { pendingExitAction = GameExitAction.RESTART }, Modifier.align(Alignment.CenterVertically).testTag("restart-game"))
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(stringResource(R.string.turn, game.turn), color = Cyan, fontSize = 11.sp)
                     Text(stringResource(R.string.ram, game.ram, MAX_RAM), color = Terminal, fontSize = 11.sp)
@@ -275,11 +266,17 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    game.scriptHand.forEach { card ->
-                        ScriptCardView(card, state.selectedScriptId == card.id, game.ram >= card.type.ramCost && game.result == null, compact = true) { actions.selectScript(card.id) }
+                    game.scriptHand.groupBy { it.type }.values.forEach { stack ->
+                        ScriptStack(
+                            cards = stack,
+                            selectedId = state.selectedScriptId,
+                            enabled = game.ram >= stack.first().type.ramCost && game.result == null,
+                            onSelect = actions::selectScript,
+                        )
                     }
                 }
-                TextButton(onClick = { helpOpen = true }, modifier = Modifier.size(42.dp).testTag("general-help")) { Text("?", color = Cyan) }
+                    TextButton(onClick = { helpOpen = true }, modifier = Modifier.size(46.dp).testTag("general-help")) { Text("?", color = Cyan) }
+                }
             }
             Spacer(Modifier.height(8.dp))
             BoxWithConstraints(Modifier.weight(1f)) {
@@ -301,12 +298,17 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                             onCell = actions::placeAt,
                             animatePlacement = !state.preferences.reducedMotion,
                     )
+                    if (state.reviewingBoard) ReviewPanel(controlsWidth, actions)
                     if (!state.reviewingBoard) Box(
                         Modifier.width(controlsWidth).fillMaxHeight()
-                            .background(Brush.verticalGradient(listOf(Panel, Void)), RoundedCornerShape(8.dp))
-                            .border(1.dp, Cyan.copy(alpha = .3f), RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(10.dp))
+                            .border(1.dp, Cyan.copy(alpha = .3f), RoundedCornerShape(10.dp))
                             .padding(6.dp),
                     ) {
+                        Image(
+                            painterResource(R.drawable.menu_card_v1), contentDescription = null,
+                            modifier = Modifier.matchParentSize(), contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
+                        )
                         Column(Modifier.fillMaxSize().padding(bottom = 88.dp).verticalScroll(rememberScrollState()).testTag("hardware-panel"), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             state.message?.let { Text(stringResource(rejectionText(it)), color = Danger, fontSize = 11.sp) }
                             state.lastBuff?.let { buff ->
@@ -340,22 +342,30 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                             }
                         }
                         Box(
-                            Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(84.dp).background(Panel),
+                            Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(84.dp).background(Panel.copy(alpha = .9f)),
                         ) {
                             Column(
-                                Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
+                                Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
                                 verticalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    SmallButton(stringResource(R.string.rotate), actions::rotate, Modifier.weight(1f).height(36.dp).testTag("rotate"))
+                                    SmallButton(
+                                        stringResource(R.string.rotate), actions::rotate,
+                                        Modifier.weight(1f).height(40.dp).testTag("rotate"),
+                                        minHeight = 40.dp,
+                                    )
                                 }
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Button(
+                                    MenuArtworkButton(
+                                        label = stringResource(R.string.end_turn),
                                         onClick = actions::endTurn,
+                                        primary = true,
+                                        compact = true,
                                         enabled = game.tilePlacedThisTurn && game.result == null,
-                                        modifier = Modifier.weight(1f).height(36.dp).testTag("end-turn").then(if (state.endTurnHint) Modifier.border(2.dp, Warning) else Modifier),
-                                        colors = ButtonDefaults.buttonColors(containerColor = Terminal, contentColor = Void),
-                                    ) { Text(stringResource(R.string.end_turn), fontSize = 10.sp) }
+                                        minHeight = 40.dp,
+                                        modifier = Modifier.weight(1f).height(40.dp).testTag("end-turn")
+                                            .then(if (state.endTurnHint) Modifier.border(2.dp, Warning) else Modifier),
+                                    )
                                 }
                             }
                         }
@@ -374,28 +384,31 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
     }
     if (helpOpen) GeneralGameHelp { helpOpen = false }
     pendingExitAction?.let { action ->
-        Dialog(onDismissRequest = { pendingExitAction = null }) {
-            Box(Modifier.fillMaxWidth().widthIn(max = 380.dp).padding(8.dp)) {
-                Image(
-                    painter = painterResource(R.drawable.dialog_panel_frame),
-                    contentDescription = null,
-                    modifier = Modifier.matchParentSize(),
-                )
-                Column(Modifier.fillMaxWidth().padding(horizontal = 30.dp, vertical = 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(stringResource(if (action == GameExitAction.EXIT) R.string.confirm_exit_title else R.string.confirm_restart_title), color = Warning, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Text(stringResource(R.string.confirm_match_loss), color = Color.White)
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = { pendingExitAction = null }) { Text(stringResource(R.string.cancel)) }
-                        Button(onClick = {
-                            pendingExitAction = null
-                            if (action == GameExitAction.EXIT) onMenu() else actions.restartNetwork()
-                        }) { Text(stringResource(if (action == GameExitAction.EXIT) R.string.confirm_exit else R.string.confirm_restart)) }
-                    }
-                }
-            }
-        }
+        ConfirmGameDialog(
+            title = stringResource(if (action == GameExitAction.EXIT) R.string.confirm_exit_title else R.string.confirm_restart_title),
+            message = stringResource(R.string.confirm_match_loss),
+            confirmLabel = stringResource(if (action == GameExitAction.EXIT) R.string.confirm_exit else R.string.confirm_restart),
+            onDismiss = { pendingExitAction = null },
+            onConfirm = {
+                pendingExitAction = null
+                if (action == GameExitAction.EXIT) onMenu() else transition(actions::restartNetwork)
+            },
+        )
     }
     if (!state.reviewingBoard) game.result?.let { MatchResultDialog(state, actions, onMenu) }
+}
+
+@Composable
+private fun ReviewPanel(width: androidx.compose.ui.unit.Dp, actions: MainViewModel) {
+    val transition = LocalWindowTransition.current
+    Box(Modifier.width(width).fillMaxHeight().clip(RoundedCornerShape(10.dp)).border(1.dp, Cyan.copy(alpha = .3f), RoundedCornerShape(10.dp))) {
+        Image(painterResource(R.drawable.menu_card_v1), contentDescription = null, modifier = Modifier.matchParentSize(), contentScale = androidx.compose.ui.layout.ContentScale.FillBounds)
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(stringResource(R.string.review_board), color = Cyan, fontSize = 13.sp)
+            SmallButton(stringResource(R.string.result_summary), actions::showResult, Modifier.fillMaxWidth().height(42.dp))
+            SmallButton(stringResource(R.string.play_again), { transition(actions::retry) }, Modifier.fillMaxWidth().height(42.dp))
+        }
+    }
 }
 
 @Composable
@@ -410,6 +423,7 @@ internal fun Board(
     previewOnly: Boolean = false,
     animatePlacement: Boolean = true,
 ) {
+    val boardArtwork = boardSkinResource(skin, previewOnly)
     val placementKeys = remember(board.placed) {
         board.placed.map { placed ->
             "${placed.domino.id}:${placed.origin.x}:${placed.origin.y}:${placed.orientation}"
@@ -435,31 +449,18 @@ internal fun Board(
         }
     }
     BoxWithConstraints(
-        modifier.background(Brush.linearGradient(when (skin) {
-            "copper" -> listOf(Color(0xFF40271B), Color(0xFF130E0B), Color(0xFF9D6336))
-            "aurora" -> listOf(Color(0xFF301550), Color(0xFF100D26), Color(0xFF12646B))
-            "blueprint" -> listOf(Color(0xFF102A4A), Color(0xFF07111F), Color(0xFF164D73))
-            "industrial" -> listOf(Color(0xFF3A2914), Color(0xFF17120B), Color(0xFF60421A))
-            "rust" -> listOf(Color(0xFF572616), Color(0xFF1C0E0A), Color(0xFF873D1E))
-            "ice" -> listOf(Color(0xFF123B56), Color(0xFF071721), Color(0xFF2B7895))
-            "graphite" -> listOf(Color(0xFF34404A), Color(0xFF111820), Color(0xFF53636B))
-            "signal" -> listOf(Color(0xFF4A2C18), Color(0xFF1A1110), Color(0xFF177A78))
-            else -> listOf(Panel, Void, Panel)
-        }), RoundedCornerShape(10.dp))
+        modifier.background(androidx.compose.ui.graphics.SolidColor(Void), RoundedCornerShape(10.dp))
             .border(1.dp, Cyan.copy(alpha = .4f), RoundedCornerShape(10.dp)).padding(4.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Canvas(Modifier.fillMaxSize()) {
-            if (skin == "copper" || skin == "aurora") {
-                val tint = if (skin == "copper") Color(0xFFE6A466) else Color(0xFF8DEBF0)
-                repeat(16) { index ->
-                    val x = size.width * (index + 1) / 17
-                    val bend = size.height * (.2f + (index % 4) * .17f)
-                    drawLine(tint.copy(alpha = .35f), Offset(x, 0f), Offset(x, bend), 2.dp.toPx())
-                    drawLine(tint.copy(alpha = .35f), Offset(x, bend), Offset(x + 12.dp.toPx(), bend + 12.dp.toPx()), 2.dp.toPx())
-                    drawCircle(tint, 3.dp.toPx(), Offset(x + 12.dp.toPx(), bend + 12.dp.toPx()), style = Stroke(1.dp.toPx()))
-                }
-            }
+        if (boardArtwork != null) {
+            Image(
+                painterResource(boardArtwork), contentDescription = null,
+                modifier = Modifier.matchParentSize(),
+                contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
+            )
+        } else Canvas(Modifier.fillMaxSize()) {
+            // Generic fallback only; every built-in skin uses a pre-rendered asset.
             val inset = 6.dp.toPx()
             val rail = 15.dp.toPx()
             drawRect(Muted.copy(alpha = .25f), Offset(rail, rail), Size((size.width - rail * 2).coerceAtLeast(0f), (size.height - rail * 2).coerceAtLeast(0f)), style = Stroke(1.dp.toPx()))
@@ -473,19 +474,12 @@ internal fun Board(
                 drawLine(Cyan.copy(alpha = .3f), Offset(x, size.height - inset), Offset(x, size.height), 2.dp.toPx())
             }
         }
-        val margin = if (maxHeight < 250.dp) 12.dp else 20.dp
+        val margin = if (boardArtwork != null) maxOf(12.dp, minOf(maxWidth, maxHeight) * .1f)
+            else if (maxHeight < 250.dp) 12.dp else 20.dp
         val cell = minOf((maxWidth - margin * 2) / board.width, (maxHeight - margin * 2) / board.height).coerceAtLeast(0.dp)
-            Box(Modifier.width(cell * board.width).height(cell * board.height).background(when (skin) {
-                "copper" -> Color(0xFF211710)
-                "aurora" -> Color(0xFF1D1231)
-                "blueprint" -> Color(0xFF0B1D31)
-                "industrial" -> Color(0xFF241A0D)
-                "rust" -> Color(0xFF24110C)
-                "ice" -> Color(0xFF0A2635)
-                "graphite" -> Color(0xFF151E26)
-                "signal" -> Color(0xFF221813)
-                else -> Void
-            }).border(1.dp, Muted.copy(alpha = .4f))) {
+            Box(Modifier.width(cell * board.width).height(cell * board.height)
+                .background(Color.Transparent)
+                .border(1.dp, Muted.copy(alpha = .4f))) {
             Canvas(Modifier.fillMaxSize()) {
                 for (x in 0..board.width) drawLine(Muted.copy(alpha = .18f), Offset(x * size.width / board.width, 0f), Offset(x * size.width / board.width, size.height))
                 for (y in 0..board.height) drawLine(Muted.copy(alpha = .18f), Offset(0f, y * size.height / board.height), Offset(size.width, y * size.height / board.height))
@@ -520,6 +514,7 @@ internal fun Board(
                     placed.orientation,
                     describe = false,
                     skin = dominoSkin,
+                    previewOnly = previewOnly,
                 )
             }
             if (previewOnly) {
@@ -554,7 +549,7 @@ internal fun Board(
                         )
                         board.bridges.find { it.center == position }?.let { bridge ->
                             Text(
-                                if (bridge.horizontal) "═" else "║",
+                                if (bridge.horizontal) "═${bridge.value}" else "║${bridge.value}",
                                 modifier = Modifier.align(Alignment.Center).background(Void.copy(alpha = .85f)),
                                 color = Warning,
                                 fontWeight = FontWeight.Black,
@@ -588,7 +583,7 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
         if (trap) stringResource(R.string.node_trap) else null,
         buff?.let { stringResource(if (it == BoardBuff.TRACE_COOLER) R.string.node_trace_cooler else R.string.node_ram_reserve) },
         if (daemon) stringResource(R.string.node_daemon) else null,
-        bridge?.let { stringResource(R.string.bridge_label, stringResource(if (it.horizontal) R.string.horizontal else R.string.vertical)) },
+        bridge?.let { stringResource(R.string.bridge_label, stringResource(if (it.horizontal) R.string.horizontal else R.string.vertical)) + " ${it.value}" },
         value?.let { stringResource(R.string.node_value, it) },
         if (legal) stringResource(R.string.node_legal) else null,
         if (target) stringResource(R.string.node_target) else null,
@@ -624,7 +619,7 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
         } else if (firewall || (trap && !daemon && !isStart && !isExit)) {
             BoardThreatImage(firewall, Modifier.fillMaxSize().padding(1.dp))
             if (bridge != null) Text(
-                if (bridge.horizontal) "═" else "║",
+                if (bridge.horizontal) "═${bridge.value}" else "║${bridge.value}",
                 modifier = Modifier.background(Void.copy(alpha = .85f)),
                 color = Warning,
                 fontFamily = FontFamily.Monospace,
@@ -632,7 +627,7 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
             )
         } else Text(
             when {
-                bridge != null -> if (bridge.horizontal) "═" else "║"
+                bridge != null -> if (bridge.horizontal) "═${bridge.value}" else "║${bridge.value}"
                 daemon -> "D!"
                 isStart -> "S0"
                 isExit -> "X6"
@@ -648,13 +643,61 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
 }
 
 @Composable
-private fun ScriptCardView(card: ScriptCard, selected: Boolean, enabled: Boolean, highlighted: Boolean = false, compact: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Card(
-        modifier.then((if (compact) Modifier.width(88.dp) else Modifier.fillMaxWidth()).heightIn(min = 48.dp).testTag("script-${card.id}").semantics { this.selected = selected }.alpha(if (enabled) 1f else .4f).clickable(enabled = enabled, onClick = onClick)),
-        colors = CardDefaults.cardColors(containerColor = if (selected) Cyan.copy(alpha = .22f) else Void),
-        border = BorderStroke(1.dp, if (highlighted) Warning else if (selected) Cyan else Muted),
-        shape = RoundedCornerShape(0.dp),
+private fun ScriptStack(
+    cards: List<ScriptCard>,
+    selectedId: String?,
+    enabled: Boolean,
+    onSelect: (String) -> Unit,
+) {
+    val overlap = 10.dp
+    Box(
+        Modifier.width(88.dp + overlap * (cards.size - 1).coerceAtLeast(0))
+            .heightIn(min = 48.dp),
     ) {
+        cards.forEachIndexed { index, card ->
+            ScriptCardView(
+                card = card,
+                selected = selectedId == card.id,
+                enabled = enabled,
+                compact = true,
+                modifier = Modifier.offset(x = overlap * index).zIndex(index.toFloat()),
+            ) { onSelect(card.id) }
+        }
+        if (cards.size > 1) {
+            Surface(
+                modifier = Modifier.align(Alignment.TopEnd).zIndex(cards.size.toFloat() + 1f),
+                shape = RoundedCornerShape(8.dp),
+                color = Cyan,
+                contentColor = Void,
+            ) {
+                Text(
+                    "×${cards.size}",
+                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScriptCardView(card: ScriptCard, selected: Boolean, enabled: Boolean, highlighted: Boolean = false, compact: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Box(
+        modifier.then((if (compact) Modifier.width(88.dp) else Modifier.fillMaxWidth())
+            .heightIn(min = 48.dp).clip(RoundedCornerShape(8.dp)).testTag("script-${card.id}")
+            .semantics { this.selected = selected }.alpha(if (enabled) 1f else .4f)
+            .clickable(enabled = enabled, onClick = onClick)
+            .border(1.dp, if (highlighted) Warning else if (selected) Cyan else Muted, RoundedCornerShape(8.dp))),
+    ) {
+        Image(
+            painter = painterResource(R.drawable.menu_card_v1),
+            contentDescription = null,
+            modifier = Modifier.matchParentSize(),
+            contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
+        )
+        if (selected) Box(Modifier.matchParentSize().background(Cyan.copy(alpha = .2f)))
         Row(Modifier.padding(4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             scriptArtwork(card.type)?.let { artwork ->
                 Image(
@@ -715,13 +758,22 @@ private fun SettingsScreen(state: GameUiState, actions: MainViewModel, onBack: (
 
 @Composable
 private fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart: () -> Unit, onBack: () -> Unit) {
+    val transition = LocalWindowTransition.current
+    val previews by produceState<Map<Int, BoardState>>(emptyMap()) {
+        ChallengeCatalog.levels.forEach { challenge ->
+            val board = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                com.aela.mainboardoverride.domain.LevelGenerator.generateChallenge(challenge.number, challenge.seed).board
+            }
+            value = value + (challenge.number to board)
+        }
+    }
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            ProgressionHeader(stringResource(R.string.challenge), onBack) {
-                Text("${state.preferences.challengeBest.size}/${ChallengeCatalog.COUNT}", color = Warning, fontSize = 12.sp, fontFamily = FontFamily.Monospace)
-            }
-            Text(stringResource(R.string.challenge_description), color = Color.White, modifier = Modifier.padding(horizontal = 4.dp))
-            Text(stringResource(R.string.challenge_progress, state.preferences.challengeBest.size, ChallengeCatalog.COUNT), color = Cyan, modifier = Modifier.padding(horizontal = 4.dp))
+            ProgressionHeader(
+                title = stringResource(R.string.challenge),
+                onBack = onBack,
+                counter = "${state.preferences.challengeBest.size}/${ChallengeCatalog.COUNT}",
+            )
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(220.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -735,18 +787,24 @@ private fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart:
                     val rules = challenge.rules
                     val maxTurns = rules.maxTurns
                     val maxTrace = rules.maxTrace
+                    val preview = previews[level]
                     val ruleText = when {
                         maxTurns != null && maxTrace != null -> stringResource(R.string.challenge_rules_both, maxTurns, maxTrace)
                         maxTurns != null -> stringResource(R.string.challenge_rules_turns, maxTurns)
                         else -> stringResource(R.string.challenge_rules_trace, maxTrace ?: 0)
                     }
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().height(ProgressionCardHeight),
                         colors = CardDefaults.cardColors(containerColor = if (unlocked) Panel.copy(alpha = .94f) else Void.copy(alpha = .72f)),
                         border = BorderStroke(1.dp, if (record != null) Terminal.copy(alpha = .8f) else if (unlocked) Cyan.copy(alpha = .35f) else Muted.copy(alpha = .35f)),
                         shape = RoundedCornerShape(8.dp),
                     ) {
-                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                        Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                            if (preview != null) {
+                                Board(preview, state.preferences.boardSkin, state.preferences.dominoSkin, emptySet(), modifier = Modifier.fillMaxWidth().height(110.dp), onCell = {}, previewOnly = true)
+                            } else {
+                                Box(Modifier.fillMaxWidth().height(110.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(Modifier.size(24.dp)) }
+                            }
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text("%02d".format(level), color = if (unlocked) Terminal else Muted, fontSize = 26.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace)
                                 Spacer(Modifier.width(8.dp))
@@ -764,9 +822,10 @@ private fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart:
                                 fontFamily = FontFamily.Monospace,
                                 fontSize = 10.sp,
                             )
+                            Spacer(Modifier.weight(1f))
                             Button(
                                 enabled = unlocked,
-                                onClick = { actions.startChallenge(level); onStart() },
+                                onClick = { transition { actions.startChallenge(level); onStart() } },
                                 modifier = Modifier.fillMaxWidth().testTag("challenge-$level"),
                                 colors = ButtonDefaults.buttonColors(containerColor = if (unlocked) Terminal else Muted.copy(alpha = .25f), contentColor = if (unlocked) Void else Muted),
                             ) {
@@ -818,24 +877,22 @@ private fun StatusBox(label: String, value: String, color: Color, wide: Boolean 
 
 @Composable
 private fun TerminalButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, primary: Boolean = true, enabled: Boolean = true) {
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(0.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (primary) Terminal else Panel,
-            contentColor = if (primary) Void else Terminal,
-        ),
-        border = if (primary) null else BorderStroke(1.dp, Terminal),
-    ) { Text(label, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold) }
+    MenuArtworkButton(label, onClick, modifier = modifier, primary = primary, enabled = enabled)
 }
 
 @Composable
-private fun SmallButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    OutlinedButton(onClick = onClick, modifier = modifier, shape = RoundedCornerShape(0.dp), border = BorderStroke(1.dp, Muted)) {
-        Text(label, fontSize = 11.sp, maxLines = 1, softWrap = false)
+private fun LevelActionButton(label: String, icon: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Box(modifier.size(49.dp).clip(RoundedCornerShape(10.dp)).semantics { contentDescription = label }) {
+        Image(painterResource(R.drawable.menu_button_compact_v2), contentDescription = null, modifier = Modifier.matchParentSize(), contentScale = androidx.compose.ui.layout.ContentScale.FillBounds)
+        androidx.compose.material3.IconButton(onClick = onClick, modifier = Modifier.matchParentSize()) {
+            androidx.compose.material3.Icon(painterResource(icon), contentDescription = null, tint = Cyan, modifier = Modifier.size(24.dp))
+        }
     }
+}
+
+@Composable
+private fun SmallButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, minHeight: Dp? = null) {
+    MenuArtworkButton(label, onClick, modifier = modifier, compact = true, minHeight = minHeight)
 }
 
 @Composable
@@ -866,10 +923,15 @@ private fun PanelHeading(label: String, topic: HelpTopic, onHelp: (HelpTopic) ->
 internal fun CircuitBackground(animated: Boolean = false, content: @Composable () -> Unit) {
     val progress = if (animated) {
         val transition = rememberInfiniteTransition(label = "menu circuits")
-        val phase by transition.animateFloat(0f, 1f, infiniteRepeatable(tween(6000, easing = LinearEasing)), label = "pulse")
-        phase
-    } else 0f
+        transition.animateFloat(0f, 1f, infiniteRepeatable(tween(6000, easing = LinearEasing)), label = "pulse")
+    } else null
     Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Void, Panel, Void)))) {
+        Image(
+            painterResource(R.drawable.menu_background_v2),
+            contentDescription = null,
+            modifier = Modifier.matchParentSize().alpha(.72f),
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+        )
         Canvas(Modifier.fillMaxSize()) {
             val step = 48.dp.toPx()
             var x = -step
@@ -882,7 +944,8 @@ internal fun CircuitBackground(animated: Boolean = false, content: @Composable (
                 drawLine(tint, Offset(x + step / 2, bend + step / 2), Offset(x + step / 2, size.height), 1.dp.toPx())
                 drawCircle(tint, 3.dp.toPx(), Offset(x, bend), style = Stroke(1.dp.toPx()))
                 if (animated) {
-                    val distance = ((progress + index * .13f) % 1f) * (size.height + step / 2)
+                    // Read the animation in the draw phase, without recomposing menu content each frame.
+                    val distance = (((progress?.value ?: 0f) + index * .13f) % 1f) * (size.height + step / 2)
                     val point = when {
                         distance < bend -> Offset(x, distance)
                         distance < bend + step / 2 -> Offset(x + distance - bend, distance)
@@ -935,11 +998,15 @@ internal fun PingPreview(tiles: List<Domino>) {
 @Composable
 internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?,
     onHalf: (Int) -> Unit, onValue: (Int) -> Unit, onApply: () -> Unit, onCancel: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onCancel,
-        title = { Text(stringResource(R.string.spoof_value)) },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
+    GameDialog(
+        title = stringResource(R.string.spoof_value),
+        onDismiss = onCancel,
+        actions = {
+            TextButton(onClick = onCancel, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.cancel)) }
+            TextButton(onClick = onApply, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.apply)) }
+        },
+    ) {
+            Column {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Column(Modifier.weight(1f)) {
                         Text(stringResource(R.string.spoof_before))
@@ -971,10 +1038,7 @@ internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?,
                 }
                 error?.let { Text(stringResource(it), color = Danger) }
             }
-        },
-        confirmButton = { TextButton(onClick = onApply) { Text(stringResource(R.string.apply)) } },
-        dismissButton = { TextButton(onClick = onCancel) { Text(stringResource(R.string.cancel)) } },
-    )
+    }
 }
 
 @Composable

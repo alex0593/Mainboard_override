@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.aela.mainboardoverride.ui.MainboardApp
 import com.aela.mainboardoverride.ui.MainboardTheme
+import com.aela.mainboardoverride.ui.WindowTransitionHost
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,12 +29,14 @@ class MainActivity : ComponentActivity() {
                 }
             }
             MainboardTheme {
-                MainboardApp(
-                    nav = rememberNavController(),
-                    state = state,
-                    actions = viewModel,
-                    onExitApp = { finishAndRemoveTask() },
-                )
+                WindowTransitionHost(reducedMotion = state.preferences.reducedMotion) {
+                    MainboardApp(
+                        nav = rememberNavController(),
+                        state = state,
+                        actions = viewModel,
+                        onExitApp = { finishAndRemoveTask() },
+                    )
+                }
             }
         }
     }

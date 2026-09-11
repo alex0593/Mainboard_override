@@ -95,7 +95,8 @@ class ProgressionUiTest {
         // Wait for the collected UI state to reflect the repository update before equipping.
         compose.waitUntil(5000) { "copper" in vm.uiState.value.preferences.ownedSkins }
         compose.waitForIdle()
-        compose.onNodeWithTag("skin-action-copper").performClick()
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasTestTag("skin-action-copper"))
+        compose.onNodeWithTag("skin-action-copper").assertIsDisplayed().assertIsEnabled().performClick()
         compose.waitUntil(5000) { runBlocking { repository.preferences.first().boardSkin == "copper" } }
         assertEquals(40, runBlocking { repository.preferences.first().credits })
     }
@@ -128,7 +129,7 @@ class ProgressionUiTest {
         compose.waitUntil(5000) { vm.uiState.value.preferences.challengeBest.size == 5 }
         compose.runOnIdle { vm.startScenario("lab", 42) }
         compose.waitUntil(5000) { vm.uiState.value.scenarioId == "lab" }
-        assertEquals(8, vm.uiState.value.game!!.board.width)
+        assertEquals(9, vm.uiState.value.game!!.board.width)
         compose.runOnIdle { vm.retry() }
         compose.waitForIdle()
         assertEquals(42L, vm.uiState.value.game!!.seed)
@@ -145,6 +146,11 @@ class ProgressionUiTest {
         compose.waitUntil(5000) { vm.uiState.value.game != null }
         val firstSeed = vm.uiState.value.game!!.seed
         compose.onNodeWithTag("restart-game").performClick()
+        compose.onNodeWithTag("confirmation-dialog").assertIsDisplayed()
+        compose.onNodeWithTag("cancel-dialog").performClick()
+        assertEquals(firstSeed, vm.uiState.value.game!!.seed)
+        compose.onNodeWithTag("restart-game").performClick()
+        compose.onNodeWithTag("confirm-dialog").performClick()
         compose.waitForIdle()
         assertEquals(1, vm.uiState.value.challengeLevel)
         assertEquals(firstSeed, vm.uiState.value.game!!.seed)
@@ -160,6 +166,7 @@ class ProgressionUiTest {
         compose.waitUntil(5000) { vm.uiState.value.game != null }
         val firstSeed = vm.uiState.value.game!!.seed
         compose.onNodeWithTag("restart-game").performClick()
+        compose.onNodeWithTag("confirm-dialog").performClick()
         compose.waitForIdle()
         assertEquals("classic", vm.uiState.value.scenarioId)
         assertNull(vm.uiState.value.challengeLevel)
@@ -169,16 +176,19 @@ class ProgressionUiTest {
     @Test fun menuPulsesStopWithReducedMotion() {
         val reduced = mutableStateOf(false)
         compose.mainClock.autoAdvance = false
-        compose.setContent { MainboardTheme { CircuitBackground(animated = !reduced.value) {} } }
-        compose.mainClock.advanceTimeBy(32)
+        compose.setContent { MainboardTheme { MenuArtworkBackground(reducedMotion = reduced.value) {} } }
+        compose.waitForIdle()
+        compose.mainClock.advanceTimeBy(250)
+        compose.waitForIdle()
         val first = compose.onRoot().captureToImage().toPixelMap()
-        compose.mainClock.advanceTimeBy(1000)
+        compose.mainClock.advanceTimeBy(2500)
+        compose.waitForIdle()
         val second = compose.onRoot().captureToImage().toPixelMap()
         var changed = false
         for (x in 0 until first.width step 3) for (y in 0 until first.height step 3) {
             if (first[x, y] != second[x, y]) changed = true
         }
-        assertTrue(changed)
+        assertTrue("Menu pixels did not change after advancing the animation clock", changed)
         compose.runOnUiThread { reduced.value = true }
         compose.mainClock.advanceTimeBy(32)
         val still = compose.onRoot().captureToImage().toPixelMap()

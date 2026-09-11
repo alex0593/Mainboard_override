@@ -16,9 +16,12 @@ object GameEngine {
         return when (action) {
             is GameAction.PlaceDomino -> placeDomino(state, action)
             is GameAction.PlayPing -> playCard(state, action.cardId, ScriptType.PING) { current ->
+                val hidden = (current.board.honeypots - current.board.revealedHoneypots - current.board.triggeredHoneypots)
+                    .sortedWith(compareBy<Position> { it.y }.thenBy { it.x })
+                val revealed = hidden.randomOrNull(kotlin.random.Random(current.seed xor action.cardId.hashCode().toLong()))
                 current.copy(
-                    board = current.board.copy(revealedHoneypots = current.board.honeypots),
-                    pingPreview = current.dominoBag.take(3),
+                    board = current.board.copy(revealedHoneypots = current.board.revealedHoneypots + listOfNotNull(revealed)),
+                    pingPreview = current.dominoBag.take(1),
                 )
             }
             is GameAction.PlaySpoof -> playSpoof(state, action)
@@ -38,6 +41,7 @@ object GameEngine {
         val newPositions = setOf(firstPosition, secondPosition)
         for (position in newPositions) {
             val value = placed.valueAt(position) ?: continue
+            if (board.bridges.any { position in it.ends && it.value != value }) return false
             for (neighbor in neighbors(board, position).filterNot { it in newPositions }) {
                 val neighborValue = board.valueAt(neighbor) ?: continue
                 if (neighborValue != value) return false
@@ -47,7 +51,11 @@ object GameEngine {
         val reachable = reachableFromStart(board)
         return newPositions.any { position ->
             val value = placed.valueAt(position)
-            neighbors(board, position).any { it in reachable && board.valueAt(it) == value }
+            neighbors(board, position).any { it in reachable && board.valueAt(it) == value } ||
+                board.bridges.any { bridge ->
+                    position in bridge.ends && bridge.value == value &&
+                        bridge.ends.any { it != position && it in reachable && board.valueAt(it) == value }
+                }
         }
     }
 
@@ -78,7 +86,8 @@ object GameEngine {
         val result = when {
             state.dominoHand.isEmpty() && state.dominoBag.isEmpty() -> GameResult.MEMORY_EXHAUSTED
             legalPlacements(state).isEmpty() &&
-                (state.ram < ScriptType.SPOOF.ramCost || state.scriptHand.none { it.type == ScriptType.SPOOF }) -> GameResult.KERNEL_PANIC
+                (state.ram < ScriptType.SPOOF.ramCost || state.scriptHand.none { it.type == ScriptType.SPOOF }) &&
+                !canOpenPlacement(state) -> GameResult.KERNEL_PANIC
             else -> null
         } ?: return Transition(state)
         val finished = state.copy(phase = TurnPhase.FINISHED, result = result)
@@ -143,7 +152,10 @@ object GameEngine {
     private fun playKill(state: GameState, action: GameAction.PlayKillProcess): Transition {
         if (action.target !in state.board.firewalls) return rejected(state, RejectReason.INVALID_TARGET)
         return playCard(state, action.cardId, ScriptType.KILL_PROCESS) { current ->
-            current.copy(board = current.board.copy(firewalls = current.board.firewalls - action.target))
+            current.copy(board = current.board.copy(
+                firewalls = current.board.firewalls - action.target,
+                bridges = current.board.bridges.filterNot { it.center == action.target },
+            ))
         }
     }
 
@@ -158,14 +170,35 @@ object GameEngine {
             Position(center.x, center.y - 1) to Position(center.x, center.y + 1)
         }
         val values = state.board.valueAt(ends.first) to state.board.valueAt(ends.second)
-        if (!inBounds(state.board, ends.first) || !inBounds(state.board, ends.second) || values.first == null || values.first != values.second) {
+        val value = values.first ?: values.second
+        val hasTile = state.board.placed.any { it.valueAt(ends.first) != null || it.valueAt(ends.second) != null }
+        if (!inBounds(state.board, ends.first) || !inBounds(state.board, ends.second) ||
+            ends.first in state.board.firewalls || ends.second in state.board.firewalls ||
+            !hasTile || value == null || (values.first != null && values.second != null && values.first != values.second)) {
             return rejected(state, RejectReason.INVALID_TARGET)
         }
         return playCard(state, action.cardId, ScriptType.BRIDGE) { current ->
             current.copy(board = current.board.copy(
-                bridges = current.board.bridges + Bridge("bridge-${current.turn}-${center.x}-${center.y}", center, action.horizontal),
+                bridges = current.board.bridges + Bridge("bridge-${current.turn}-${center.x}-${center.y}", center, action.horizontal, value),
             ))
         }
+    }
+
+    /** Search only resource-opening scripts; every recursive step consumes a card. */
+    private fun canOpenPlacement(state: GameState): Boolean {
+        for (card in state.scriptHand.filter { it.type in setOf(ScriptType.BRIDGE, ScriptType.KILL_PROCESS) && it.type.ramCost <= state.ram }) {
+            for (target in state.board.firewalls) {
+                val actions = if (card.type == ScriptType.BRIDGE)
+                    listOf(GameAction.PlayBridge(card.id, target, true), GameAction.PlayBridge(card.id, target, false))
+                else listOf(GameAction.PlayKillProcess(card.id, target))
+                for (action in actions) {
+                    val next = reduce(state, action).state
+                    if (next == state) continue
+                    if (legalPlacements(next).isNotEmpty() || canOpenPlacement(next)) return true
+                }
+            }
+        }
+        return false
     }
 
     private inline fun playCard(
@@ -272,8 +305,10 @@ object GameEngine {
             } else {
                 Position(bridge.center.x, bridge.center.y - 1) to Position(bridge.center.x, bridge.center.y + 1)
             }
-            if (position == ends.first) result += ends.second
-            if (position == ends.second) result += ends.first
+            if (board.valueAt(ends.first) == bridge.value && board.valueAt(ends.second) == bridge.value) {
+                if (position == ends.first) result += ends.second
+                if (position == ends.second) result += ends.first
+            }
         }
         return result.filter { inBounds(board, it) }
     }

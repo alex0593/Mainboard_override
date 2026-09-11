@@ -1,6 +1,7 @@
 package com.aela.mainboardoverride.ui
 
 import com.aela.mainboardoverride.domain.Orientation
+import androidx.compose.ui.graphics.Color
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -27,5 +28,11 @@ class DominoResourcesTest {
             assertEquals(-90f, dominoAngle(value, value, Orientation.HORIZONTAL))
             assertEquals(0f, dominoAngle(value, value, Orientation.VERTICAL))
         }
+    }
+
+    @Test fun lightThemedSkinsUseDistinctReadablePipColors() {
+        assertEquals(Color(0xFF075985), dominoPipColor("ice"))
+        assertEquals(Color(0xFFFFC107), dominoPipColor("aurora"))
+        assertTrue(dominoPipColor("ice") != dominoPipColor("aurora"))
     }
 }

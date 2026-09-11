@@ -32,7 +32,10 @@
     <string name="next_challenge">Next challenge</string>
     <string name="restart_level">Restart level</string>
     <string name="restart_network">Restart network</string>
-    <string name="exit_match">EXIT</string>
+    <string name="exit_match">Leave level</string>
+    <string name="retry_level">Retry</string>
+    <string name="skin_obsidian">Obsidian circuit</string>
+    <string name="skin_ceramic">Ceramic circuit</string>
     <string name="confirm_exit_title">Leave match?</string>
     <string name="confirm_restart_title">Restart network?</string>
     <string name="confirm_match_loss">This match is not saved. Are you sure?</string>
@@ -81,7 +84,7 @@
     <string name="second_half">Second port</string>
     <string name="horizontal">Horizontal</string>
     <string name="vertical">Vertical</string>
-    <string name="ping_preview">PING: next hardware</string>
+    <string name="ping_preview">PING: next domino</string>
     <string name="noise">Noise +%1$d</string>
     <string name="status_turn">TURN</string>
     <string name="status_ram">RAM</string>
@@ -111,7 +114,7 @@
     <string name="error_not_connected">Place next to the network connected to start.</string>
     <string name="error_card_not_found">Select an available script.</string>
     <string name="error_insufficient_ram">Not enough RAM. Place hardware and execute the turn to refill it.</string>
-    <string name="error_invalid_target">Choose a valid target: a hand port for SPOOF, a firewall for KILL, or equal ports across a firewall for BRIDGE.</string>
+    <string name="error_invalid_target">Choose a valid target: a hand port for SPOOF, a firewall for KILL, or a firewall beside a domino with a compatible exit for BRIDGE.</string>
     <string name="error_must_place_domino">Place one domino before executing the turn.</string>
     <string name="result_victory">Extraction connected successfully.</string>
     <string name="result_trace_intercepted">Trace reached 100. Use fewer noisy scripts.</string>
@@ -122,7 +125,7 @@
     <string name="help_description">Help: %1$s</string>
     <string name="help_close">Close</string>
     <string name="help_board_title">Board and objective</string>
-    <string name="help_board_body">Connect S0 (start, value 0) to X6 (extraction, value 6), then execute the turn. Match every outside contact; the two halves inside a domino connect automatically. Green outlines mark valid origins for the selected domino. Tap an origin to place its first port there; the other goes right or down.\n\nGreen circuit chip: firewall, blocks placement. Circuit icon with a downward arrow: revealed honeypot (shown as a small badge on hardware); covering a hidden or revealed trap adds 20 noise and discards a script (once per placement, only for new traps). D!: daemon, moves one connected cell toward start each turn; reaching start ends the match. ═ / ║: horizontal / vertical bridge across a firewall.\n\nAt 100 trace you lose. Running out of hardware or having no legal placements without an available SPOOF also ends the match. Defeats from trace or daemon are checked before victory.</string>
+    <string name="help_board_body">Connect S0 (start, value 0) to X6 (extraction, value 6), then execute the turn. Match every outside contact; the two halves inside a domino connect automatically. Green outlines mark valid origins for the selected domino. Tap an origin to place its first port there; the other goes right or down.\n\nGreen circuit chip: firewall, blocks placement. Circuit icon with a downward arrow: revealed honeypot (shown as a small badge on hardware); covering a hidden or revealed trap adds 20 noise and discards a script (once per placement, only for new traps). D!: daemon, moves one connected cell toward start each turn; reaching start ends the match. ═ / ║: horizontal / vertical bridge across a firewall.\n\nAt 100 trace you lose. Running out of hardware or having no legal placements or scripts that allow play to continue also ends the match. Defeats from trace or daemon are checked before victory.</string>
     <string name="help_ram_title">RAM</string>
     <string name="help_ram_body">Scripts spend RAM when executed successfully. You have up to 3 RAM, restored after executing the turn. Placing and rotating hardware cost no RAM. You can read help even when a script is unavailable.</string>
     <string name="help_trace_title">Trace</string>
@@ -138,13 +141,13 @@
     <string name="help_rotate_body">Cycles through horizontal, vertical, reversed horizontal and reversed vertical. The preview shows the exact port order: first on the left or top. Four presses restore the original orientation. Rotation spends no resources.</string>
     <string name="help_end_turn_body">Available after placing one domino. Applies 8 plus noise to trace, moves the daemon and checks defeat and victory. If play continues, restores 3 RAM, draws one domino and up to one script if there is room and stock, and clears the PING hardware preview.</string>
     <string name="help_ping_title">PING</string>
-    <string name="help_ping_body">Tap the card to reveal all hidden honeypots and up to three upcoming dominoes immediately. Traps stay revealed; the domino preview lasts until you execute the turn. Revealing traps does not trigger them.</string>
+    <string name="help_ping_body">Tap the card to preview the next domino and reveal one random hidden honeypot without triggering it. Earlier discoveries remain visible. The preview lasts until you execute the turn. If no hidden traps or dominoes remain, only the available information is shown.</string>
     <string name="help_spoof_title">SPOOF</string>
     <string name="help_spoof_body">Select the card, then a domino in your hand. Choose either port and a value from 0 to 6. Check the before/after images and apply to change that port permanently. Cancel or close to leave the domino and resources unchanged.</string>
     <string name="help_kill_title">KILL_PROCESS</string>
     <string name="help_kill_body">Select the card, then tap a firewall to remove it and free its cell for hardware. This script targets firewalls; it cannot remove the daemon.</string>
     <string name="help_bridge_title">BRIDGE</string>
-    <string name="help_bridge_body">Select the card, choose horizontal or vertical, then tap a firewall. The two ports on opposite sides must exist and have equal values. The bridge connects them without removing the firewall. Each firewall can hold one bridge.</string>
+    <string name="help_bridge_body">Select the card, choose horizontal or vertical, then tap a firewall beside a domino. The bridge copies its port across the firewall without removing it. The opposite cell stays free for a matching domino. Existing ports on both sides must match. Each firewall can hold one bridge.</string>
     <string name="help_script_cost">Cost: %1$d RAM · Noise: +%2$d</string>
     <string name="spoof_before">Before</string>
     <string name="spoof_after">After</string>

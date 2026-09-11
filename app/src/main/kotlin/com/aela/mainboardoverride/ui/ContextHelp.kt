@@ -11,7 +11,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -71,17 +70,12 @@ internal fun HelpDialog(topic: HelpTopic, onClose: () -> Unit) {
     val body = stringResource(topic.body)
     val cost = topic.script?.let { stringResource(R.string.help_script_cost, it.ramCost, it.traceNoise) }
     val close = stringResource(R.string.help_close)
-    AlertDialog(
-        onDismissRequest = onClose,
-        title = { Text(title) },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text(body)
-                cost?.let { Text(it) }
-            }
-        },
-        confirmButton = { TextButton(onClick = onClose) { Text(close) } },
-    )
+    GameDialog(title = title, onDismiss = onClose, actions = {
+        TextButton(onClick = onClose, modifier = Modifier.heightIn(min = 48.dp)) { Text(close) }
+    }) {
+        Text(body)
+        cost?.let { Text(it) }
+    }
 }
 
 @Composable
@@ -102,19 +96,15 @@ internal fun GeneralGameHelp(onClose: () -> Unit) {
     val buffs = stringResource(R.string.help_buffs_body)
     val title = stringResource(R.string.help_general)
     val close = stringResource(R.string.help_close)
-    AlertDialog(onDismissRequest = onClose,
-        title = { Text(title) },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                groups.indices.forEach { index ->
-                    TextButton(
-                        onClick = { expanded = if (expanded == index) null else index },
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("help-section-$index"),
-                    ) { Text((if (expanded == index) "− " else "+ ") + titles[index]) }
-                    if (expanded == index) Text(bodies[index] + if (index == 0) "\n\n$buffs" else "")
-                }
-            }
-        },
-        confirmButton = { TextButton(onClick = onClose) { Text(close) } },
-    )
+    GameDialog(title = title, onDismiss = onClose, actions = {
+        TextButton(onClick = onClose, modifier = Modifier.heightIn(min = 48.dp)) { Text(close) }
+    }) {
+        groups.indices.forEach { index ->
+            TextButton(
+                onClick = { expanded = if (expanded == index) null else index },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("help-section-$index"),
+            ) { Text((if (expanded == index) "− " else "+ ") + titles[index]) }
+            if (expanded == index) Text(bodies[index] + if (index == 0) "\n\n$buffs" else "")
+        }
+    }
 }

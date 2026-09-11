@@ -32,7 +32,10 @@
     <string name="next_challenge">Siguiente desafío</string>
     <string name="restart_level">Reiniciar nivel</string>
     <string name="restart_network">Reiniciar red</string>
-    <string name="exit_match">SALIR</string>
+    <string name="exit_match">Salir del nivel</string>
+    <string name="retry_level">Reintentar</string>
+    <string name="skin_obsidian">Circuito obsidiana</string>
+    <string name="skin_ceramic">Circuito cerámico</string>
     <string name="confirm_exit_title">¿Salir de la partida?</string>
     <string name="confirm_restart_title">¿Reiniciar la red?</string>
     <string name="confirm_match_loss">La partida no se guarda. ¿Estás seguro?</string>
@@ -79,7 +82,7 @@
     <string name="second_half">Segundo puerto</string>
     <string name="horizontal">Horizontal</string>
     <string name="vertical">Vertical</string>
-    <string name="ping_preview">PING: próximas fichas</string>
+    <string name="ping_preview">PING: siguiente ficha</string>
     <string name="noise">Ruido +%1$d</string>
     <string name="status_turn">TURNO</string>
     <string name="status_ram">RAM</string>
@@ -109,7 +112,7 @@
     <string name="error_not_connected">Coloca junto a la red conectada con inicio.</string>
     <string name="error_card_not_found">Selecciona un script disponible.</string>
     <string name="error_insufficient_ram">No hay suficiente RAM. Coloca una ficha y ejecuta el turno para reponerla.</string>
-    <string name="error_invalid_target">Elige un objetivo válido: un puerto de la mano para SPOOF, un firewall para KILL o puertos iguales separados por un firewall para BRIDGE.</string>
+    <string name="error_invalid_target">Elige un objetivo válido: un puerto de la mano para SPOOF, un firewall para KILL o un firewall junto a una ficha con salida compatible para BRIDGE.</string>
     <string name="error_must_place_domino">Coloca una ficha antes de ejecutar el turno.</string>
     <string name="result_victory">Extracción conectada correctamente.</string>
     <string name="result_trace_intercepted">El rastreo llegó a 100. Usa menos scripts ruidosos.</string>
@@ -120,7 +123,7 @@
     <string name="help_description">Ayuda: %1$s</string>
     <string name="help_close">Cerrar</string>
     <string name="help_board_title">Tablero y objetivo</string>
-    <string name="help_board_body">Conecta S0 (inicio, valor 0) con X6 (extracción, valor 6) y ejecuta el turno. Todos los contactos externos deben coincidir; las dos mitades de una ficha se conectan automáticamente. Los bordes verdes marcan orígenes válidos para la ficha seleccionada. Toca un origen para colocar allí su primer puerto; el otro queda a la derecha o abajo.\n\nChip verde con circuitos: firewall, bloquea la colocación. Icono de circuitos con flecha hacia abajo: honeypot revelado (aparece como insignia pequeña sobre una ficha); cubrir una trampa oculta o revelada añade 20 de ruido y descarta un script (una vez por colocación, solo para trampas nuevas). D!: daemon, avanza una celda conectada hacia inicio por turno; si llega, pierdes. ═ / ║: puente horizontal / vertical sobre un firewall.\n\nPierdes al llegar a 100 de rastreo, al agotar las fichas o al quedarte sin colocaciones y sin SPOOF disponible. Las derrotas por rastreo o daemon se comprueban antes de la victoria.</string>
+    <string name="help_board_body">Conecta S0 (inicio, valor 0) con X6 (extracción, valor 6) y ejecuta el turno. Todos los contactos externos deben coincidir; las dos mitades de una ficha se conectan automáticamente. Los bordes verdes marcan orígenes válidos para la ficha seleccionada. Toca un origen para colocar allí su primer puerto; el otro queda a la derecha o abajo.\n\nChip verde con circuitos: firewall, bloquea la colocación. Icono de circuitos con flecha hacia abajo: honeypot revelado (aparece como insignia pequeña sobre una ficha); cubrir una trampa oculta o revelada añade 20 de ruido y descarta un script (una vez por colocación, solo para trampas nuevas). D!: daemon, avanza una celda conectada hacia inicio por turno; si llega, pierdes. ═ / ║: puente horizontal / vertical sobre un firewall.\n\nPierdes al llegar a 100 de rastreo, al agotar las fichas o al quedarte sin colocaciones ni scripts que permitan continuar. Las derrotas por rastreo o daemon se comprueban antes de la victoria.</string>
     <string name="help_ram_title">RAM</string>
     <string name="help_ram_body">Los scripts gastan RAM al ejecutarse correctamente. Dispones de hasta 3 RAM, que se reponen al ejecutar el turno. Colocar y rotar fichas no consume RAM. Puedes consultar la ayuda aunque un script no esté disponible.</string>
     <string name="help_trace_title">Rastreo</string>
@@ -134,15 +137,15 @@
     <string name="help_scripts_body">Selecciona un script para usar su efecto. PING se ejecuta inmediatamente; los demás requieren un objetivo. Cada ejecución correcta consume la carta y su coste de RAM y añade su ruido. Puedes cancelar una selección pendiente sin gastar recursos. Consulta el ? de cada carta para ver sus instrucciones.</string>
     <string name="help_hardware_body">Cada ficha tiene dos puertos con valores de 0 a 6; una mitad vacía vale 0. Selecciona una ficha, rótala si hace falta y toca una celda con borde verde. Ambas celdas deben estar libres y todos los contactos externos deben coincidir. La colocación debe tocar la red conectada con S0.</string>
     <string name="help_rotate_body">Alterna entre horizontal, vertical, horizontal invertida y vertical invertida. La vista previa muestra el orden exacto: el primer puerto queda a la izquierda o arriba. Cuatro pulsaciones recuperan la orientación inicial. Rotar no gasta recursos.</string>
-    <string name="help_end_turn_body">Disponible después de colocar una ficha. Suma 8 más el ruido al rastreo, mueve al daemon y comprueba derrota y victoria. Si la partida continúa, repone 3 RAM, roba una ficha y hasta un script si hay espacio y existencias, y limpia la vista de próximas fichas de PING.</string>
+    <string name="help_end_turn_body">Disponible después de colocar una ficha. Suma 8 más el ruido al rastreo, mueve al daemon y comprueba derrota y victoria. Si la partida continúa, repone 3 RAM, roba una ficha y hasta un script si hay espacio y existencias, y limpia la vista de la siguiente ficha de PING.</string>
     <string name="help_ping_title">PING</string>
-    <string name="help_ping_body">Toca la carta para revelar inmediatamente todos los honeypots ocultos y hasta tres próximas fichas. Las trampas siguen reveladas; la vista de fichas dura hasta ejecutar el turno. Revelar trampas no las activa.</string>
+    <string name="help_ping_body">Toca la carta para ver la siguiente ficha y revelar un honeypot oculto al azar, sin activarlo. Los descubrimientos anteriores se conservan. La vista de la ficha dura hasta ejecutar el turno. Si no quedan trampas ocultas o fichas, se muestra solo la información disponible.</string>
     <string name="help_spoof_title">SPOOF</string>
     <string name="help_spoof_body">Selecciona la carta y una ficha de tu mano. Elige cualquiera de los dos puertos y un valor de 0 a 6. Revisa las imágenes de antes y después y aplica para cambiar ese puerto permanentemente. Cancelar o cerrar conserva la ficha y los recursos.</string>
     <string name="help_kill_title">KILL_PROCESS</string>
     <string name="help_kill_body">Selecciona la carta y toca un firewall para eliminarlo y liberar su celda para colocar fichas. Este script actúa sobre firewalls; no elimina al daemon.</string>
     <string name="help_bridge_title">BRIDGE</string>
-    <string name="help_bridge_body">Selecciona la carta, elige horizontal o vertical y toca un firewall. Deben existir dos puertos de igual valor a sus lados opuestos. El puente los conecta sin eliminar el firewall. Cada firewall admite un puente.</string>
+    <string name="help_bridge_body">Selecciona la carta, elige horizontal o vertical y toca un firewall junto a una ficha. El puente copia su puerto y cruza el firewall sin eliminarlo. La casilla opuesta queda libre para colocar una ficha del mismo número. Si ya hay puertos a ambos lados, deben coincidir. Cada firewall admite un puente.</string>
     <string name="help_script_cost">Coste: %1$d RAM · Ruido: +%2$d</string>
     <string name="spoof_before">Antes</string>
     <string name="spoof_after">Después</string>

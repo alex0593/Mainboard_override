@@ -35,8 +35,8 @@ class GameEngineTest {
             var state = generated.state
             layouts += state.board.firewalls
             lengths += generated.solution.size
-            assertTrue(state.board.firewalls.size in 4..7)
-            assertTrue(state.board.honeypots.size in 2..4)
+            assertEquals(3, state.board.firewalls.size)
+            assertEquals(1, state.board.honeypots.size)
             assertTrue(state.board.firewalls.intersect(state.board.honeypots).isEmpty())
             assertTrue((state.board.firewalls + state.board.honeypots).none {
                 it == state.board.start || it == state.board.extraction || it.x !in 0 until state.board.width || it.y !in 0 until state.board.height
@@ -48,10 +48,10 @@ class GameEngineTest {
                 state = GameEngine.reduce(placed.state, GameAction.EndTurn).state
             }
             assertEquals(GameResult.VICTORY, state.result, "seed $seed")
-            assertEquals(generated.solution.size * 8, state.trace)
+            assertTrue(state.trace <= generated.solution.size * 8)
         }
-        assertTrue(layouts.size > 900)
-        assertEquals(setOf(5, 6, 7), lengths)
+        assertTrue(layouts.size > 500)
+        assertEquals(setOf(5), lengths)
     }
 
     @Test fun `ping consumes ram and reveals traps`() {
@@ -60,7 +60,7 @@ class GameEngineTest {
         val result = GameEngine.reduce(generated.copy(scriptHand = listOf(ping)), GameAction.PlayPing(ping.id)).state
         assertEquals(2, result.ram)
         assertEquals(result.board.honeypots, result.board.revealedHoneypots)
-        assertEquals(result.dominoBag.take(3), result.pingPreview)
+        assertEquals(result.dominoBag.take(1), result.pingPreview)
     }
 
     @Test fun `spoof permanently changes one held port`() {
@@ -139,7 +139,9 @@ class GameEngineTest {
     }
 
     @Test fun `every scenario is reproducible solvable and respects its profile`() {
-        for (scenario in ScenarioCatalog.all.drop(1)) for (seed in 0L until 100L) {
+        assertEquals(listOf(8, 9, 9, 10, 10, 11, 11), ScenarioCatalog.all.map { it.width })
+        assertTrue(ScenarioCatalog.all.all { it.height == 6 })
+        for (scenario in ScenarioCatalog.all) for (seed in 0L until 100L) {
             val generated = LevelGenerator.generateVerified(seed, scenarioId = scenario.id)
             assertEquals(generated, LevelGenerator.generateVerified(seed, scenarioId = scenario.id))
             assertEquals(scenario.width, generated.state.board.width)

@@ -58,7 +58,11 @@ enum class ScriptType(
 
 data class ScriptCard(val id: String, val type: ScriptType)
 
-data class Bridge(val id: String, val center: Position, val horizontal: Boolean)
+data class Bridge(val id: String, val center: Position, val horizontal: Boolean, val value: Int) {
+    val ends: List<Position> get() = if (horizontal)
+        listOf(Position(center.x - 1, center.y), Position(center.x + 1, center.y))
+    else listOf(Position(center.x, center.y - 1), Position(center.x, center.y + 1))
+}
 
 data class Daemon(val position: Position)
 
