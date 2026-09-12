@@ -24,6 +24,11 @@
     <string name="free_scenarios">Escenarios de modo libre</string>
     <string name="scenario_difficulty">Dificultad %1$d · %2$d × %3$d</string>
     <string name="scenario_locked">%1$d / %2$d desafíos distintos completados</string>
+    <string name="show_details">Mostrar detalles</string>
+    <string name="hide_details">Ocultar detalles</string>
+    <string name="scenario_route">Longitud de ruta: %1$d</string>
+    <string name="scenario_firewalls">Firewalls: %1$d</string>
+    <string name="scenario_traps">Honeypots: %1$d</string>
     <string name="play_scenario">Jugar</string>
     <string name="locked_scenario">Bloqueado</string>
     <string name="saving_reward">Guardando recompensa…</string>
@@ -77,6 +82,7 @@
     <string name="spanish">ESPAÑOL</string>
     <string name="record">MEJOR: %1$d TURNOS · %2$d%% RASTREO</string>
     <string name="cancel">Cancelar</string>
+    <string name="action_error">No se pudo completar la acción</string>
     <string name="apply">Aplicar</string>
     <string name="first_half">Primer puerto</string>
     <string name="second_half">Segundo puerto</string>

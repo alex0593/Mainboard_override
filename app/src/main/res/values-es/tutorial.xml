@@ -1,0 +1,85 @@
+<resources>
+    <string name="tutorial">TUTORIAL</string>
+    <string name="puzzle_preview">Previsualización del tablero</string>
+    <string name="preview_failed">No se pudo cargar la previsualización.</string>
+    <string name="preview_retry">Reintentar</string>
+    <string name="puzzle_difficulty">Dificultad %1$d</string>
+    <string name="preview_example">Tablero de ejemplo. Al jugar se genera un tablero aleatorio nuevo.</string>
+    <string name="puzzle_objective">Conecta el inicio 0 con la extracción 6 y ejecuta turno sin perder.</string>
+    <string name="puzzle_record">Récord: %1$d turnos · %2$d%% de rastreo</string>
+    <string name="tutorial_intro">Aprende jugando 10 lecciones guiadas. La práctica no cambia tu partida, créditos ni récords. Puedes salir y continuar desde el inicio de tu última lección.</string>
+    <string name="tutorial_start">Iniciar tutorial</string>
+    <string name="tutorial_restart">Reiniciar tutorial</string>
+    <string name="tutorial_continue">Continuar última lección</string>
+    <string name="tutorial_complete">Tutorial completado. Puedes volver a practicar cuando quieras.</string>
+    <string name="tutorial_lesson_complete">Lección completada.</string>
+    <string name="tutorial_next">Siguiente</string>
+    <string name="tutorial_next_lesson">Siguiente lección</string>
+    <string name="tutorial_finish">Terminar tutorial</string>
+    <string name="tutorial_repeat">Repetir lección</string>
+    <string name="tutorial_wrong">Sigue la acción resaltada. Las demás acciones no cambian este ejercicio.</string>
+    <string name="tutorial_status">Turno %1$d · RAM %2$d/3 · Rastreo %3$d%% · Ruido +%4$d</string>
+    <string name="tutorial_rotation">Rotación: %1$d°</string>
+    <string name="tutorial_half">Mitad %1$d</string>
+    <string name="tutorial_spoof_selection">Mitad %1$d → valor %2$d</string>
+    <string name="tutorial_bridge_horizontal">Puente: horizontal ↔</string>
+    <string name="tutorial_bridge_vertical">Puente: vertical ↕</string>
+    <string-array name="tutorial_titles">
+        <item>Objetivo</item>
+        <item>Fichas y conexiones</item>
+        <item>Rotación</item>
+        <item>Turnos, RAM y rastreo</item>
+        <item>Peligros y bonificaciones</item>
+        <item>PING</item>
+        <item>SPOOF y cancelación</item>
+        <item>KILL PROCESS</item>
+        <item>BRIDGE</item>
+        <item>Victoria y progreso</item>
+    </string-array>
+    <string-array name="tutorial_instructions">
+        <item>Conecta el inicio 0 con la extracción 6 mediante fichas. El tablero de práctica es independiente: aquí no gastas créditos ni cambias tus récords.</item>
+        <item>Selecciona la ficha 0–2 resaltada. Cada ficha ocupa dos casillas.</item>
+        <item>Toca la casilla resaltada junto al inicio. Los valores de TODOS los contactos externos deben coincidir; las dos mitades de una ficha pueden ser distintas.</item>
+        <item>¡Conexión válida! Puedes colocar una ficha por turno. Las casillas ocupadas y los firewalls no admiten fichas.</item>
+        <item>Selecciona 2–0. Necesitamos acercar su 0 al inicio.</item>
+        <item>Pulsa Rotar: ahora la orientación es vertical.</item>
+        <item>Pulsa Rotar otra vez: queda horizontal, con las mitades invertidas. Cuatro giros recuperan la posición original.</item>
+        <item>Coloca la ficha en la casilla resaltada. Ahora el 0 coincide con el inicio.</item>
+        <item>Ejecuta turno. Solo puedes hacerlo después de colocar una ficha. Se sumarán 8 puntos de rastreo más el ruido pendiente de los scripts.</item>
+        <item>Se repone una ficha si quedan en la bolsa, se recupera la RAM hasta 3 y puede llegar un script. El ruido vuelve a cero; el rastreo acumulado no.</item>
+        <item>Los firewalls bloquean casillas. El daemon amenaza tu inicio avanzando por la red. Hay trampas ocultas; las bonificaciones visibles dan RAM o reducen el rastreo.</item>
+        <item>Selecciona 0–2 para explorar las dos casillas junto al inicio.</item>
+        <item>Coloca la ficha resaltada: recoge RAM y enfriamiento. Esta práctica también tiene una trampa oculta.</item>
+        <item>La trampa añade 20 de ruido y descarta un script. Ejecuta turno para ver cómo se acumula el rastreo.</item>
+        <item>Vigila el rastreo y el daemon en cada turno. El enfriamiento resta 8 de rastreo y la reserva da 1 RAM, sin superar 3.</item>
+        <item>Pulsa PING. Cuesta 1 RAM, no genera ruido, muestra la próxima ficha y revela una trampa oculta si existe.</item>
+        <item>Observa la trampa revelada. PING informa, pero no elimina trampas ni cambia la bolsa.</item>
+        <item>Selecciona SPOOF. Cuesta 2 RAM y genera 5 de ruido al confirmarlo; permite cambiar una mitad de una ficha a un valor de 0 a 6.</item>
+        <item>Selecciona la ficha 1–2 que quieres modificar.</item>
+        <item>Elige la segunda mitad.</item>
+        <item>Elige el valor 3. Aún no hemos consumido recursos.</item>
+        <item>Pulsa Cancelar. La ficha y los recursos quedan intactos.</item>
+        <item>Selecciona SPOOF de nuevo para hacer una modificación útil.</item>
+        <item>Selecciona la ficha 1–2.</item>
+        <item>Elige la primera mitad, la que contiene 1.</item>
+        <item>Elige 0 para poder conectarla al inicio.</item>
+        <item>Pulsa Aplicar. Ahora sí se consume RAM, se añade ruido y cambia la ficha.</item>
+        <item>Selecciona la ficha modificada 0–2.</item>
+        <item>Colócala junto al inicio. SPOOF ayuda cuando no tienes un valor compatible.</item>
+        <item>Selecciona KILL PROCESS. Cuesta 3 RAM y genera 15 de ruido. Elimina un firewall, no al daemon.</item>
+        <item>Toca el firewall resaltado. Si tenía un puente, también desaparece.</item>
+        <item>Selecciona 0–2: la casilla que estaba bloqueada ya está libre.</item>
+        <item>Coloca la ficha en la casilla resaltada.</item>
+        <item>Selecciona BRIDGE. Cuesta 2 RAM y genera 10 de ruido. Une los extremos de un firewall sin eliminarlo; necesita una ficha adyacente.</item>
+        <item>Cambia el puente a vertical para conocer el control.</item>
+        <item>Vuelve a horizontal: nuestra conexión cruza de izquierda a derecha.</item>
+        <item>Toca el firewall resaltado. El puente transmite el valor 2; si ambos extremos están ocupados, sus valores deben coincidir.</item>
+        <item>Selecciona 2–6 para continuar al otro lado.</item>
+        <item>Colócala en la casilla resaltada. No colocamos fichas encima del firewall.</item>
+        <item>Selecciona 4–6 para completar la ruta.</item>
+        <item>Coloca la ficha resaltada: el 4 continúa la red y el 6 toca la extracción.</item>
+        <item>Ejecuta turno para comprobar la victoria. Conectar no basta: evita que el rastreo llegue a 100 o que el daemon alcance el inicio al resolver el turno.</item>
+        <item>¡Victoria! También puedes perder por superar los límites del desafío, agotar las fichas sin llegar a la salida o no tener una jugada ni un script que te rescate.</item>
+        <item>Fuera del tutorial, una victoria da 20 créditos y el primer éxito en cada desafío añade 40. Cada 5 desafíos completados se desbloquea un escenario. Las skins son cosméticas; en modo libre el tablero es aleatorio.</item>
+    </string-array>
+</resources>

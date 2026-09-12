@@ -52,6 +52,7 @@ data class GameUiState(
 /** Coordinates navigation-facing selection state, the pure engine and player preferences. */
 class MainViewModel(application: Application, private val repository: PlayerPreferencesRepository) : AndroidViewModel(application) {
     constructor(application: Application) : this(application, DataStorePlayerPreferencesRepository(application))
+    val tutorial = com.aela.mainboardoverride.ui.TutorialController(repository, viewModelScope)
     private val session = MutableStateFlow(GameUiState())
 
     val uiState: StateFlow<GameUiState> = combine(session, repository.preferences) { game, preferences ->
@@ -83,6 +84,7 @@ class MainViewModel(application: Application, private val repository: PlayerPref
     fun retryLast() { uiState.value.preferences.let { prefs -> prefs.lastSeed?.let { startScenario(prefs.lastScenario, it) } } }
     fun reviewBoard() { session.update { it.copy(reviewingBoard = true, selectedDominoId = null, selectedScriptId = null) } }
     fun showResult() { session.update { it.copy(reviewingBoard = false) } }
+    fun dismissMessage() { session.update { it.copy(message = null) } }
     fun buySkin(id: String) = viewModelScope.launch { repository.buySkin(id) }
 
     fun retry() {

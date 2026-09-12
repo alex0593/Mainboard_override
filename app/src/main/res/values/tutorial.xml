@@ -1,0 +1,85 @@
+<resources>
+    <string name="tutorial">TUTORIAL</string>
+    <string name="puzzle_preview">Board preview</string>
+    <string name="preview_failed">Preview could not be loaded.</string>
+    <string name="preview_retry">Retry</string>
+    <string name="puzzle_difficulty">Difficulty %1$d</string>
+    <string name="preview_example">Example board. Playing generates a new random board.</string>
+    <string name="puzzle_objective">Connect start 0 to extraction 6 and execute turn without losing.</string>
+    <string name="puzzle_record">Record: %1$d turns · %2$d%% trace</string>
+    <string name="tutorial_intro">Learn by playing 10 short guided lessons. Practice never changes your match, credits or records. You can exit and resume from the beginning of your last lesson.</string>
+    <string name="tutorial_start">Start tutorial</string>
+    <string name="tutorial_restart">Restart tutorial</string>
+    <string name="tutorial_continue">Continue last lesson</string>
+    <string name="tutorial_complete">Tutorial completed. You can practice again whenever you like.</string>
+    <string name="tutorial_lesson_complete">Lesson completed.</string>
+    <string name="tutorial_next">Next</string>
+    <string name="tutorial_next_lesson">Next lesson</string>
+    <string name="tutorial_finish">Finish tutorial</string>
+    <string name="tutorial_repeat">Repeat lesson</string>
+    <string name="tutorial_wrong">Follow the highlighted action. Other actions do not change this exercise.</string>
+    <string name="tutorial_status">Turn %1$d · RAM %2$d/3 · Trace %3$d%% · Noise +%4$d</string>
+    <string name="tutorial_rotation">Rotation: %1$d°</string>
+    <string name="tutorial_half">Half %1$d</string>
+    <string name="tutorial_spoof_selection">Half %1$d → value %2$d</string>
+    <string name="tutorial_bridge_horizontal">Bridge: horizontal ↔</string>
+    <string name="tutorial_bridge_vertical">Bridge: vertical ↕</string>
+    <string-array name="tutorial_titles">
+        <item>Goal</item>
+        <item>Tiles and connections</item>
+        <item>Rotation</item>
+        <item>Turns, RAM and trace</item>
+        <item>Hazards and bonuses</item>
+        <item>PING</item>
+        <item>SPOOF and cancellation</item>
+        <item>KILL PROCESS</item>
+        <item>BRIDGE</item>
+        <item>Victory and progression</item>
+    </string-array>
+    <string-array name="tutorial_instructions">
+        <item>Connect start 0 to extraction 6 using dominoes. Practice is independent: it does not spend credits or change records.</item>
+        <item>Select the highlighted 0–2 tile. Each tile occupies two cells.</item>
+        <item>Tap the highlighted cell beside start. ALL external touching values must match; the two halves within a tile may differ.</item>
+        <item>Valid connection! Place one tile per turn. Occupied cells and firewalls cannot hold new tiles.</item>
+        <item>Select 2–0. We need its 0 next to start.</item>
+        <item>Press Rotate: the tile is now vertical.</item>
+        <item>Press Rotate again: it is horizontal with reversed halves. Four rotations restore the original position.</item>
+        <item>Place the tile in the highlighted cell. Its 0 now matches start.</item>
+        <item>Execute turn. You must first place a tile. Trace increases by 8 plus pending script noise.</item>
+        <item>A tile is drawn if the bag has any, RAM recovers to 3 and a script may be drawn. Noise resets; accumulated trace does not.</item>
+        <item>Firewalls block cells. The daemon threatens start as it moves through the network. Traps are hidden; visible bonuses give RAM or reduce trace.</item>
+        <item>Select 0–2 to explore the two cells beside start.</item>
+        <item>Place the highlighted tile to collect RAM and cooling. This exercise also has a hidden trap.</item>
+        <item>The trap adds 20 noise and discards a script. Execute turn to see trace accumulate.</item>
+        <item>Watch trace and the daemon each turn. Cooling removes 8 trace; a reserve gives 1 RAM, capped at 3.</item>
+        <item>Press PING. It costs 1 RAM, adds no noise, previews the next tile and reveals one hidden trap if present.</item>
+        <item>Observe the revealed trap. PING provides information; it does not remove traps or change the bag.</item>
+        <item>Select SPOOF. On confirmation it costs 2 RAM and adds 5 noise. It changes one half of a tile to a value from 0 to 6.</item>
+        <item>Select the 1–2 tile to modify.</item>
+        <item>Choose its second half.</item>
+        <item>Choose value 3. No resources have been spent yet.</item>
+        <item>Press Cancel. The tile and resources remain unchanged.</item>
+        <item>Select SPOOF again to make a useful change.</item>
+        <item>Select the 1–2 tile.</item>
+        <item>Choose the first half, which contains 1.</item>
+        <item>Choose 0 so it can connect to start.</item>
+        <item>Press Apply. RAM is spent, noise is added and the tile changes.</item>
+        <item>Select the modified 0–2 tile.</item>
+        <item>Place it beside start. SPOOF helps when no value matches.</item>
+        <item>Select KILL PROCESS. It costs 3 RAM and adds 15 noise. It removes a firewall, not the daemon.</item>
+        <item>Tap the highlighted firewall. Any bridge on it is also removed.</item>
+        <item>Select 0–2: the blocked cell is now free.</item>
+        <item>Place the tile in the highlighted cell.</item>
+        <item>Select BRIDGE. It costs 2 RAM and adds 10 noise. It joins the ends of a firewall without removing it and requires an adjacent tile.</item>
+        <item>Switch the bridge to vertical to try the control.</item>
+        <item>Switch back to horizontal: our connection runs left to right.</item>
+        <item>Tap the highlighted firewall. This bridge transmits value 2. If both ends are occupied, their values must match.</item>
+        <item>Select 2–6 to continue on the other side.</item>
+        <item>Place it in the highlighted cell. Tiles do not occupy the firewall.</item>
+        <item>Select 4–6 to complete the route.</item>
+        <item>Place the highlighted tile: 4 continues the network and 6 touches extraction.</item>
+        <item>Execute turn to check victory. Connecting is not enough: keep trace below 100 and prevent the daemon reaching start during turn resolution.</item>
+        <item>Victory! You can also lose by exceeding challenge limits, exhausting tiles before reaching extraction, or having neither a legal move nor a rescue script.</item>
+        <item>Outside practice, victory earns 20 credits and the first win in each challenge adds 40. Every 5 completed challenges unlock a scenario. Skins are cosmetic; free play generates a random board.</item>
+    </string-array>
+</resources>

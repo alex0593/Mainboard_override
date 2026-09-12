@@ -4,7 +4,7 @@ Vertical slice de un juego táctico de lógica para Android. El jugador conecta 
 
 ## Estado
 
-Versión actual: **0.1.0-alpha.11**.
+Versión actual: **0.1.0-alpha.12**.
 
 El repositorio contiene el motor Kotlin puro, una aplicación Jetpack Compose horizontal, generación determinista por semillas, persistencia local de ajustes y récords, recursos en español e inglés y pruebas unitarias del bucle principal.
 
@@ -18,9 +18,15 @@ Una victoria otorga 20 créditos y la primera victoria de cada desafío añade 4
 
 El resumen permite revisar el tablero final, volver a los resultados, reintentar o avanzar al siguiente desafío. El menú tiene pulsos animados que se desactivan con movimiento reducido. Las pruebas de progresión usan un DataStore aislado en caché y no modifican el perfil real.
 
+Las tarjetas de desafíos y dificultades abren detalles antes de iniciar la partida. Las previsualizaciones se generan bajo demanda y se guardan en una caché limitada; el modo libre muestra un ejemplo etiquetado, no el futuro tablero aleatorio. Las dificultades bloqueadas muestran candado y no permiten entrar.
+
+El botón Tutorial del menú ofrece diez lecciones jugables sobre conexiones, rotación, turnos, peligros y los cuatro scripts. Guarda la última lección para continuar o reiniciar, sin alterar créditos, récords ni partidas. Los controles de partida tienen espacio propio y las tarjetas de skins son compactas y centradas.
+
 ## Compilar
 
 Requisitos: JDK 17 y Android SDK 37.
+
+Gradle necesita un JDK completo con `javac`. Si el Java predeterminado apunta al runtime de Minecrack, selecciona el JDK instalado antes de compilar: `export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64` (ruta de este equipo).
 
 ```bash
 ./gradlew test

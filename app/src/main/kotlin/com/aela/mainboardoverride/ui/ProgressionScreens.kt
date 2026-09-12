@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.testTag
@@ -50,9 +51,6 @@ internal fun scenarioLabel(id: String) = when (id) {
     else -> R.string.scenario_classic
 }
 
-/** Shared fixed height keeps scenario and challenge cards visually aligned. */
-internal val ProgressionCardHeight = 320.dp
-
 @Composable
 internal fun ProgressionHeader(
     title: String,
@@ -60,7 +58,7 @@ internal fun ProgressionHeader(
     counter: String? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
-    Box(Modifier.fillMaxWidth().heightIn(min = 64.dp).clip(RoundedCornerShape(10.dp))) {
+    Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))) {
         androidx.compose.foundation.Image(
             painter = androidx.compose.ui.res.painterResource(R.drawable.menu_header_v1),
             contentDescription = null,
@@ -68,18 +66,15 @@ internal fun ProgressionHeader(
             contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
         )
         Row(
-            Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 24.dp, vertical = 8.dp),
+            Modifier.fillMaxWidth().heightIn(min = 72.dp).padding(horizontal = 24.dp, vertical = 12.dp),
             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text(title, Modifier.weight(1f), fontSize = 20.sp, color = Terminal, maxLines = 1)
+            MetalTitle(title, Modifier.weight(1f), fontSize = 20.sp)
             counter?.let { Text(it, color = Warning, fontSize = 12.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace) }
             trailing?.invoke()
             MenuArtworkButton(
-                label = stringResource(R.string.back),
-                onClick = onBack,
-                compact = true,
-                fillWidth = false,
+                stringResource(R.string.back), onBack, compact = true, fillWidth = false,
                 modifier = Modifier.widthIn(min = 92.dp).heightIn(min = 48.dp),
             )
         }
@@ -101,14 +96,14 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                 FilterChip(selected = !pcb, onClick = { pcb = false }, label = { Text(stringResource(R.string.domino_skin)) })
                 FilterChip(selected = pcb, onClick = { pcb = true }, label = { Text(stringResource(R.string.board_skin)) })
             }
-            LazyVerticalGrid(columns = GridCells.Adaptive(210.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            LazyVerticalGrid(columns = GridCells.Adaptive(220.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(if (pcb) boardSkins else dominoSkins, key = { it.id }) { skin ->
                     val paid = pcb && skin.id in Rewards.purchasableSkins
                     val price = Rewards.skinPrice(skin.id)
                     val owned = !paid || skin.id in prefs.ownedSkins || skin.id in locallyPurchased
                     val equipped = skin.id == if (pcb) prefs.boardSkin else prefs.dominoSkin
                     Box(
-                        Modifier.fillMaxWidth().height(ProgressionCardHeight).clip(RoundedCornerShape(14.dp))
+                        Modifier.fillMaxWidth().heightIn(min = 240.dp).clip(RoundedCornerShape(14.dp))
                             .border(1.dp, Cyan.copy(alpha = if (equipped) .72f else .28f), RoundedCornerShape(14.dp)),
                     ) {
                         androidx.compose.foundation.Image(
@@ -117,14 +112,14 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                             modifier = Modifier.matchParentSize(),
                             contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
                         )
-                        Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            if (pcb) Board(BoardState(placed = listOf(PlacedDomino(Domino("sample", 0, 3), Position(1, 3), Orientation.HORIZONTAL))), skin.id, prefs.dominoSkin, emptySet(), modifier = Modifier.fillMaxWidth().height(112.dp), onCell = {}, previewOnly = true)
+                        Column(Modifier.fillMaxWidth().heightIn(min = 240.dp).padding(18.dp), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp, androidx.compose.ui.Alignment.CenterVertically)) {
+                            if (pcb) Board(BoardState(placed = listOf(PlacedDomino(Domino("sample", 0, 3), Position(1, 3), Orientation.HORIZONTAL))), skin.id, prefs.dominoSkin, emptySet(), modifier = Modifier.fillMaxWidth().height(88.dp), onCell = {}, previewOnly = true)
                             else Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                DominoImage(Domino("preview1", 2, 5), Modifier.width(80.dp), skin = skin.id, previewOnly = true)
-                                DominoImage(Domino("preview2", 0, 6), Modifier.width(80.dp), skin = skin.id, previewOnly = true)
+                                DominoImage(Domino("preview1", 2, 5), Modifier.width(64.dp), skin = skin.id, previewOnly = true)
+                                DominoImage(Domino("preview2", 0, 6), Modifier.width(64.dp), skin = skin.id, previewOnly = true)
                             }
-                            Text(stringResource(skin.label), color = Cyan)
-                            Spacer(Modifier.weight(1f))
+                            Text(stringResource(skin.label), Modifier.fillMaxWidth(), color = Cyan, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                            if (paid) Text(stringResource(R.string.skin_price, price), color = Warning, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 10.sp)
                             MenuArtworkButton(
                                 label = if (equipped) stringResource(R.string.equipped) else if (owned) stringResource(R.string.equip) else stringResource(R.string.buy_credits, price),
                                 primary = equipped || owned,
@@ -135,8 +130,7 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                                 }, modifier = Modifier.fillMaxWidth().testTag("skin-action-${skin.id}"),
                                 compact = true,
                             )
-                            if (paid) Text(stringResource(R.string.skin_price, price), color = Warning, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 10.sp)
-                            if (!owned && prefs.credits < price) Text(stringResource(R.string.missing_credits, price - prefs.credits), color = Muted)
+                            if (!owned && prefs.credits < price) Text(stringResource(R.string.missing_credits, price - prefs.credits), Modifier.fillMaxWidth(), color = Muted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                         }
                     }
                 }
@@ -148,57 +142,16 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
             title = stringResource(boardSkins.first { it.id == id }.label),
             onDismiss = { purchase = null },
             actions = {
-                TextButton(onClick = { purchase = null }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.cancel)) }
-                Button(
-                    modifier = Modifier.testTag("confirm-purchase").heightIn(min = 48.dp),
+                MenuArtworkButton(stringResource(R.string.cancel), { purchase = null }, compact = true, fillWidth = false)
+                MenuArtworkButton(
+                    label = stringResource(R.string.buy_credits, Rewards.skinPrice(id)),
+                    modifier = Modifier.testTag("confirm-purchase"), compact = true, primary = true, fillWidth = false,
                     enabled = prefs.credits >= Rewards.skinPrice(id) && id !in prefs.ownedSkins,
                     onClick = { locallyPurchased = locallyPurchased + id; actions.buySkin(id); purchase = null },
-                ) { Text(stringResource(R.string.buy_credits, Rewards.skinPrice(id))) }
+                )
             },
         ) {
             Text(stringResource(R.string.confirm_skin_purchase, Rewards.skinPrice(id), prefs.credits - Rewards.skinPrice(id)))
-        }
-    }
-}
-
-@Composable
-internal fun ScenarioScreen(state: GameUiState, actions: MainViewModel, onStart: () -> Unit, onBack: () -> Unit) {
-    val transition = LocalWindowTransition.current
-    val completed = state.preferences.challengeBest.size
-    val previews by produceState<Map<String, BoardState>>(emptyMap()) {
-        ScenarioCatalog.all.forEach { scenario ->
-            val board = withContext(Dispatchers.Default) { LevelGenerator.generateScenario(42L, scenario.id).board }
-            value = value + (scenario.id to board)
-        }
-    }
-    CircuitBackground {
-        Column(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            ProgressionHeader(stringResource(R.string.free_scenarios), onBack)
-            Text(stringResource(R.string.expected_reward, Rewards.VICTORY), color = Warning)
-            LazyVerticalGrid(columns = GridCells.Adaptive(220.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(ScenarioCatalog.all, key = { it.id }) { scenario ->
-                    val unlocked = completed >= scenario.required
-                    val preview = previews[scenario.id]
-                    Card(
-                        modifier = Modifier.fillMaxWidth().height(ProgressionCardHeight),
-                        colors = CardDefaults.cardColors(containerColor = Panel.copy(alpha = if (unlocked) .94f else .72f)),
-                        border = BorderStroke(1.dp, if (unlocked) Cyan.copy(alpha = .35f) else Muted.copy(alpha = .35f)),
-                        shape = RoundedCornerShape(12.dp),
-                    ) {
-                        Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            if (preview != null) Board(preview, state.preferences.boardSkin, state.preferences.dominoSkin, emptySet(), modifier = Modifier.fillMaxWidth().height(110.dp), onCell = {}, previewOnly = true)
-                            else Box(Modifier.fillMaxWidth().height(110.dp), contentAlignment = androidx.compose.ui.Alignment.Center) { CircularProgressIndicator(Modifier.size(24.dp)) }
-                            Text(stringResource(scenarioLabel(scenario.id)), color = Cyan)
-                            Text(stringResource(R.string.scenario_difficulty, ScenarioCatalog.all.indexOf(scenario) + 1, preview?.width ?: scenario.width, preview?.height ?: scenario.height))
-                            if (!unlocked) Text(stringResource(R.string.scenario_locked, completed, scenario.required), color = Warning)
-                            Spacer(Modifier.weight(1f))
-                            Button(enabled = unlocked, onClick = { transition { actions.startScenario(scenario.id); onStart() } }, modifier = Modifier.fillMaxWidth()) {
-                                Text(stringResource(if (unlocked) R.string.play_scenario else R.string.locked_scenario))
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }
@@ -219,13 +172,11 @@ internal fun MatchResultDialog(state: GameUiState, actions: MainViewModel, onMen
         actions = {
             // Secondary navigation gets its own row, apart from continuing play.
             FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onMenu, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.main_menu)) }
-                TextButton(onClick = actions::reviewBoard, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.review_board)) }
+                MenuArtworkButton(stringResource(R.string.main_menu), onMenu, compact = true, fillWidth = false)
+                MenuArtworkButton(stringResource(R.string.review_board), actions::reviewBoard, compact = true, fillWidth = false)
             }
-            OutlinedButton(onClick = { transition(actions::retry) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.play_again)) }
-            if (next != null) Button(onClick = { transition { actions.startChallenge(next) } }, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(R.string.next_challenge))
-            }
+            MenuArtworkButton(stringResource(R.string.play_again), { transition(actions::retry) }, compact = true, primary = true, fillWidth = false)
+            if (next != null) MenuArtworkButton(stringResource(R.string.next_challenge), { transition { actions.startChallenge(next) } }, compact = true, primary = true, fillWidth = false)
         },
     ) {
         Text(stringResource(resultText(result)), style = MaterialTheme.typography.bodyLarge)

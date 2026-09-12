@@ -34,7 +34,7 @@ El proyecto fija AGP, Kotlin, Compose BOM y Gradle para que una semilla y una re
 
 ## Ayuda contextual, fichas y escenarios internos
 
-`HelpTopic` centraliza títulos, explicaciones y el tipo de script para obtener costes del dominio. `GameScreen` conserva únicamente el tema abierto como estado de presentación; `HelpButton` es independiente de los controles que ejecutan acciones. `HelpDialog` y PROTOCOLO comparten contenido localizado.
+`HelpTopic` centraliza títulos, explicaciones y el tipo de script para obtener costes del dominio. `GameScreen` conserva únicamente el tema abierto como estado de presentación; la ayuda contextual sigue disponible durante la partida. El menú ofrece TUTORIAL en lugar de PROTOCOLO.
 
 `DominoImage` usa los 28 PNG claros de Kenney en `drawable-nodpi`: normaliza el par para elegir imagen y transforma el dibujo para conservar el primer puerto a la izquierda o arriba. Las imágenes colocadas se dibujan bajo las celdas táctiles y sus insignias; las descripciones de celda siguen usando los valores del motor. La licencia viaja en los assets del APK.
 
@@ -43,3 +43,21 @@ Las partidas usan directamente el generador de escenarios y el reductor del domi
 `MainViewModel` conserva el constructor Android con `Application` y añade uno con `PlayerPreferencesRepository` inyectable para pruebas. Captura el tipo de sesión antes de iniciar la escritura asíncrona de resultados y solo persiste una transición inicial a victoria.
 
 Compose presenta `SpoofDialog`, `BridgeControl` y `PingPreview`. Las asignaciones exhaustivas de enums a recursos obligan a considerar los textos al añadir errores o resultados. Las descripciones accesibles se construyen desde información visible del tablero.
+
+Durante una partida, los rechazos del motor se muestran en una ventana descartable y no se renderizan dentro del inventario. El editor SPOOF queda como panel flotante para conservar accesibles los controles inferiores; Cancelar ocupa temporalmente el lugar de Rotar. El inventario de hardware usa una fila compacta de fichas verticales y los controles de Rotar/Ejecutar turno permanecen juntos al pie del panel.
+
+## Selección y previsualizaciones
+
+Las tarjetas de desafíos y modo libre no generan tableros. Solo una selección desbloqueada abre un diálogo con detalles y una imagen estática; jugar requiere confirmación explícita. La imagen del modo libre usa la semilla fija 42 y se etiqueta como ejemplo, no como la futura partida aleatoria.
+
+El diálogo de escenarios muestra únicamente las dimensiones, ruta, obstáculos y requisito de desbloqueo; las previsualizaciones se mantienen fuera del diálogo, en las tarjetas de selección.
+
+`PuzzlePreviewCache` genera fuera del hilo principal y guarda PNG de 640 × 400: LRU de 8 MiB en memoria y límite de 24 MiB en disco. La clave SHA-256 incluye modo, identificador, semilla, revisión del generador/renderizado y ambas skins. Hay carga, reintento, recuperación de archivos inválidos y exclusión mutua para evitar generación duplicada. Las trampas ocultas y soluciones nunca se dibujan. Incrementar REVISION al cambiar la geometría del generador o el renderizado.
+
+El panel de partida mide sus controles al pie por separado del inventario desplazable. Cada control compacto conserva un objetivo táctil de al menos 48 dp. Las cards exclusivas de skins tienen altura mínima de 240 dp, contenido centrado y crecimiento libre para fuentes ampliadas.
+
+## Tutorial aislado
+
+`TutorialCatalog` contiene diez fixtures deterministas y un reductor que solo acepta la acción esperada de cada paso. Las acciones de juego pasan por `GameEngine`; los intentos incorrectos no cambian la práctica. Las explicaciones están en arrays de recursos españoles e ingleses.
+
+`TutorialController` tiene su propio StateFlow y no llama al flujo de partida ni a `finishMatch`. Solo persiste la última lección y la finalización mediante DataStore. Continuar y repetir reconstruyen el fixture inicial de la lección. La práctica no modifica récords, desbloqueos, saldo ni una partida en curso.

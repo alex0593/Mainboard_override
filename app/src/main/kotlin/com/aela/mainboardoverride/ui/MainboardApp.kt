@@ -52,6 +52,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -85,6 +86,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -153,7 +156,7 @@ fun MainboardApp(
                 onBack = { transition { nav.popBackStack() } },
             )
         }
-        composable(HELP) { InfoScreen { transition { nav.popBackStack() } } }
+        composable(HELP) { TutorialScreen(state.preferences, actions.tutorial, onBack = { transition { nav.popBackStack() } }) }
     }
 }
 
@@ -211,7 +214,7 @@ private fun MenuScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     MenuArtworkButton(stringResource(R.string.settings), onSettings, Modifier.weight(1f), compact = true)
                     MenuArtworkButton(stringResource(R.string.skins), onSkins, Modifier.weight(1f), compact = true)
-                    MenuArtworkButton(stringResource(R.string.help), onHelp, Modifier.weight(1.35f), compact = true)
+                    MenuArtworkButton(stringResource(R.string.tutorial), onHelp, Modifier.weight(1.35f), compact = true, icon = R.drawable.ic_tutorial)
                 }
             }
         }
@@ -241,26 +244,16 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
     BackHandler(enabled = pendingExitAction == null) { pendingExitAction = GameExitAction.EXIT }
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(8.dp)) {
-            Box(Modifier.fillMaxWidth().heightIn(min = 64.dp).testTag("game-header").clip(RoundedCornerShape(10.dp))) {
-                Image(
-                    painterResource(R.drawable.menu_header_v1), contentDescription = null,
-                    modifier = Modifier.matchParentSize(), contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
-                )
-                Row(
-                    Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 9.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                LevelActionButton(stringResource(R.string.exit_match), R.drawable.ic_leave_level,
-                    { pendingExitAction = GameExitAction.EXIT }, Modifier.align(Alignment.CenterVertically).testTag("exit-game"))
-                LevelActionButton(stringResource(R.string.retry_level), R.drawable.ic_retry_level,
-                    { pendingExitAction = GameExitAction.RESTART }, Modifier.align(Alignment.CenterVertically).testTag("restart-game"))
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+              Box(Modifier.weight(1f).heightIn(min = 64.dp).testTag("game-header").clip(RoundedCornerShape(10.dp))) {
+                Image(painterResource(R.drawable.menu_header_v1), null, Modifier.matchParentSize(), contentScale = androidx.compose.ui.layout.ContentScale.FillBounds)
+                Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 18.dp, vertical = 9.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                  Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(stringResource(R.string.turn, game.turn), color = Cyan, fontSize = 11.sp)
                     Text(stringResource(R.string.ram, game.ram, MAX_RAM), color = Terminal, fontSize = 11.sp)
                     Text(stringResource(R.string.trace, game.trace), color = if (game.trace >= 80) Danger else Warning, fontSize = 11.sp)
-                }
-                FlowRow(
+                  }
+                  FlowRow(
                     Modifier.weight(1f).testTag("script-hand"),
                     maxItemsInEachRow = 4,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -274,14 +267,21 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                             onSelect = actions::selectScript,
                         )
                     }
+                  }
+                  TextButton(onClick = { helpOpen = true }, modifier = Modifier.size(46.dp).testTag("general-help")) { Text("?", color = Cyan) }
                 }
-                    TextButton(onClick = { helpOpen = true }, modifier = Modifier.size(46.dp).testTag("general-help")) { Text("?", color = Cyan) }
-                }
+              }
+              // Actions live beside the decorative header, with compact visuals and full touch targets.
+              Column(Modifier.width(92.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                LevelActionButton(stringResource(R.string.exit_match), R.drawable.ic_leave_level, { pendingExitAction = GameExitAction.EXIT }, Modifier.testTag("exit-game"))
+                LevelActionButton(stringResource(R.string.retry_level), R.drawable.ic_retry_level, { pendingExitAction = GameExitAction.RESTART }, Modifier.testTag("restart-game"))
+              }
             }
             Spacer(Modifier.height(8.dp))
             BoxWithConstraints(Modifier.weight(1f)) {
                 val controlsWidth = (maxWidth * .29f).coerceIn(190.dp, 260.dp)
-                Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(Modifier.fillMaxSize()) {
+                  Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Board(
                             board = game.board,
                             skin = state.preferences.boardSkin,
@@ -299,30 +299,24 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                             animatePlacement = !state.preferences.reducedMotion,
                     )
                     if (state.reviewingBoard) ReviewPanel(controlsWidth, actions)
-                    if (!state.reviewingBoard) Box(
-                        Modifier.width(controlsWidth).fillMaxHeight()
-                            .clip(RoundedCornerShape(10.dp))
-                            .border(1.dp, Cyan.copy(alpha = .3f), RoundedCornerShape(10.dp))
-                            .padding(6.dp),
-                    ) {
+                    if (!state.reviewingBoard) Column(Modifier.width(controlsWidth).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                      Box(Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(10.dp)).border(1.dp, Cyan.copy(alpha = .3f), RoundedCornerShape(10.dp)).padding(2.dp)) {
                         Image(
                             painterResource(R.drawable.menu_card_v1), contentDescription = null,
                             modifier = Modifier.matchParentSize(), contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
                         )
-                        Column(Modifier.fillMaxSize().padding(bottom = 88.dp).verticalScroll(rememberScrollState()).testTag("hardware-panel"), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            state.message?.let { Text(stringResource(rejectionText(it)), color = Danger, fontSize = 11.sp) }
+                        Column(Modifier.fillMaxSize().padding(2.dp).testTag("hardware-panel"), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             state.lastBuff?.let { buff ->
                                 Text(stringResource(if (buff == BoardBuff.TRACE_COOLER) R.string.buff_trace_collected else R.string.buff_ram_collected), color = Cyan, fontSize = 11.sp)
                             }
                             if (game.scriptHand.any { it.id == state.selectedScriptId && it.type == ScriptType.BRIDGE }) BridgeControl(state.bridgeHorizontal, actions::toggleBridge)
-                            if (state.selectedScriptId != null) SmallButton(stringResource(R.string.cancel), actions::cancelScript)
                             if (game.pingPreview.isNotEmpty()) PingPreview(game.pingPreview)
-                            Text(stringResource(R.string.dominoes), color = Cyan, fontSize = 11.sp)
+                            Text(stringResource(R.string.dominoes), Modifier.fillMaxWidth(), color = Cyan, fontSize = 11.sp, softWrap = true)
                             FlowRow(
                                 Modifier.fillMaxWidth(),
-                                maxItemsInEachRow = 2,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                                maxItemsInEachRow = 3,
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalArrangement = Arrangement.spacedBy(1.dp),
                             ) {
                                 game.dominoHand.forEach { tile ->
                                     DominoView(
@@ -330,46 +324,35 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                                         state.selectedDominoId == tile.id,
                                         state.preferences.dominoSkin,
                                         highlighted = false,
-                                        modifier = Modifier.fillMaxWidth(.48f),
+                                        modifier = Modifier.weight(1f).fillMaxWidth(.32f),
                                     ) { actions.selectDomino(tile.id) }
                                 }
                             }
-                            game.dominoHand.find { it.id == state.selectedDominoId }?.let { tile ->
-                                val preview = if (state.rotationSteps >= 2) tile.rotated() else tile
-                                val orientation = if (state.rotationSteps % 2 == 0) Orientation.HORIZONTAL else Orientation.VERTICAL
-                                Text(stringResource(if (orientation == Orientation.HORIZONTAL) R.string.horizontal else R.string.vertical), color = Cyan)
-                                DominoImage(preview, Modifier.align(Alignment.CenterHorizontally).width(if (orientation == Orientation.HORIZONTAL) 76.dp else 38.dp), orientation, skin = state.preferences.dominoSkin)
-                            }
                         }
-                        Box(
-                            Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(84.dp).background(Panel.copy(alpha = .9f)),
-                        ) {
-                            Column(
-                                Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp),
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    SmallButton(
-                                        stringResource(R.string.rotate), actions::rotate,
-                                        Modifier.weight(1f).height(40.dp).testTag("rotate"),
-                                        minHeight = 40.dp,
-                                    )
-                                }
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    MenuArtworkButton(
-                                        label = stringResource(R.string.end_turn),
-                                        onClick = actions::endTurn,
-                                        primary = true,
-                                        compact = true,
-                                        enabled = game.tilePlacedThisTurn && game.result == null,
-                                        minHeight = 40.dp,
-                                        modifier = Modifier.weight(1f).height(40.dp).testTag("end-turn")
-                                            .then(if (state.endTurnHint) Modifier.border(2.dp, Warning) else Modifier),
-                                    )
-                                }
-                            }
+                      }
+                      // Keep the two controls together below the hardware frame.
+                      Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                        if (state.selectedScriptId != null) {
+                            GameControlButton(stringResource(R.string.cancel), actions::cancelScript, Modifier.fillMaxWidth().testTag("cancel-script"))
+                        } else {
+                            GameControlButton(stringResource(R.string.rotate), actions::rotate, Modifier.fillMaxWidth().testTag("rotate"), enabled = state.selectedDominoId != null && game.result == null)
+                        }
+                        GameControlButton(stringResource(R.string.end_turn), actions::endTurn, Modifier.fillMaxWidth().testTag("end-turn"), enabled = game.tilePlacedThisTurn && game.result == null, highlighted = state.endTurnHint)
+                      }
+                    }
+                  }
+                  // A floating inspection window sits at the board/hardware junction.
+                  game.dominoHand.find { it.id == state.selectedDominoId }?.let { tile ->
+                    val preview = if (state.rotationSteps >= 2) tile.rotated() else tile
+                    val orientation = if (state.rotationSteps % 2 == 0) Orientation.HORIZONTAL else Orientation.VERTICAL
+                    Surface(Modifier.align(Alignment.TopEnd).offset(x = (-controlsWidth - 8.dp), y = 10.dp).width(96.dp).height(126.dp).zIndex(3f), shape = RoundedCornerShape(10.dp), color = Panel.copy(alpha = .98f), border = BorderStroke(1.dp, Cyan.copy(alpha = .8f))) {
+                      Column(Modifier.fillMaxSize().padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Text(stringResource(if (orientation == Orientation.HORIZONTAL) R.string.horizontal else R.string.vertical), color = Cyan, fontSize = 10.sp)
+                        DominoImage(preview, Modifier.width(if (orientation == Orientation.HORIZONTAL) 68.dp else 34.dp), orientation, skin = state.preferences.dominoSkin)
+                        Text("${preview.first} : ${preview.second}", color = Terminal, fontSize = 11.sp)
                         }
                     }
+                  }
                 }
             }
         }
@@ -381,6 +364,17 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
             SpoofDialog(tile, state.spoofHalf, state.spoofValue, state.message?.let { rejectionText(it) },
                 actions::setSpoofHalf, actions::setSpoofValue, { actions.spoof(state.spoofValue) }, actions::cancelScript)
         }
+    }
+    if (state.message != null) {
+        GameDialog(
+            title = stringResource(R.string.action_error),
+            onDismiss = actions::dismissMessage,
+            modifier = Modifier.testTag("error-dialog"),
+            accent = Danger,
+            actions = {
+                MenuArtworkButton(stringResource(R.string.help_close), actions::dismissMessage, compact = true, fillWidth = false, modifier = Modifier.testTag("close-error"))
+            },
+        ) { Text(stringResource(rejectionText(state.message)), color = Danger) }
     }
     if (helpOpen) GeneralGameHelp { helpOpen = false }
     pendingExitAction?.let { action ->
@@ -683,7 +677,7 @@ private fun ScriptStack(
 }
 
 @Composable
-private fun ScriptCardView(card: ScriptCard, selected: Boolean, enabled: Boolean, highlighted: Boolean = false, compact: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
+internal fun ScriptCardView(card: ScriptCard, selected: Boolean, enabled: Boolean, highlighted: Boolean = false, compact: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Box(
         modifier.then((if (compact) Modifier.width(88.dp) else Modifier.fillMaxWidth())
             .heightIn(min = 48.dp).clip(RoundedCornerShape(8.dp)).testTag("script-${card.id}")
@@ -723,15 +717,15 @@ private fun scriptArtwork(type: ScriptType): Int? = when (type) {
 }
 
 @Composable
-private fun DominoView(tile: Domino, selected: Boolean, skin: String = "kenney", highlighted: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
+internal fun DominoView(tile: Domino, selected: Boolean, skin: String = "kenney", highlighted: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val label = stringResource(R.string.domino_description, tile.first, tile.second)
     Row(
-        modifier.heightIn(min = 48.dp).semantics { contentDescription = label; this.selected = selected }.background(if (selected) Terminal.copy(alpha = .2f) else Void)
+        modifier.widthIn(min = 42.dp).heightIn(min = 64.dp).semantics { contentDescription = label; this.selected = selected }.background(if (selected) Terminal.copy(alpha = .2f) else Void)
             .border(1.dp, if (highlighted) Warning else if (selected) Terminal else Muted).clickable(onClick = onClick).padding(3.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-            DominoImage(tile, Modifier.width(60.dp), describe = false, skin = skin)
+            DominoImage(tile, Modifier.height(54.dp).width(27.dp), Orientation.VERTICAL, describe = false, skin = skin)
     }
 }
 
@@ -752,89 +746,6 @@ private fun SettingsScreen(state: GameUiState, actions: MainViewModel, onBack: (
             SettingSwitch(stringResource(R.string.context_help), state.preferences.contextHelpEnabled, actions::setContextHelpEnabled)
             Spacer(Modifier.height(20.dp))
             SmallButton(stringResource(R.string.back), onBack)
-        }
-    }
-}
-
-@Composable
-private fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart: () -> Unit, onBack: () -> Unit) {
-    val transition = LocalWindowTransition.current
-    val previews by produceState<Map<Int, BoardState>>(emptyMap()) {
-        ChallengeCatalog.levels.forEach { challenge ->
-            val board = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-                com.aela.mainboardoverride.domain.LevelGenerator.generateChallenge(challenge.number, challenge.seed).board
-            }
-            value = value + (challenge.number to board)
-        }
-    }
-    CircuitBackground {
-        Column(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            ProgressionHeader(
-                title = stringResource(R.string.challenge),
-                onBack = onBack,
-                counter = "${state.preferences.challengeBest.size}/${ChallengeCatalog.COUNT}",
-            )
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(220.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.weight(1f),
-            ) {
-                items(ChallengeCatalog.levels, key = { it.number }) { challenge ->
-                    val level = challenge.number
-                    val unlocked = level <= state.preferences.challengeUnlocked
-                    val record = state.preferences.challengeBest[level]
-                    val rules = challenge.rules
-                    val maxTurns = rules.maxTurns
-                    val maxTrace = rules.maxTrace
-                    val preview = previews[level]
-                    val ruleText = when {
-                        maxTurns != null && maxTrace != null -> stringResource(R.string.challenge_rules_both, maxTurns, maxTrace)
-                        maxTurns != null -> stringResource(R.string.challenge_rules_turns, maxTurns)
-                        else -> stringResource(R.string.challenge_rules_trace, maxTrace ?: 0)
-                    }
-                    Card(
-                        modifier = Modifier.fillMaxWidth().height(ProgressionCardHeight),
-                        colors = CardDefaults.cardColors(containerColor = if (unlocked) Panel.copy(alpha = .94f) else Void.copy(alpha = .72f)),
-                        border = BorderStroke(1.dp, if (record != null) Terminal.copy(alpha = .8f) else if (unlocked) Cyan.copy(alpha = .35f) else Muted.copy(alpha = .35f)),
-                        shape = RoundedCornerShape(8.dp),
-                    ) {
-                        Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                            if (preview != null) {
-                                Board(preview, state.preferences.boardSkin, state.preferences.dominoSkin, emptySet(), modifier = Modifier.fillMaxWidth().height(110.dp), onCell = {}, previewOnly = true)
-                            } else {
-                                Box(Modifier.fillMaxWidth().height(110.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(Modifier.size(24.dp)) }
-                            }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("%02d".format(level), color = if (unlocked) Terminal else Muted, fontSize = 26.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace)
-                                Spacer(Modifier.width(8.dp))
-                                Column(Modifier.weight(1f)) {
-                                    Text(stringResource(R.string.challenge_level, level), color = if (unlocked) Cyan else Muted, fontWeight = FontWeight.Bold)
-                                    Text("DIFFICULTY ${challenge.difficulty}", color = if (unlocked) Warning else Muted, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
-                                }
-                                Text(if (record != null) "✓" else if (unlocked) "•" else "▣", color = if (record != null) Terminal else if (unlocked) Cyan else Muted, fontSize = 20.sp)
-                            }
-                            Box(Modifier.fillMaxWidth().height(3.dp).background(if (record != null) Terminal else if (unlocked) Cyan.copy(alpha = .35f) else Muted.copy(alpha = .25f), RoundedCornerShape(2.dp)))
-                            Text(ruleText, color = if (unlocked) Warning else Muted, fontFamily = FontFamily.Monospace, fontSize = 10.sp)
-                            Text(
-                                record?.let { "BEST  ${it.turns}T / ${it.trace}%" } ?: stringResource(R.string.expected_reward, com.aela.mainboardoverride.domain.Rewards.VICTORY + if (record == null) com.aela.mainboardoverride.domain.Rewards.FIRST_CHALLENGE else 0),
-                                color = if (record != null) Terminal else Warning,
-                                fontFamily = FontFamily.Monospace,
-                                fontSize = 10.sp,
-                            )
-                            Spacer(Modifier.weight(1f))
-                            Button(
-                                enabled = unlocked,
-                                onClick = { transition { actions.startChallenge(level); onStart() } },
-                                modifier = Modifier.fillMaxWidth().testTag("challenge-$level"),
-                                colors = ButtonDefaults.buttonColors(containerColor = if (unlocked) Terminal else Muted.copy(alpha = .25f), contentColor = if (unlocked) Void else Muted),
-                            ) {
-                                Text(stringResource(if (unlocked) R.string.play_scenario else R.string.locked_scenario), fontSize = 11.sp)
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }
@@ -882,10 +793,12 @@ private fun TerminalButton(label: String, onClick: () -> Unit, modifier: Modifie
 
 @Composable
 private fun LevelActionButton(label: String, icon: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(modifier.size(49.dp).clip(RoundedCornerShape(10.dp)).semantics { contentDescription = label }) {
-        Image(painterResource(R.drawable.menu_button_compact_v2), contentDescription = null, modifier = Modifier.matchParentSize(), contentScale = androidx.compose.ui.layout.ContentScale.FillBounds)
+    Box(modifier.size(48.dp).semantics { contentDescription = label }, contentAlignment = Alignment.Center) {
+        Box(Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))) {
+          Image(painterResource(R.drawable.menu_button_compact_v2), contentDescription = null, modifier = Modifier.matchParentSize(), contentScale = androidx.compose.ui.layout.ContentScale.FillBounds)
+        }
         androidx.compose.material3.IconButton(onClick = onClick, modifier = Modifier.matchParentSize()) {
-            androidx.compose.material3.Icon(painterResource(icon), contentDescription = null, tint = Cyan, modifier = Modifier.size(24.dp))
+            androidx.compose.material3.Icon(painterResource(icon), contentDescription = null, tint = Cyan, modifier = Modifier.size(18.dp))
         }
     }
 }
@@ -998,14 +911,18 @@ internal fun PingPreview(tiles: List<Domino>) {
 @Composable
 internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?,
     onHalf: (Int) -> Unit, onValue: (Int) -> Unit, onApply: () -> Unit, onCancel: () -> Unit) {
-    GameDialog(
-        title = stringResource(R.string.spoof_value),
-        onDismiss = onCancel,
-        actions = {
-            TextButton(onClick = onCancel, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.cancel)) }
-            TextButton(onClick = onApply, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.apply)) }
-        },
+    Popup(
+        alignment = Alignment.TopCenter,
+        onDismissRequest = onCancel,
+        properties = PopupProperties(focusable = false),
     ) {
+      Surface(
+          Modifier.widthIn(max = 360.dp).fillMaxWidth(.92f).padding(8.dp),
+          shape = RoundedCornerShape(14.dp), color = Panel.copy(alpha = .98f),
+          border = BorderStroke(1.dp, Cyan.copy(alpha = .8f)),
+      ) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(stringResource(R.string.spoof_value), color = Cyan, fontWeight = FontWeight.Bold)
             Column {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Column(Modifier.weight(1f)) {
@@ -1037,7 +954,13 @@ internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?,
                     }
                 }
                 error?.let { Text(stringResource(it), color = Danger) }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = onCancel, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text(stringResource(R.string.cancel)) }
+                    TextButton(onClick = onApply, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text(stringResource(R.string.apply)) }
+                }
             }
+        }
+      }
     }
 }
 

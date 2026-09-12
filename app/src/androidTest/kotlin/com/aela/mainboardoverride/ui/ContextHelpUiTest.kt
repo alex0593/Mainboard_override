@@ -95,6 +95,11 @@ class ContextHelpUiTest {
         val scripts = compose.onNodeWithTag("script-hand").fetchSemanticsNode().boundsInRoot
         assertTrue(scripts.top >= header.top && scripts.bottom <= header.bottom)
         val fixed = compose.onNodeWithTag("end-turn").fetchSemanticsNode().boundsInRoot
+        val rotate = compose.onNodeWithTag("rotate").fetchSemanticsNode().boundsInRoot
+        val inventory = compose.onNodeWithTag("hardware-panel").fetchSemanticsNode().boundsInRoot
+        assertTrue("Controls must not overlap", rotate.bottom <= fixed.top)
+        assertTrue("Inventory must not overlap controls", inventory.bottom <= rotate.top)
+        assertTrue("Touch targets stay at least 48dp", rotate.height >= 48f && fixed.height >= 48f)
         compose.onNodeWithText(context.getString(R.string.seed, before.game!!.seed)).assertDoesNotExist()
         listOf(R.string.help_board_body, R.string.help_ram_body, R.string.help_hardware_body, R.string.help_spoof_body).forEachIndexed { index, body ->
             compose.onNodeWithTag("general-help").assertIsDisplayed().performClick()

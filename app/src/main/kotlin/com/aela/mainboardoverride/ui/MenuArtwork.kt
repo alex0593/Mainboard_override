@@ -84,6 +84,7 @@ internal fun MenuArtworkButton(
     enabled: Boolean = true,
     fillWidth: Boolean = true,
     minHeight: androidx.compose.ui.unit.Dp? = null,
+    icon: Int? = null,
 ) {
     val image = ImageBitmap.imageResource(when {
         compact -> R.drawable.menu_button_compact_v2
@@ -125,6 +126,10 @@ internal fun MenuArtworkButton(
             disabledContentColor = Muted,
         ),
     ) {
+        icon?.let {
+            androidx.compose.material3.Icon(painterResource(it), null, Modifier.size(18.dp))
+            Spacer(Modifier.width(6.dp))
+        }
         Text(label, fontFamily = FontFamily.Monospace,
             fontWeight = if (primary) FontWeight.Bold else FontWeight.Medium,
             fontSize = if (compact) 11.sp else 13.sp,

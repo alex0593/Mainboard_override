@@ -31,6 +31,8 @@ data class PlayerPreferences(
     val credits: Int = 0,
     val ownedSkins: Set<String> = emptySet(),
     val lastScenario: String = "classic",
+    val tutorialLesson: Int = -1,
+    val tutorialCompleted: Boolean = false,
 )
 
 data class ChallengeRecord(val turns: Int, val trace: Int)
@@ -55,6 +57,7 @@ interface PlayerPreferencesRepository {
     }
     suspend fun buySkin(id: String): Boolean = false
     suspend fun setLastScenario(id: String) {}
+    suspend fun setTutorialProgress(lesson: Int, completed: Boolean) {}
 }
 
 /** Preferences DataStore implementation; match state is deliberately not persisted. */
@@ -79,6 +82,8 @@ class DataStorePlayerPreferencesRepository(
             credits = values[CREDITS] ?: 0,
             ownedSkins = values[OWNED_SKINS] ?: emptySet(),
             lastScenario = values[LAST_SCENARIO] ?: "classic",
+            tutorialLesson = values[TUTORIAL_LESSON] ?: -1,
+            tutorialCompleted = values[TUTORIAL_COMPLETED] ?: false,
             challengeBest = values[CHALLENGE_BEST].orEmpty().split(",").mapNotNull { item ->
                 val fields = item.split(":")
                 if (fields.size == 3) fields[0].toIntOrNull()?.let { level ->
@@ -109,6 +114,9 @@ class DataStorePlayerPreferencesRepository(
         if (value !in Rewards.purchasableSkins || value in (it[OWNED_SKINS] ?: emptySet())) it[BOARD_SKIN] = value
     } }
     override suspend fun setLastScenario(id: String) { store.edit { it[LAST_SCENARIO] = id } }
+    override suspend fun setTutorialProgress(lesson: Int, completed: Boolean) {
+        store.edit { it[TUTORIAL_LESSON] = lesson; it[TUTORIAL_COMPLETED] = completed }
+    }
     override suspend fun buySkin(id: String): Boolean {
         if (id !in Rewards.purchasableSkins) return false
         var purchased = false
@@ -170,6 +178,8 @@ class DataStorePlayerPreferencesRepository(
     }.toMap().toMutableMap()
 
     private companion object {
+        val TUTORIAL_LESSON = intPreferencesKey("tutorial_lesson")
+        val TUTORIAL_COMPLETED = booleanPreferencesKey("tutorial_completed")
         val CREDITS = intPreferencesKey("credits")
         val OWNED_SKINS = stringSetPreferencesKey("owned_skins")
         val PAID_MATCHES = stringSetPreferencesKey("paid_matches")

@@ -71,7 +71,7 @@ internal fun HelpDialog(topic: HelpTopic, onClose: () -> Unit) {
     val cost = topic.script?.let { stringResource(R.string.help_script_cost, it.ramCost, it.traceNoise) }
     val close = stringResource(R.string.help_close)
     GameDialog(title = title, onDismiss = onClose, actions = {
-        TextButton(onClick = onClose, modifier = Modifier.heightIn(min = 48.dp)) { Text(close) }
+        MenuArtworkButton(close, onClose, compact = true, fillWidth = false)
     }) {
         Text(body)
         cost?.let { Text(it) }
@@ -97,7 +97,7 @@ internal fun GeneralGameHelp(onClose: () -> Unit) {
     val title = stringResource(R.string.help_general)
     val close = stringResource(R.string.help_close)
     GameDialog(title = title, onDismiss = onClose, actions = {
-        TextButton(onClick = onClose, modifier = Modifier.heightIn(min = 48.dp)) { Text(close) }
+        MenuArtworkButton(close, onClose, compact = true, fillWidth = false)
     }) {
         groups.indices.forEach { index ->
             TextButton(

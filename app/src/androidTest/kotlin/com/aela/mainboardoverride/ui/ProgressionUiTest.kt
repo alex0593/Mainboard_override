@@ -122,7 +122,7 @@ class ProgressionUiTest {
             val state by vm.uiState.collectAsState()
             MainboardTheme { ScenarioScreen(state, vm, {}, {}) }
         }
-        compose.onAllNodesWithText(app.getString(R.string.locked_scenario))[0].assertIsNotEnabled()
+        compose.onNodeWithTag("scenario-lab").assertIsNotEnabled()
         compose.runOnIdle { vm.startScenario("lab") }
         assertNull(vm.uiState.value.game)
         runBlocking { for (level in 1..5) repository.finishMatch("unlock-$level", level, 5, 40) }
