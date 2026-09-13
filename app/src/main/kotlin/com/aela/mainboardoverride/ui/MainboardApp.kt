@@ -890,26 +890,26 @@ internal fun PingPreview(tiles: List<Domino>) {
 internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?,
     onHalf: (Int) -> Unit, onValue: (Int) -> Unit, onApply: () -> Unit, onCancel: () -> Unit) {
     Popup(
-        alignment = Alignment.TopCenter,
+        alignment = Alignment.Center,
         onDismissRequest = onCancel,
         properties = PopupProperties(focusable = false),
     ) {
       Surface(
-          Modifier.widthIn(max = 360.dp).fillMaxWidth(.92f).padding(8.dp),
+          Modifier.widthIn(max = 340.dp).fillMaxWidth(.9f).height(316.dp).padding(6.dp),
           shape = RoundedCornerShape(14.dp), color = Panel.copy(alpha = .98f),
           border = BorderStroke(1.dp, Cyan.copy(alpha = .8f)),
       ) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(stringResource(R.string.spoof_value), color = Cyan, fontWeight = FontWeight.Bold)
             Column {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(Modifier.height(50.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Column(Modifier.weight(1f)) {
                         Text(stringResource(R.string.spoof_before))
-                        DominoImage(tile, Modifier.widthIn(max = 112.dp).fillMaxWidth())
+                        DominoImage(tile, Modifier.height(44.dp).width(22.dp))
                     }
                     Column(Modifier.weight(1f)) {
                         Text(stringResource(R.string.spoof_after))
-                        DominoImage(if (half == 0) tile.copy(first = value) else tile.copy(second = value), Modifier.widthIn(max = 112.dp).fillMaxWidth())
+                        DominoImage(if (half == 0) tile.copy(first = value) else tile.copy(second = value), Modifier.height(44.dp).width(22.dp))
                     }
                 }
                 FlowRow {
@@ -917,18 +917,18 @@ internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?,
                         OutlinedButton(onClick = { onHalf(index) }, modifier = Modifier.semantics { selected = half == index }) { Text(stringResource(label)) }
                     }
                 }
-                Text(stringResource(R.string.spoof_scroll_hint), color = Cyan, fontSize = 11.sp)
+                Text(stringResource(R.string.spoof_scroll_hint), color = Cyan, fontSize = 10.sp, maxLines = 1)
                 val valueList = rememberLazyListState(initialFirstVisibleItemIndex = value.coerceIn(0, 6))
                 LazyColumn(
                     state = valueList,
-                    modifier = Modifier.fillMaxWidth().height(196.dp).border(1.dp, Cyan.copy(alpha = .35f)),
+                    modifier = Modifier.fillMaxWidth().height(94.dp).border(1.dp, Cyan.copy(alpha = .35f)),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     items((0..6).toList()) { candidate ->
                         TextButton(
                             onClick = { onValue(candidate) },
-                            modifier = Modifier.fillMaxWidth().height(28.dp).semantics { selected = value == candidate },
-                        ) { Text("$candidate", color = if (value == candidate) Terminal else Muted, fontSize = if (value == candidate) 22.sp else 14.sp) }
+                            modifier = Modifier.fillMaxWidth().height(30.dp).semantics { selected = value == candidate },
+                        ) { Text("$candidate", color = if (value == candidate) Terminal else Muted, fontSize = 18.sp, maxLines = 1) }
                     }
                 }
                 error?.let { Text(stringResource(it), color = Danger) }

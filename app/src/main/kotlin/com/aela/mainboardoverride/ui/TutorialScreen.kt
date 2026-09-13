@@ -118,8 +118,6 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
                                                 contentPadding = PaddingValues(8.dp)) { Text("$value") }
                                         }
                                     }
-                                    TutorialAction(stringResource(R.string.apply), TutorialInput.ApplySpoof, state, dispatch)
-                                    TutorialAction(stringResource(R.string.cancel), TutorialInput.Cancel, state, dispatch)
                                 }
                                 if (state.script == "BRIDGE") TutorialAction(
                                     stringResource(if (state.horizontalBridge) R.string.tutorial_bridge_horizontal else R.string.tutorial_bridge_vertical),
@@ -133,10 +131,21 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
                             HardwareHand(state.game.dominoHand, state.tile, preferences.dominoSkin,
                                 highlighted = (expected as? TutorialInput.SelectTile)?.id,
                                 tagPrefix = "tutorial-tile") { dispatch(TutorialInput.SelectTile(it)) }
-                            GameControlButton(stringResource(R.string.rotate), { dispatch(TutorialInput.Rotate) },
-                                Modifier.testTag("tutorial-action-Rotate"),
-                                enabled = !instructionOpen && state.tile != null && state.script == null,
-                                highlighted = expected == TutorialInput.Rotate)
+                            if (state.script == "SPOOF") {
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                                    GameControlButton(stringResource(R.string.apply), { dispatch(TutorialInput.ApplySpoof) },
+                                        Modifier.weight(1f).testTag("tutorial-action-ApplySpoof"),
+                                        enabled = !instructionOpen, highlighted = expected == TutorialInput.ApplySpoof)
+                                    GameControlButton(stringResource(R.string.cancel), { dispatch(TutorialInput.Cancel) },
+                                        Modifier.weight(1f).testTag("tutorial-action-Cancel"),
+                                        enabled = !instructionOpen, highlighted = expected == TutorialInput.Cancel)
+                                }
+                            } else {
+                                GameControlButton(stringResource(R.string.rotate), { dispatch(TutorialInput.Rotate) },
+                                    Modifier.testTag("tutorial-action-Rotate"),
+                                    enabled = !instructionOpen && state.tile != null && state.script == null,
+                                    highlighted = expected == TutorialInput.Rotate)
+                            }
                             GameControlButton(stringResource(R.string.end_turn), { dispatch(TutorialInput.EndTurn) },
                                 Modifier.testTag("tutorial-action-EndTurn"),
                                 enabled = !instructionOpen && state.game.tilePlacedThisTurn,
