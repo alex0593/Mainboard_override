@@ -128,6 +128,8 @@ data class GameState(
     val turn: Int = 1,
     val tilePlacedThisTurn: Boolean = false,
     val pingPreview: List<Domino> = emptyList(),
+    /** PING discoveries cannot be destroyed by KILL until the next turn. */
+    val pingRevealedThisTurn: Set<Position> = emptySet(),
     val challengeRules: ChallengeRules? = null,
     val phase: TurnPhase = TurnPhase.ACTION,
     val result: GameResult? = null,

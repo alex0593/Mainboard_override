@@ -87,13 +87,10 @@ class MainViewModel(application: Application, private val repository: PlayerPref
     fun dismissMessage() { session.update { it.copy(message = null) } }
     fun buySkin(id: String) = viewModelScope.launch { repository.buySkin(id) }
 
-    fun retry() {
-        session.value.challengeLevel?.let { restartChallenge(); return }
-        val current = session.value.game ?: return
-        startScenario(session.value.scenarioId, current.seed)
-    }
+    /** Plays again in the same mode, generating a new seed for free play. */
+    fun retry() = restartNetwork()
 
-    /** Restarts the same challenge with a fresh generated network and seed. */
+    /** Restarts the same challenge using its fixed catalog seed. */
     fun restartChallenge() {
         val level = session.value.challengeLevel ?: return
         // Challenge levels are fixed puzzles: restart restores the catalog seed

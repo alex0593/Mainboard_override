@@ -33,14 +33,14 @@ El modo libre tiene 6 filas: Red original 8 columnas, Laboratorio y Centro de da
 |---|---:|---:|---|
 | `PING` | 1 | 0 | Revela un honeypot oculto sin activar al azar y muestra solo la siguiente ficha, sin robarla. |
 | `SPOOF` | 2 | 5 | Reescribe permanentemente un puerto de una ficha en mano. |
-| `KILL_PROCESS` | 3 | 15 | Elimina el firewall seleccionado. |
+| `KILL_PROCESS` | 3 | 15 | Elimina un firewall o un honeypot visible. Si PING lo reveló, debe esperar al turno siguiente. |
 | `BRIDGE` | 2 | 10 | Copia un puerto de una ficha adyacente a través del firewall; la salida queda libre para colocar una ficha compatible. |
 
 Las derrotas posibles son rastreo al 100 %, daemon en el inicio, kernel panic sin acciones habilitables o bolsa de hardware agotada. BRIDGE y KILL_PROCESS pueden evitar kernel panic si abren una colocación legal. La victoria requiere una ruta continua hasta extracción después de resolver la fase del sistema.
 
 PING conserva descubrimientos anteriores y selecciona entre trampas ocultas sin activar con azar reproducible por semilla y carta. La vista de la siguiente ficha se limpia al terminar el turno. Si faltan trampas o fichas, muestra la información disponible y mantiene su coste.
 
-BRIDGE requiere al menos una ficha junto al firewall en el eje seleccionado. Si ambos puertos existen, deben coincidir. Rechaza otra pared en la salida, extremos fuera del mapa y puentes duplicados sin gastar recursos. Conserva el firewall, guarda y muestra el número copiado y solo conecta extremos ocupados compatibles. KILL_PROCESS elimina también el puente del firewall destruido.
+BRIDGE requiere al menos una ficha junto al firewall en el eje seleccionado. Si ambos puertos existen, deben coincidir. Rechaza otra pared en la salida, extremos fuera del mapa y puentes duplicados sin gastar recursos. Conserva el firewall, guarda y muestra el número copiado y solo conecta extremos ocupados compatibles. KILL_PROCESS elimina también el puente del firewall destruido. Puede destruir un honeypot visible desde un turno anterior: PING registra los descubrimientos del turno actual y KILL los rechaza hasta ejecutar turno. Los honeypots ocultos no son objetivos válidos. Destruir una trampa elimina su presencia, revelado y registro de activación, sin reembolsar ruido ni cartas. Mantiene el coste de 3 RAM y 15 de ruido.
 
 ## Qué se lleva implementado
 
@@ -81,7 +81,7 @@ BRIDGE requiere al menos una ficha junto al firewall en el eje seleccionado. Si 
 
 - La “Energía/RAM” queda definida como RAM renovable de 3 por turno.
 - `SPOOF` persiste para evitar que una conexión válida se rompa al terminar el turno.
-- `KILL_PROCESS` elimina firewalls; eliminar dominós se pospone hasta definir componentes desconectados.
+- `KILL_PROCESS` elimina firewalls y honeypots visibles (los descubiertos por PING, a partir del siguiente turno); eliminar dominós se pospone hasta definir componentes desconectados.
 - El mazo de scripts vacío no derrota por sí mismo; memoria agotada usa la bolsa de hardware.
 - DataStore sustituye temporalmente a Room porque el slice solo guarda valores simples.
 - Se prioriza una sola orientación horizontal y no se reanuda una partida tras cerrar el proceso.

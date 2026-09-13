@@ -17,7 +17,7 @@ Compose -> GameAction -> GameEngine -> Transition -> StateFlow -> Compose
 
 La progresión local, el saldo y las compras viven en `PlayerPreferencesRepository` y DataStore. `finishMatch` guarda récord, recompensa e identificador de partida en una sola transacción; repetir el identificador no paga de nuevo. Las compras validan saldo y propiedad dentro de la misma transacción. `ScenarioCatalog` y `Rewards` no dependen de Android. Una economía futura con inventarios más complejos podrá migrar a Room.
 
-`LevelGenerator.generateScenario(seed, scenarioId)` aplica dimensiones, longitud de ruta y obstáculos del escenario y valida la solución mediante el motor. El modo original conserva `generate(seed)`. El ViewModel valida los desbloqueos antes de generar una partida y conserva escenario y semilla al reintentar. La UI deriva los escenarios disponibles del número de desafíos distintos ganados.
+`LevelGenerator.generateScenario(seed, scenarioId)` aplica dimensiones, longitud de ruta y obstáculos del escenario y valida la solución mediante el motor. El modo original conserva `generate(seed)`. El ViewModel valida los desbloqueos antes de generar una partida. Jugar de nuevo conserva el escenario y genera una semilla distinta en modo libre; los desafíos conservan la semilla del catálogo. Recuperar la última semilla desde el menú sigue siendo una acción explícita. La UI deriva los escenarios disponibles del número de desafíos distintos ganados.
 
 `GameUiState` identifica cada partida con UUID y conserva su recompensa y el estado de revisión del tablero. La revisión no altera `GameState`; el motor sigue rechazando acciones después de terminar. La galería comparte `Board` y `DominoImage` con la partida para que las vistas previas coincidan con las skins equipadas.
 
@@ -56,7 +56,15 @@ El diálogo de escenarios muestra únicamente las dimensiones, ruta, obstáculos
 
 El panel de partida mide sus controles al pie por separado del inventario desplazable. Cada control compacto conserva un objetivo táctil de al menos 48 dp. Las cards exclusivas de skins tienen altura mínima de 240 dp, contenido centrado y crecimiento libre para fuentes ampliadas.
 
+BRIDGE mantiene su orientación junto a Cancelar en los controles fijos, también en el tutorial. `GameEngine.scriptTargets` deriva los objetivos resaltados de la validación real de BRIDGE y KILL. `GameState.pingRevealedThisTurn` acumula los descubrimientos de PING y se vacía al avanzar turno: KILL rechaza esos honeypots hasta entonces. Destruirlos limpia los tres conjuntos de trampas del tablero; la UI elimina su insignia al observar el estado. La práctica de PING enseña a colocar, ejecutar turno y destruir la trampa con KILL.
+
 ## Tutorial aislado
+
+La rotación del tutorial comparte `RotationPreview` con la partida: ventana flotante junto al hardware, orientación, ficha y valores de puertos con los mismos tamaños. Rotar utiliza el mismo control de partida y sigue pasando por el reductor guiado del tutorial.
+
+La partida y el tutorial comparten `GameHeader`: fondo, indicadores de turno/RAM/rastreo y banda de scripts. El título y número de lección viven en la explicación. Siguiente, Repetir y la ayuda «?» pertenecen a esa ventana y desaparecen al cerrarla; no hay barra inferior permanente. Solo el texto se desplaza, conservando sus acciones visibles. Cerrar la explicación no desmonta el tablero ni reinicia el estado de la práctica.
+
+El tutorial reutiliza `SpoofDialog` de la partida y conecta sus selecciones al reductor del tutorial. Se muestra al cerrar la explicación y seleccionar una ficha; conserva el resaltado de la acción esperada. El editor limita su altura disponible, desplaza su contenido y reserva una fila fija para Aplicar y Cancelar.
 
 El tutorial utiliza la distribución de partida: indicadores y scripts arriba, tablero a la izquierda y hardware con controles fijos a la derecha. `HardwareHand` comparte fichas de 48 dp de ancho con la partida y ajusta el marco al contenido. La explicación se superpone dentro de la pantalla, conserva visible parte del tablero y no abre un diálogo modal. Siguiente cierra el objetivo sin saltar acciones; solo el reductor valida cada práctica. La pantalla abre el objetivo del siguiente paso y avanza automáticamente a la siguiente lección al terminar. Repetir vuelve al inicio de la lección y vuelve a mostrar su objetivo.
 

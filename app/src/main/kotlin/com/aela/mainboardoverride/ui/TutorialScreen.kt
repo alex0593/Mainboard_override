@@ -1,8 +1,6 @@
 package com.aela.mainboardoverride.ui
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,6 +28,7 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
     var repeat by remember { mutableIntStateOf(0) }
     val state by controller.state.collectAsState()
     var instructionOpen by remember(running, state.lesson, state.step, repeat) { mutableStateOf(true) }
+    var helpOpen by remember(instructionOpen, state.lesson, state.step) { mutableStateOf(false) }
     val expected = state.expected
     val titles = stringArrayResource(R.array.tutorial_titles)
     val instructions = stringArrayResource(R.array.tutorial_instructions)
@@ -56,22 +55,16 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
                         { controller.start(0); running = true }, modifier = Modifier.testTag("tutorial-start"))
                 }
             } else {
-                Surface(color = Panel, shape = RoundedCornerShape(8.dp)) {
-                    Row(Modifier.fillMaxWidth().padding(4.dp), verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Column(Modifier.widthIn(max = 180.dp)) {
-                            Text("${state.lesson + 1}/${titles.size} · ${titles[state.lesson]}", color = Terminal, fontSize = 12.sp)
-                            Text(stringResource(R.string.tutorial_status, state.game.turn, state.game.ram, state.game.trace, state.game.pendingNoise),
-                                color = Cyan, fontSize = 11.sp)
-                        }
-                        Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                            if (state.lesson in 5..8) state.game.scriptHand.forEach { card ->
-                                ScriptCardView(card, state.script == card.id, !instructionOpen,
-                                    highlighted = expected == TutorialInput.SelectScript(card.id), compact = true) { dispatch(TutorialInput.SelectScript(card.id)) }
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    GameHeader(state.game, Modifier.weight(1f)) {
+                        if (state.lesson in 5..8) state.game.scriptHand.forEach { card ->
+                            ScriptCardView(card, state.script == card.id, !instructionOpen,
+                                highlighted = expected == TutorialInput.SelectScript(card.id), compact = true) {
+                                dispatch(TutorialInput.SelectScript(card.id))
                             }
                         }
-                        TextButton(onBack) { Text(stringResource(R.string.back)) }
                     }
+                    TextButton(onBack, Modifier.width(92.dp)) { Text(stringResource(R.string.back)) }
                 }
                 BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
                     val panelWidth = (maxWidth * .29f).coerceIn(160.dp, 230.dp)
@@ -87,26 +80,6 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
                             Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 if (state.incorrect) Text(stringResource(R.string.tutorial_wrong), color = Warning)
-                                if (state.tile != null && state.script == null) {
-                                    Text(stringResource(R.string.tutorial_rotation, state.rotation * 90), color = Cyan, fontSize = 11.sp)
-                                    state.game.dominoHand.find { it.id == state.tile }?.let { tile ->
-                                        val horizontal = state.rotation % 2 == 0
-                                        DominoImage(if (state.rotation >= 2) tile.rotated() else tile,
-                                            Modifier.width(if (horizontal) 60.dp else 30.dp),
-                                            if (horizontal) Orientation.HORIZONTAL else Orientation.VERTICAL,
-                                            skin = preferences.dominoSkin)
-                                    }
-                                }
-                                if (state.script == "SPOOF" && state.tile != null) {
-                                    Text(stringResource(R.string.tutorial_spoof_selection, state.half + 1, state.value), color = Muted)
-                                    state.game.dominoHand.find { it.id == state.tile }?.let { tile ->
-                                        DominoImage(if (state.half == 0) tile.copy(first = state.value) else tile.copy(second = state.value),
-                                            Modifier.width(60.dp), skin = preferences.dominoSkin)
-                                    }
-                                }
-                                if (state.script == "BRIDGE") TutorialAction(
-                                    stringResource(if (state.horizontalBridge) R.string.tutorial_bridge_horizontal else R.string.tutorial_bridge_vertical),
-                                    TutorialInput.ToggleBridge, state, dispatch)
                                 state.game.pingPreview.forEach { tile ->
                                     Text(stringResource(R.string.ping_preview), color = Muted)
                                     DominoImage(tile, Modifier.width(60.dp), skin = preferences.dominoSkin)
@@ -116,39 +89,13 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
                             HardwareHand(state.game.dominoHand, state.tile, preferences.dominoSkin,
                                 highlighted = (expected as? TutorialInput.SelectTile)?.id,
                                 tagPrefix = "tutorial-tile") { dispatch(TutorialInput.SelectTile(it)) }
-                            if (state.script == "SPOOF") {
-                                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                    listOf(0..3, 4..6).forEach { rowValues ->
-                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                                            rowValues.forEach { value ->
-                                                OutlinedButton({ dispatch(TutorialInput.Value(value)) },
-                                                    Modifier.weight(1f).height(44.dp).testTag("tutorial-value-$value")
-                                                        .then(if (expected == TutorialInput.Value(value)) Modifier.border(2.dp, Terminal) else Modifier),
-                                                    contentPadding = PaddingValues(0.dp)) { Text("$value") }
-                                            }
-                                        }
-                                    }
-                                }
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                                    (0..1).forEach { half ->
-                                        GameControlButton(stringResource(R.string.tutorial_half, half + 1),
-                                            { dispatch(TutorialInput.Half(half)) },
-                                            Modifier.weight(1f).testTag("tutorial-half-$half"),
-                                            enabled = !instructionOpen,
-                                            highlighted = expected == TutorialInput.Half(half))
-                                    }
-                                }
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                                    GameControlButton(stringResource(R.string.apply), { dispatch(TutorialInput.ApplySpoof) },
-                                        Modifier.weight(1f).testTag("tutorial-action-ApplySpoof"),
-                                        enabled = !instructionOpen, highlighted = expected == TutorialInput.ApplySpoof)
-                                    GameControlButton(stringResource(R.string.cancel), { dispatch(TutorialInput.Cancel) },
-                                        Modifier.weight(1f).testTag("tutorial-action-Cancel"),
-                                        enabled = !instructionOpen, highlighted = expected == TutorialInput.Cancel)
-                                }
-                            } else {
+                            if (state.script == "BRIDGE") {
+                                BridgeControl(state.horizontalBridge, { dispatch(TutorialInput.ToggleBridge) },
+                                    enabled = !instructionOpen, highlighted = expected == TutorialInput.ToggleBridge,
+                                    tag = "tutorial-action-ToggleBridge")
+                            } else if (state.script != "SPOOF") {
                                 GameControlButton(stringResource(R.string.rotate), { dispatch(TutorialInput.Rotate) },
-                                    Modifier.testTag("tutorial-action-Rotate"),
+                                    Modifier.fillMaxWidth().testTag("tutorial-action-Rotate"),
                                     enabled = !instructionOpen && state.tile != null && state.script == null,
                                     highlighted = expected == TutorialInput.Rotate)
                             }
@@ -158,45 +105,61 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
                                 highlighted = expected == TutorialInput.EndTurn)
                         }
                     }
+                    if (!instructionOpen && !state.finished && state.script == null) {
+                        state.game.dominoHand.find { it.id == state.tile }?.let { tile ->
+                            RotationPreview(tile, state.rotation, preferences.dominoSkin,
+                                Modifier.align(Alignment.TopEnd).offset(x = (-panelWidth - 8.dp), y = 10.dp))
+                        }
+                    }
                     // In-layout overlay: the board stays mounted, with no modal window or dim layer.
                     if (instructionOpen || state.finished) {
                         Surface(Modifier.align(Alignment.TopEnd).widthIn(max = 360.dp).fillMaxWidth(.55f)
                             .fillMaxHeight().testTag("tutorial-instruction-dialog"),
                             color = Panel.copy(alpha = .98f), shape = RoundedCornerShape(10.dp),
                             border = BorderStroke(1.dp, Cyan)) {
-                            Column(Modifier.padding(12.dp).verticalScroll(rememberScrollState()),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(titles[state.lesson], color = Terminal)
-                                Text(if (state.finished) stringResource(R.string.tutorial_complete)
-                                    else instructions[state.definition.steps[state.step].instruction],
-                                    Modifier.testTag("tutorial-instruction").semantics { liveRegion = LiveRegionMode.Polite },
-                                    color = Cyan)
+                            Column(Modifier.fillMaxSize().padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text("${state.lesson + 1}/${titles.size} · ${titles[state.lesson]}", color = Terminal)
+                                    Text(if (state.finished) stringResource(R.string.tutorial_complete)
+                                        else instructions[state.definition.steps[state.step].instruction],
+                                        Modifier.testTag("tutorial-instruction").semantics { liveRegion = LiveRegionMode.Polite },
+                                        color = Cyan)
+                                }
+                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                    TextButton({ controller.start(state.lesson); repeat++ },
+                                        Modifier.weight(1f).testTag("tutorial-repeat")) {
+                                        Text(stringResource(R.string.tutorial_repeat))
+                                    }
+                                    TextButton({ helpOpen = true }, Modifier.size(48.dp).testTag("tutorial-help")) {
+                                        Text("?")
+                                    }
+                                }
+                                GameControlButton(
+                                    stringResource(if (state.finished) R.string.tutorial_finish else R.string.tutorial_next),
+                                    {
+                                        if (state.finished) onBack()
+                                        else {
+                                            instructionOpen = false
+                                            if (expected == TutorialInput.Next) controller.dispatch(TutorialInput.Next)
+                                        }
+                                    }, Modifier.fillMaxWidth().testTag("tutorial-action-Next"))
                             }
                         }
+                        if (helpOpen) GeneralGameHelp { helpOpen = false }
                     }
-                }
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    TextButton({ controller.start(state.lesson); repeat++ },
-                        Modifier.testTag("tutorial-repeat")) { Text(stringResource(R.string.tutorial_repeat)) }
-                    TextButton({ instructionOpen = true }, enabled = !state.finished) { Text("?") }
-                    Spacer(Modifier.weight(1f))
-                    GameControlButton(stringResource(if (state.finished) R.string.tutorial_finish else R.string.tutorial_next),
-                        {
-                            if (state.finished) onBack()
-                            else {
-                                instructionOpen = false
-                                if (expected == TutorialInput.Next) controller.dispatch(TutorialInput.Next)
-                            }
-                        }, Modifier.width(180.dp).testTag("tutorial-action-Next"),
-                        enabled = instructionOpen || state.finished)
                 }
             }
         }
     }
-}
-
-@Composable
-private fun TutorialAction(label: String, input: TutorialInput, state: TutorialState, dispatch: (TutorialInput) -> Unit) {
-    GameControlButton(label, { dispatch(input) }, highlighted = state.expected == input,
-        modifier = Modifier.testTag("tutorial-action-${input::class.simpleName}"))
+    if (running && !instructionOpen && !state.finished && state.script == "SPOOF") {
+        state.game.dominoHand.find { it.id == state.tile }?.let { tile ->
+            SpoofDialog(tile, state.half, state.value,
+                if (state.incorrect) R.string.tutorial_wrong else null,
+                { dispatch(TutorialInput.Half(it)) }, { dispatch(TutorialInput.Value(it)) },
+                { dispatch(TutorialInput.ApplySpoof) }, { dispatch(TutorialInput.Cancel) },
+                tutorialExpected = expected)
+        }
+    }
 }

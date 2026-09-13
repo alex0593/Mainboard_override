@@ -3,6 +3,48 @@ package com.aela.mainboardoverride.domain
 import kotlin.test.*
 
 class ScriptRulesTest {
+    @Test fun `ping discovery is protected until next turn even with enough RAM`() {
+        val trap = Position(3, 2)
+        val initial = state(BoardState(width = 8, height = 5, honeypots = setOf(trap))).copy(
+            dominoHand = listOf(Domino("a", 0, 2), Domino("b", 2, 3)),
+            scriptHand = listOf(ScriptCard("ping", ScriptType.PING), ScriptCard("kill", ScriptType.KILL_PROCESS)),
+        )
+        val pinged = GameEngine.reduce(initial, GameAction.PlayPing("ping")).state.copy(ram = 3)
+        assertEquals(setOf(trap), pinged.pingRevealedThisTurn)
+        assertEquals(pinged, GameEngine.reduce(pinged, GameAction.PlayKillProcess("kill", trap)).state)
+        assertTrue(GameEngine.scriptTargets(pinged, "kill").isEmpty())
+        val placed = GameEngine.reduce(pinged, GameAction.PlaceDomino("a", Position(1, 2), Orientation.HORIZONTAL)).state
+        val next = GameEngine.reduce(placed, GameAction.EndTurn).state
+        assertNull(next.result)
+        assertTrue(next.pingRevealedThisTurn.isEmpty())
+        assertEquals(setOf(trap), GameEngine.scriptTargets(next, "kill"))
+        val killed = GameEngine.reduce(next, GameAction.PlayKillProcess("kill", trap)).state
+        assertTrue(killed.board.honeypots.isEmpty())
+        assertTrue(killed.board.revealedHoneypots.isEmpty())
+        assertEquals(0, killed.ram)
+        assertEquals(15, killed.pendingNoise)
+        assertTrue(killed.scriptHand.isEmpty())
+        val covered = GameEngine.reduce(killed, GameAction.PlaceDomino("b", trap, Orientation.HORIZONTAL))
+        assertTrue(covered.events.contains(GameEvent.DominoPlaced))
+        assertFalse(covered.events.contains(GameEvent.HoneypotTriggered))
+        assertEquals(15, covered.state.pendingNoise)
+    }
+
+    @Test fun `kill rejects hidden traps and clears visible triggered traps without refund`() {
+        val trap = Position(3, 2)
+        val hidden = state(BoardState(honeypots = setOf(trap))).copy(
+            scriptHand = listOf(ScriptCard("kill", ScriptType.KILL_PROCESS)), pendingNoise = 20,
+        )
+        assertEquals(hidden, GameEngine.reduce(hidden, GameAction.PlayKillProcess("kill", trap)).state)
+        val visible = hidden.copy(board = hidden.board.copy(
+            revealedHoneypots = setOf(trap), triggeredHoneypots = setOf(trap)))
+        val killed = GameEngine.reduce(visible, GameAction.PlayKillProcess("kill", trap)).state
+        assertTrue(killed.board.honeypots.isEmpty())
+        assertTrue(killed.board.revealedHoneypots.isEmpty())
+        assertTrue(killed.board.triggeredHoneypots.isEmpty())
+        assertEquals(35, killed.pendingNoise)
+    }
+
     private fun state(board: BoardState) = GameState(
         seed = 42, board = board, dominoHand = listOf(Domino("next", 3, 6)),
         dominoBag = emptyList(), scriptHand = listOf(ScriptCard("bridge", ScriptType.BRIDGE)),
@@ -23,6 +65,7 @@ class ScriptRulesTest {
         assertEquals(initial.dominoBag, first.dominoBag)
         assertEquals(initial.dominoBag.take(1), first.pingPreview)
         val second = GameEngine.reduce(first, GameAction.PlayPing("ping-2")).state
+        assertEquals(second.board.revealedHoneypots - initial.board.revealedHoneypots, second.pingRevealedThisTurn)
         assertEquals(3, second.board.revealedHoneypots.size)
         val third = GameEngine.reduce(second.copy(dominoBag = emptyList()), GameAction.PlayPing("ping-3")).state
         assertEquals(second.board, third.board)
@@ -39,6 +82,8 @@ class ScriptRulesTest {
             val board = BoardState(width = 8, height = 8, start = p(if (reverse) 6 else 0, 3),
                 extraction = p(if (reverse) 0 else 6, 3), placed = listOf(source), firewalls = setOf(p(3, 3)))
             val initial = state(board)
+            assertEquals(setOf(p(3, 3)), GameEngine.scriptTargets(initial, "bridge", horizontal))
+            assertTrue(GameEngine.scriptTargets(initial, "bridge", !horizontal).isEmpty())
             val bridged = GameEngine.reduce(initial, GameAction.PlayBridge("bridge", p(3, 3), horizontal)).state
             assertEquals(3, bridged.board.bridges.single().value)
             assertEquals(1, bridged.ram)

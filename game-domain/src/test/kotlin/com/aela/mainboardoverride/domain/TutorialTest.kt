@@ -38,7 +38,10 @@ class TutorialTest {
         assertEquals(GameResult.VICTORY, complete(9).game.result)
         assertTrue(complete(7).game.board.firewalls.isEmpty())
         assertEquals(1, complete(8).game.board.bridges.size)
-        assertTrue(complete(5).game.board.revealedHoneypots.isNotEmpty())
+        val pingAndKill = complete(5).game
+        assertTrue(pingAndKill.board.honeypots.isEmpty())
+        assertTrue(pingAndKill.board.revealedHoneypots.isEmpty())
+        assertEquals(2, pingAndKill.turn)
     }
     @Test fun restartingLessonRestoresFixture() {
         complete(4)

@@ -132,7 +132,7 @@ class ProgressionUiTest {
         assertEquals(9, vm.uiState.value.game!!.board.width)
         compose.runOnIdle { vm.retry() }
         compose.waitForIdle()
-        assertEquals(42L, vm.uiState.value.game!!.seed)
+        assertNotEquals(42L, vm.uiState.value.game!!.seed)
         assertEquals("lab", vm.uiState.value.scenarioId)
     }
 

@@ -54,12 +54,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.LiveRegionMode
 import com.aela.mainboardoverride.domain.RejectReason
+import com.aela.mainboardoverride.domain.TutorialInput
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -245,18 +245,9 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(8.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-              Box(Modifier.weight(1f).heightIn(min = 64.dp).testTag("game-header").clip(RoundedCornerShape(10.dp))) {
-                Image(painterResource(R.drawable.menu_header_v1), null, Modifier.matchParentSize(), contentScale = androidx.compose.ui.layout.ContentScale.FillBounds)
-                Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 18.dp, vertical = 9.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                  Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(stringResource(R.string.turn, game.turn), color = Cyan, fontSize = 11.sp)
-                    Text(stringResource(R.string.ram, game.ram, MAX_RAM), color = Terminal, fontSize = 11.sp)
-                    Text(stringResource(R.string.trace, game.trace), color = if (game.trace >= 80) Danger else Warning, fontSize = 11.sp)
-                  }
-                  Row(
-                    Modifier.weight(1f).horizontalScroll(rememberScrollState()).testTag("script-hand"),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
+              GameHeader(game, Modifier.weight(1f), trailing = {
+                  TextButton(onClick = { helpOpen = true }, modifier = Modifier.size(46.dp).testTag("general-help")) { Text("?", color = Cyan) }
+              }) {
                     game.scriptHand.groupBy { it.type }.values.forEach { stack ->
                         ScriptStack(
                             cards = stack,
@@ -265,9 +256,6 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                             onSelect = actions::selectScript,
                         )
                     }
-                  }
-                  TextButton(onClick = { helpOpen = true }, modifier = Modifier.size(46.dp).testTag("general-help")) { Text("?", color = Cyan) }
-                }
               }
               // Actions live beside the decorative header, with compact visuals and full touch targets.
               Column(Modifier.width(92.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -284,7 +272,9 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                             board = game.board,
                             skin = state.preferences.boardSkin,
                             dominoSkin = state.preferences.dominoSkin,
-                            legalOrigins = state.selectedDominoId?.takeIf { !game.tilePlacedThisTurn && state.selectedScriptId == null && game.result == null }?.let { id ->
+                            legalOrigins = state.selectedScriptId?.let {
+                                GameEngine.scriptTargets(game, it, state.bridgeHorizontal)
+                            } ?: state.selectedDominoId?.takeIf { !game.tilePlacedThisTurn && state.selectedScriptId == null && game.result == null }?.let { id ->
                                 GameEngine.legalPlacements(game).filter {
                                     it.dominoId == id &&
                                         it.orientation == (if (state.rotationSteps % 2 == 0) Orientation.HORIZONTAL else Orientation.VERTICAL) &&
@@ -302,7 +292,6 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                             state.lastBuff?.let { buff ->
                                 Text(stringResource(if (buff == BoardBuff.TRACE_COOLER) R.string.buff_trace_collected else R.string.buff_ram_collected), color = Cyan, fontSize = 11.sp)
                             }
-                            if (game.scriptHand.any { it.id == state.selectedScriptId && it.type == ScriptType.BRIDGE }) BridgeControl(state.bridgeHorizontal, actions::toggleBridge)
                             if (game.pingPreview.isNotEmpty()) PingPreview(game.pingPreview)
                         }
                         HardwareHand(game.dominoHand, state.selectedDominoId, state.preferences.dominoSkin,
@@ -310,7 +299,12 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                       // Keep the two controls together below the hardware frame.
                       Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
                         if (state.selectedScriptId != null) {
-                            GameControlButton(stringResource(R.string.cancel), actions::cancelScript, Modifier.fillMaxWidth().testTag("cancel-script"))
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                if (game.scriptHand.any { it.id == state.selectedScriptId && it.type == ScriptType.BRIDGE }) {
+                                    BridgeControl(state.bridgeHorizontal, actions::toggleBridge, Modifier.weight(1f))
+                                }
+                                GameControlButton(stringResource(R.string.cancel), actions::cancelScript, Modifier.weight(1f).testTag("cancel-script"))
+                            }
                         } else {
                             GameControlButton(stringResource(R.string.rotate), actions::rotate, Modifier.fillMaxWidth().testTag("rotate"), enabled = state.selectedDominoId != null && game.result == null)
                         }
@@ -320,15 +314,8 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                   }
                   // A floating inspection window sits at the board/hardware junction.
                   game.dominoHand.find { it.id == state.selectedDominoId }?.let { tile ->
-                    val preview = if (state.rotationSteps >= 2) tile.rotated() else tile
-                    val orientation = if (state.rotationSteps % 2 == 0) Orientation.HORIZONTAL else Orientation.VERTICAL
-                    Surface(Modifier.align(Alignment.TopEnd).offset(x = (-controlsWidth - 8.dp), y = 10.dp).width(96.dp).height(126.dp).zIndex(3f), shape = RoundedCornerShape(10.dp), color = Panel.copy(alpha = .98f), border = BorderStroke(1.dp, Cyan.copy(alpha = .8f))) {
-                      Column(Modifier.fillMaxSize().padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                        Text(stringResource(if (orientation == Orientation.HORIZONTAL) R.string.horizontal else R.string.vertical), color = Cyan, fontSize = 10.sp)
-                        DominoImage(preview, Modifier.width(if (orientation == Orientation.HORIZONTAL) 68.dp else 34.dp), orientation, skin = state.preferences.dominoSkin)
-                        Text("${preview.first} : ${preview.second}", color = Terminal, fontSize = 11.sp)
-                        }
-                    }
+                    RotationPreview(tile, state.rotationSteps, state.preferences.dominoSkin,
+                        Modifier.align(Alignment.TopEnd).offset(x = (-controlsWidth - 8.dp), y = 10.dp).zIndex(3f))
                   }
                 }
             }
@@ -888,52 +875,70 @@ internal fun PingPreview(tiles: List<Domino>) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?,
-    onHalf: (Int) -> Unit, onValue: (Int) -> Unit, onApply: () -> Unit, onCancel: () -> Unit) {
+    onHalf: (Int) -> Unit, onValue: (Int) -> Unit, onApply: () -> Unit, onCancel: () -> Unit,
+    tutorialExpected: TutorialInput? = null) {
     Popup(
         alignment = Alignment.Center,
         onDismissRequest = onCancel,
         properties = PopupProperties(focusable = false),
     ) {
       Surface(
-          Modifier.widthIn(max = 340.dp).fillMaxWidth(.9f).height(316.dp).padding(6.dp),
+          Modifier.widthIn(max = 320.dp).fillMaxWidth(.9f).heightIn(max = 300.dp).padding(6.dp),
           shape = RoundedCornerShape(14.dp), color = Panel.copy(alpha = .98f),
           border = BorderStroke(1.dp, Cyan.copy(alpha = .8f)),
       ) {
-        Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(Modifier.fillMaxWidth().padding(8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+          Column(Modifier.weight(1f, fill = false).fillMaxWidth().verticalScroll(rememberScrollState()),
+              verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(stringResource(R.string.spoof_value), color = Cyan, fontWeight = FontWeight.Bold)
-            Row(Modifier.height(46.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.spoof_before))
-                        DominoImage(tile, Modifier.height(40.dp).width(20.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(stringResource(R.string.spoof_before), Modifier.weight(1f), fontSize = 12.sp)
+                        DominoImage(tile, Modifier.width(52.dp))
                     }
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.spoof_after))
-                        DominoImage(if (half == 0) tile.copy(first = value) else tile.copy(second = value), Modifier.height(40.dp).width(20.dp))
+                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(stringResource(R.string.spoof_after), Modifier.weight(1f), fontSize = 12.sp)
+                        DominoImage(if (half == 0) tile.copy(first = value) else tile.copy(second = value), Modifier.width(52.dp))
                     }
                 }
-            FlowRow {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     listOf(R.string.first_half, R.string.second_half).forEachIndexed { index, label ->
-                        OutlinedButton(onClick = { onHalf(index) }, modifier = Modifier.semantics { selected = half == index }) { Text(stringResource(label)) }
+                        OutlinedButton(onClick = { onHalf(index) }, modifier = Modifier.weight(1f).heightIn(min = 48.dp)
+                            .testTag("tutorial-half-$index")
+                            .then(if (tutorialExpected == TutorialInput.Half(index)) Modifier.border(2.dp, Terminal) else Modifier)
+                            .semantics { selected = half == index },
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 4.dp)) {
+                            Text(stringResource(label), fontSize = 12.sp)
+                        }
                     }
                 }
             Text(stringResource(R.string.spoof_scroll_hint), color = Cyan, fontSize = 10.sp, maxLines = 1)
             val valueList = rememberLazyListState(initialFirstVisibleItemIndex = value.coerceIn(0, 6))
             LazyColumn(
                     state = valueList,
-                    modifier = Modifier.fillMaxWidth().height(72.dp).border(1.dp, Cyan.copy(alpha = .35f)),
+                    modifier = Modifier.fillMaxWidth().height(72.dp).testTag("spoof-values").border(1.dp, Cyan.copy(alpha = .35f)),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     items((0..6).toList()) { candidate ->
                         TextButton(
                             onClick = { onValue(candidate) },
-                            modifier = Modifier.fillMaxWidth().height(30.dp).semantics { selected = value == candidate },
+                            modifier = Modifier.fillMaxWidth().height(48.dp).testTag("tutorial-value-$candidate")
+                                .then(if (tutorialExpected == TutorialInput.Value(candidate)) Modifier.border(2.dp, Terminal) else Modifier)
+                                .semantics { selected = value == candidate },
                         ) { Text("$candidate", color = if (value == candidate) Terminal else Muted, fontSize = 18.sp, maxLines = 1) }
                     }
             }
             error?.let { Text(stringResource(it), color = Danger, maxLines = 2, fontSize = 10.sp) }
+          }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onCancel, modifier = Modifier.weight(1f).height(44.dp)) { Text(stringResource(R.string.cancel)) }
-                TextButton(onClick = onApply, modifier = Modifier.weight(1f).height(44.dp).testTag("spoof-apply")) { Text(stringResource(R.string.apply)) }
+                TextButton(onClick = onCancel, modifier = Modifier.weight(1f).height(48.dp)
+                    .testTag(if (tutorialExpected != null) "tutorial-action-Cancel" else "spoof-cancel")
+                    .then(if (tutorialExpected == TutorialInput.Cancel) Modifier.border(2.dp, Terminal) else Modifier)) { Text(stringResource(R.string.cancel)) }
+                TextButton(onClick = onApply, modifier = Modifier.weight(1f).height(48.dp)
+                    .testTag(if (tutorialExpected != null) "tutorial-action-ApplySpoof" else "spoof-apply")
+                    .then(if (tutorialExpected == TutorialInput.ApplySpoof) Modifier.border(2.dp, Terminal) else Modifier)) { Text(stringResource(R.string.apply)) }
             }
         }
       }
@@ -941,8 +946,10 @@ internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?,
 }
 
 @Composable
-internal fun BridgeControl(horizontal: Boolean, onToggle: () -> Unit) {
-    SmallButton(stringResource(R.string.bridge_label, stringResource(if (horizontal) R.string.horizontal else R.string.vertical)), onToggle)
+internal fun BridgeControl(horizontal: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier,
+    enabled: Boolean = true, highlighted: Boolean = false, tag: String = "bridge-orientation") {
+    GameControlButton(stringResource(if (horizontal) R.string.horizontal else R.string.vertical), onToggle,
+        modifier.testTag(tag), enabled = enabled, highlighted = highlighted)
 }
 
 @Composable

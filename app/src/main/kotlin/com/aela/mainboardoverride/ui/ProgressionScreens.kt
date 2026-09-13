@@ -170,11 +170,8 @@ internal fun MatchResultDialog(state: GameUiState, actions: MainViewModel, onMen
         modifier = Modifier.testTag("match-result-dialog"),
         accent = if (victory) Terminal else Danger,
         actions = {
-            // Secondary navigation gets its own row, apart from continuing play.
-            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                MenuArtworkButton(stringResource(R.string.main_menu), onMenu, compact = true, fillWidth = false)
-                MenuArtworkButton(stringResource(R.string.review_board), actions::reviewBoard, compact = true, fillWidth = false)
-            }
+            MenuArtworkButton(stringResource(R.string.main_menu), onMenu, compact = true, fillWidth = false)
+            MenuArtworkButton(stringResource(R.string.review_board), actions::reviewBoard, compact = true, fillWidth = false)
             MenuArtworkButton(stringResource(R.string.play_again), { transition(actions::retry) }, compact = true, primary = true, fillWidth = false)
             if (next != null) MenuArtworkButton(stringResource(R.string.next_challenge), { transition { actions.startChallenge(next) } }, compact = true, primary = true, fillWidth = false)
         },

@@ -22,6 +22,7 @@ object GameEngine {
                 current.copy(
                     board = current.board.copy(revealedHoneypots = current.board.revealedHoneypots + listOfNotNull(revealed)),
                     pingPreview = current.dominoBag.take(1),
+                    pingRevealedThisTurn = current.pingRevealedThisTurn + listOfNotNull(revealed),
                 )
             }
             is GameAction.PlaySpoof -> playSpoof(state, action)
@@ -150,12 +151,34 @@ object GameEngine {
     }
 
     private fun playKill(state: GameState, action: GameAction.PlayKillProcess): Transition {
-        if (action.target !in state.board.firewalls) return rejected(state, RejectReason.INVALID_TARGET)
+        if (action.target !in state.board.firewalls &&
+            (action.target !in state.board.honeypots.intersect(state.board.revealedHoneypots) ||
+                action.target in state.pingRevealedThisTurn)) {
+            return rejected(state, RejectReason.INVALID_TARGET)
+        }
         return playCard(state, action.cardId, ScriptType.KILL_PROCESS) { current ->
             current.copy(board = current.board.copy(
                 firewalls = current.board.firewalls - action.target,
+                honeypots = current.board.honeypots - action.target,
+                revealedHoneypots = current.board.revealedHoneypots - action.target,
+                triggeredHoneypots = current.board.triggeredHoneypots - action.target,
                 bridges = current.board.bridges.filterNot { it.center == action.target },
             ))
+        }
+    }
+
+    /** Valid board targets for BRIDGE or KILL, using the same validation as execution. */
+    fun scriptTargets(state: GameState, cardId: String, horizontal: Boolean = true): Set<Position> {
+        val type = state.scriptHand.find { it.id == cardId }?.type ?: return emptySet()
+        val candidates = when (type) {
+            ScriptType.BRIDGE -> state.board.firewalls
+            ScriptType.KILL_PROCESS -> state.board.firewalls + state.board.revealedHoneypots
+            else -> return emptySet()
+        }
+        return candidates.filterTo(mutableSetOf()) { target ->
+            val action = if (type == ScriptType.BRIDGE) GameAction.PlayBridge(cardId, target, horizontal)
+                else GameAction.PlayKillProcess(cardId, target)
+            reduce(state, action).events.any { it is GameEvent.ScriptExecuted }
         }
     }
 
@@ -253,6 +276,7 @@ object GameEngine {
             turn = state.turn + 1,
             tilePlacedThisTurn = false,
             pingPreview = emptyList(),
+            pingRevealedThisTurn = emptySet(),
         )
         return resolveForcedResult(next)
     }

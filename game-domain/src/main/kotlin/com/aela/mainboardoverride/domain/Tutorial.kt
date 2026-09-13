@@ -62,7 +62,10 @@ object TutorialCatalog {
             step(10, TutorialInput.Next), step(11, TutorialInput.SelectTile("a")),
             step(12, TutorialInput.Cell(Position(1, 2))), step(13, TutorialInput.EndTurn), step(14, TutorialInput.Next))),
         TutorialLesson(base().copy(board = base().board.copy(honeypots = setOf(Position(4, 3)))), listOf(
-            step(15, TutorialInput.SelectScript("PING")), step(16, TutorialInput.Next))),
+            step(15, TutorialInput.SelectScript("PING")), step(16, TutorialInput.Next),
+            step(44, TutorialInput.SelectTile("a")), step(45, TutorialInput.Cell(Position(1, 2))),
+            step(46, TutorialInput.EndTurn), step(47, TutorialInput.SelectScript("KILL_PROCESS")),
+            step(48, TutorialInput.Cell(Position(4, 3))))),
         TutorialLesson(base().copy(dominoHand = listOf(Domino("a", 1, 2))), listOf(
             step(17, TutorialInput.SelectScript("SPOOF")), step(18, TutorialInput.SelectTile("a")),
             step(19, TutorialInput.Half(1)), step(20, TutorialInput.Value(3)), step(21, TutorialInput.Cancel),

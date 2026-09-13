@@ -80,12 +80,13 @@ class PuzzleTutorialUiTest {
         compose.onNodeWithTag("board-cell-0-0").performClick()
         assertEquals(0, controller.state.value.step)
         compose.onNodeWithTag("tutorial-action-Next").performClick()
-        compose.onNodeWithTag("tutorial-action-Next").assertIsNotEnabled()
+        compose.onNodeWithTag("tutorial-action-Next").assertDoesNotExist()
+        compose.onNodeWithTag("tutorial-repeat").assertDoesNotExist()
+        compose.onNodeWithTag("tutorial-help").assertDoesNotExist()
         compose.onNodeWithTag("tutorial-tile-b").performClick()
         assertEquals(0, controller.state.value.step)
         compose.onNodeWithTag("tutorial-tile-a").performClick()
         assertEquals(1, controller.state.value.step)
-        compose.onNodeWithTag("tutorial-action-Next").performClick()
         compose.onNodeWithTag("tutorial-repeat").performClick()
         assertEquals(0, controller.state.value.step)
         assertNull(controller.state.value.tile)
@@ -111,6 +112,15 @@ class PuzzleTutorialUiTest {
                     else -> "tutorial-action-${input::class.simpleName}"
                 }
                 val node = compose.onNodeWithTag(tag)
+                if (input is TutorialInput.Value) {
+                    compose.onNodeWithTag("spoof-values").performScrollTo().performScrollToIndex(input.value)
+                }
+                if (input is TutorialInput.Half) node.performScrollTo()
+                if (input is TutorialInput.Half || input is TutorialInput.Value ||
+                    input == TutorialInput.ApplySpoof || input == TutorialInput.Cancel) {
+                    compose.onNodeWithTag("tutorial-action-ApplySpoof").assertIsDisplayed()
+                    compose.onNodeWithTag("tutorial-action-Cancel").assertIsDisplayed()
+                }
                 if (input is TutorialInput.SelectScript ||
                     input == TutorialInput.ToggleBridge) node.performScrollTo()
                 node.assertIsDisplayed().performClick()
