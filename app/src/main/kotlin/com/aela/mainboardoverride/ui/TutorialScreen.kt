@@ -103,21 +103,6 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
                                         DominoImage(if (state.half == 0) tile.copy(first = state.value) else tile.copy(second = state.value),
                                             Modifier.width(60.dp), skin = preferences.dominoSkin)
                                     }
-                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        (0..1).forEach { half ->
-                                            Button({ dispatch(TutorialInput.Half(half)) },
-                                                Modifier.heightIn(min = 48.dp).testTag("tutorial-half-$half").then(if (expected == TutorialInput.Half(half)) Modifier.border(2.dp, Terminal) else Modifier)) {
-                                                Text(stringResource(R.string.tutorial_half, half + 1))
-                                            }
-                                        }
-                                    }
-                                    FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        (0..6).forEach { value ->
-                                            OutlinedButton({ dispatch(TutorialInput.Value(value)) },
-                                                Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp).testTag("tutorial-value-$value").then(if (expected == TutorialInput.Value(value)) Modifier.border(2.dp, Terminal) else Modifier),
-                                                contentPadding = PaddingValues(8.dp)) { Text("$value") }
-                                        }
-                                    }
                                 }
                                 if (state.script == "BRIDGE") TutorialAction(
                                     stringResource(if (state.horizontalBridge) R.string.tutorial_bridge_horizontal else R.string.tutorial_bridge_vertical),
@@ -132,6 +117,27 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
                                 highlighted = (expected as? TutorialInput.SelectTile)?.id,
                                 tagPrefix = "tutorial-tile") { dispatch(TutorialInput.SelectTile(it)) }
                             if (state.script == "SPOOF") {
+                                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    listOf(0..3, 4..6).forEach { rowValues ->
+                                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            rowValues.forEach { value ->
+                                                OutlinedButton({ dispatch(TutorialInput.Value(value)) },
+                                                    Modifier.weight(1f).height(44.dp).testTag("tutorial-value-$value")
+                                                        .then(if (expected == TutorialInput.Value(value)) Modifier.border(2.dp, Terminal) else Modifier),
+                                                    contentPadding = PaddingValues(0.dp)) { Text("$value") }
+                                            }
+                                        }
+                                    }
+                                }
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                                    (0..1).forEach { half ->
+                                        GameControlButton(stringResource(R.string.tutorial_half, half + 1),
+                                            { dispatch(TutorialInput.Half(half)) },
+                                            Modifier.weight(1f).testTag("tutorial-half-$half"),
+                                            enabled = !instructionOpen,
+                                            highlighted = expected == TutorialInput.Half(half))
+                                    }
+                                }
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                                     GameControlButton(stringResource(R.string.apply), { dispatch(TutorialInput.ApplySpoof) },
                                         Modifier.weight(1f).testTag("tutorial-action-ApplySpoof"),

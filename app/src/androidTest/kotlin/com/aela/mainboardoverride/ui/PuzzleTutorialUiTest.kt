@@ -111,8 +111,8 @@ class PuzzleTutorialUiTest {
                     else -> "tutorial-action-${input::class.simpleName}"
                 }
                 val node = compose.onNodeWithTag(tag)
-                if (input is TutorialInput.SelectScript || input is TutorialInput.Half || input is TutorialInput.Value || input == TutorialInput.ApplySpoof ||
-                    input == TutorialInput.Cancel || input == TutorialInput.ToggleBridge) node.performScrollTo()
+                if (input is TutorialInput.SelectScript ||
+                    input == TutorialInput.ToggleBridge) node.performScrollTo()
                 node.assertIsDisplayed().performClick()
             }
         }

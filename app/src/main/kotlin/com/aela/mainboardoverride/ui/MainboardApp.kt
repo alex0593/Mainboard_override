@@ -703,7 +703,7 @@ internal fun DominoView(tile: Domino, selected: Boolean, skin: String = "kenney"
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-            DominoImage(tile, Modifier.height(54.dp).width(27.dp), Orientation.VERTICAL, describe = false, skin = skin)
+            DominoImage(tile, Modifier.height(64.dp).width(32.dp), Orientation.VERTICAL, describe = false, skin = skin)
     }
 }
 
@@ -899,29 +899,28 @@ internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?,
           shape = RoundedCornerShape(14.dp), color = Panel.copy(alpha = .98f),
           border = BorderStroke(1.dp, Cyan.copy(alpha = .8f)),
       ) {
-        Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(R.string.spoof_value), color = Cyan, fontWeight = FontWeight.Bold)
-            Column {
-                Row(Modifier.height(50.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.height(46.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Column(Modifier.weight(1f)) {
                         Text(stringResource(R.string.spoof_before))
-                        DominoImage(tile, Modifier.height(44.dp).width(22.dp))
+                        DominoImage(tile, Modifier.height(40.dp).width(20.dp))
                     }
                     Column(Modifier.weight(1f)) {
                         Text(stringResource(R.string.spoof_after))
-                        DominoImage(if (half == 0) tile.copy(first = value) else tile.copy(second = value), Modifier.height(44.dp).width(22.dp))
+                        DominoImage(if (half == 0) tile.copy(first = value) else tile.copy(second = value), Modifier.height(40.dp).width(20.dp))
                     }
                 }
-                FlowRow {
+            FlowRow {
                     listOf(R.string.first_half, R.string.second_half).forEachIndexed { index, label ->
                         OutlinedButton(onClick = { onHalf(index) }, modifier = Modifier.semantics { selected = half == index }) { Text(stringResource(label)) }
                     }
                 }
-                Text(stringResource(R.string.spoof_scroll_hint), color = Cyan, fontSize = 10.sp, maxLines = 1)
-                val valueList = rememberLazyListState(initialFirstVisibleItemIndex = value.coerceIn(0, 6))
-                LazyColumn(
+            Text(stringResource(R.string.spoof_scroll_hint), color = Cyan, fontSize = 10.sp, maxLines = 1)
+            val valueList = rememberLazyListState(initialFirstVisibleItemIndex = value.coerceIn(0, 6))
+            LazyColumn(
                     state = valueList,
-                    modifier = Modifier.fillMaxWidth().height(94.dp).border(1.dp, Cyan.copy(alpha = .35f)),
+                    modifier = Modifier.fillMaxWidth().height(72.dp).border(1.dp, Cyan.copy(alpha = .35f)),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     items((0..6).toList()) { candidate ->
@@ -930,12 +929,11 @@ internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?,
                             modifier = Modifier.fillMaxWidth().height(30.dp).semantics { selected = value == candidate },
                         ) { Text("$candidate", color = if (value == candidate) Terminal else Muted, fontSize = 18.sp, maxLines = 1) }
                     }
-                }
-                error?.let { Text(stringResource(it), color = Danger) }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(onClick = onCancel, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text(stringResource(R.string.cancel)) }
-                    TextButton(onClick = onApply, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text(stringResource(R.string.apply)) }
-                }
+            }
+            error?.let { Text(stringResource(it), color = Danger, maxLines = 2, fontSize = 10.sp) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onCancel, modifier = Modifier.weight(1f).height(44.dp)) { Text(stringResource(R.string.cancel)) }
+                TextButton(onClick = onApply, modifier = Modifier.weight(1f).height(44.dp).testTag("spoof-apply")) { Text(stringResource(R.string.apply)) }
             }
         }
       }
