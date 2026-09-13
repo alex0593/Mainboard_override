@@ -253,11 +253,9 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                     Text(stringResource(R.string.ram, game.ram, MAX_RAM), color = Terminal, fontSize = 11.sp)
                     Text(stringResource(R.string.trace, game.trace), color = if (game.trace >= 80) Danger else Warning, fontSize = 11.sp)
                   }
-                  FlowRow(
-                    Modifier.weight(1f).testTag("script-hand"),
-                    maxItemsInEachRow = 4,
+                  Row(
+                    Modifier.weight(1f).horizontalScroll(rememberScrollState()).testTag("script-hand"),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     game.scriptHand.groupBy { it.type }.values.forEach { stack ->
                         ScriptStack(
@@ -300,36 +298,15 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                     )
                     if (state.reviewingBoard) ReviewPanel(controlsWidth, actions)
                     if (!state.reviewingBoard) Column(Modifier.width(controlsWidth).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                      Box(Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(10.dp)).border(1.dp, Cyan.copy(alpha = .3f), RoundedCornerShape(10.dp)).padding(2.dp)) {
-                        Image(
-                            painterResource(R.drawable.menu_card_v1), contentDescription = null,
-                            modifier = Modifier.matchParentSize(), contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
-                        )
-                        Column(Modifier.fillMaxSize().padding(2.dp).testTag("hardware-panel"), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
                             state.lastBuff?.let { buff ->
                                 Text(stringResource(if (buff == BoardBuff.TRACE_COOLER) R.string.buff_trace_collected else R.string.buff_ram_collected), color = Cyan, fontSize = 11.sp)
                             }
                             if (game.scriptHand.any { it.id == state.selectedScriptId && it.type == ScriptType.BRIDGE }) BridgeControl(state.bridgeHorizontal, actions::toggleBridge)
                             if (game.pingPreview.isNotEmpty()) PingPreview(game.pingPreview)
-                            Text(stringResource(R.string.dominoes), Modifier.fillMaxWidth(), color = Cyan, fontSize = 11.sp, softWrap = true)
-                            FlowRow(
-                                Modifier.fillMaxWidth(),
-                                maxItemsInEachRow = 3,
-                                horizontalArrangement = Arrangement.SpaceEvenly,
-                                verticalArrangement = Arrangement.spacedBy(1.dp),
-                            ) {
-                                game.dominoHand.forEach { tile ->
-                                    DominoView(
-                                        tile,
-                                        state.selectedDominoId == tile.id,
-                                        state.preferences.dominoSkin,
-                                        highlighted = false,
-                                        modifier = Modifier.weight(1f).fillMaxWidth(.32f),
-                                    ) { actions.selectDomino(tile.id) }
-                                }
-                            }
                         }
-                      }
+                        HardwareHand(game.dominoHand, state.selectedDominoId, state.preferences.dominoSkin,
+                            Modifier.align(Alignment.CenterHorizontally), onSelect = actions::selectDomino)
                       // Keep the two controls together below the hardware frame.
                       Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(0.dp)) {
                         if (state.selectedScriptId != null) {
@@ -596,6 +573,7 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
         Modifier
             .offset(x = size * position.x, y = size * position.y)
             .size(size)
+            .testTag("board-cell-${position.x}-${position.y}")
             .padding(2.dp)
             .background(if (isPlaced) Color.Transparent else placedColor.copy(alpha = if (value != null || firewall || trap || buff != null) .22f else placedColor.alpha))
             .then(if (target) Modifier.border(3.dp, Warning) else if (legal) Modifier.border(1.dp, Terminal) else Modifier)

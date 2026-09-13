@@ -58,6 +58,8 @@ El panel de partida mide sus controles al pie por separado del inventario despla
 
 ## Tutorial aislado
 
+El tutorial utiliza la distribución de partida: indicadores y scripts arriba, tablero a la izquierda y hardware con controles fijos a la derecha. `HardwareHand` comparte fichas de 48 dp de ancho con la partida y ajusta el marco al contenido. La explicación se superpone dentro de la pantalla, conserva visible parte del tablero y no abre un diálogo modal. Siguiente cierra el objetivo sin saltar acciones; solo el reductor valida cada práctica. La pantalla abre el objetivo del siguiente paso y avanza automáticamente a la siguiente lección al terminar. Repetir vuelve al inicio de la lección y vuelve a mostrar su objetivo.
+
 `TutorialCatalog` contiene diez fixtures deterministas y un reductor que solo acepta la acción esperada de cada paso. Las acciones de juego pasan por `GameEngine`; los intentos incorrectos no cambian la práctica. Las explicaciones están en arrays de recursos españoles e ingleses.
 
 `TutorialController` tiene su propio StateFlow y no llama al flujo de partida ni a `finishMatch`. Solo persiste la última lección y la finalización mediante DataStore. Continuar y repetir reconstruyen el fixture inicial de la lección. La práctica no modifica récords, desbloqueos, saldo ni una partida en curso.

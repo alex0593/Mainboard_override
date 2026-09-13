@@ -74,15 +74,50 @@ class PuzzleTutorialUiTest {
         compose.setContent { MainboardTheme { TutorialScreen(PlayerPreferences(), controller, {}) } }
         compose.onNodeWithTag("tutorial-start").performClick()
         compose.onNodeWithTag("tutorial-action-Next").performClick()
-        compose.onNodeWithTag("tutorial-next-lesson").performScrollTo().performClick()
+        compose.waitUntil(5000) { controller.state.value.lesson == 1 }
         assertEquals(1, controller.state.value.lesson)
+        compose.onNodeWithTag("tutorial-board").assertIsDisplayed()
+        compose.onNodeWithTag("board-cell-0-0").performClick()
+        assertEquals(0, controller.state.value.step)
         compose.onNodeWithTag("tutorial-action-Next").performClick()
+        compose.onNodeWithTag("tutorial-action-Next").assertIsNotEnabled()
+        compose.onNodeWithTag("tutorial-tile-b").performClick()
+        assertEquals(0, controller.state.value.step)
         compose.onNodeWithTag("tutorial-tile-a").performClick()
         assertEquals(1, controller.state.value.step)
         compose.onNodeWithTag("tutorial-action-Next").performClick()
-        compose.onNodeWithText(app.getString(R.string.tutorial_repeat)).performScrollTo().performClick()
+        compose.onNodeWithTag("tutorial-repeat").performClick()
         assertEquals(0, controller.state.value.step)
         assertNull(controller.state.value.tile)
+    }
+
+    @Test fun allTutorialLessonsCompleteThroughVisibleControls() {
+        val controller = TutorialController(repository, scope)
+        compose.setContent { MainboardTheme { TutorialScreen(PlayerPreferences(), controller, {}) } }
+        compose.onNodeWithTag("tutorial-start").performClick()
+        for (lesson in TutorialCatalog.lessons.indices) {
+            for ((step, definition) in TutorialCatalog.lessons[lesson].steps.withIndex()) {
+                compose.waitUntil(5000) { controller.state.value.lesson == lesson && controller.state.value.step == step }
+                compose.onNodeWithTag("tutorial-board").assertIsDisplayed()
+                compose.onNodeWithTag("tutorial-action-Next").assertIsDisplayed().performClick()
+                val input = definition.input
+                if (input == TutorialInput.Next) continue
+                val tag = when (input) {
+                    is TutorialInput.SelectTile -> "tutorial-tile-${input.id}"
+                    is TutorialInput.SelectScript -> "script-${input.id}"
+                    is TutorialInput.Cell -> "board-cell-${input.position.x}-${input.position.y}"
+                    is TutorialInput.Half -> "tutorial-half-${input.half}"
+                    is TutorialInput.Value -> "tutorial-value-${input.value}"
+                    else -> "tutorial-action-${input::class.simpleName}"
+                }
+                val node = compose.onNodeWithTag(tag)
+                if (input is TutorialInput.SelectScript || input is TutorialInput.Half || input is TutorialInput.Value || input == TutorialInput.ApplySpoof ||
+                    input == TutorialInput.Cancel || input == TutorialInput.ToggleBridge) node.performScrollTo()
+                node.assertIsDisplayed().performClick()
+            }
+        }
+        compose.waitUntil(5000) { controller.state.value.finished }
+        compose.onNodeWithText(app.getString(R.string.tutorial_complete)).assertIsDisplayed()
     }
 
     @Test fun completingTutorialPersistsOnlyTutorialProgress() {

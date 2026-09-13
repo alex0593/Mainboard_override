@@ -97,8 +97,15 @@ class ContextHelpUiTest {
         val fixed = compose.onNodeWithTag("end-turn").fetchSemanticsNode().boundsInRoot
         val rotate = compose.onNodeWithTag("rotate").fetchSemanticsNode().boundsInRoot
         val inventory = compose.onNodeWithTag("hardware-panel").fetchSemanticsNode().boundsInRoot
-        assertTrue("Controls must not overlap", rotate.bottom <= fixed.top)
+        assertTrue("Controls must not overlap: rotate=$rotate, endTurn=$fixed, hardware=$inventory", rotate.bottom <= fixed.top)
         assertTrue("Inventory must not overlap controls", inventory.bottom <= rotate.top)
+        before.game!!.dominoHand.forEach { tile ->
+            val node = compose.onNodeWithTag("game-tile-${tile.id}").assertIsDisplayed()
+            val bounds = node.fetchSemanticsNode().boundsInRoot
+            assertTrue("Every tile fits inside hardware", bounds.left >= inventory.left && bounds.right <= inventory.right &&
+                bounds.top >= inventory.top && bounds.bottom <= inventory.bottom)
+            assertTrue("Tiles do not stretch across the panel", bounds.width <= 49f)
+        }
         assertTrue("Touch targets stay at least 48dp", rotate.height >= 48f && fixed.height >= 48f)
         compose.onNodeWithText(context.getString(R.string.seed, before.game!!.seed)).assertDoesNotExist()
         listOf(R.string.help_board_body, R.string.help_ram_body, R.string.help_hardware_body, R.string.help_spoof_body).forEachIndexed { index, body ->
