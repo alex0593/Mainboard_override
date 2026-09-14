@@ -152,7 +152,9 @@ object GameEngine {
     private fun playKill(state: GameState, action: GameAction.PlayKillProcess): Transition {
         val removesFirewall = action.target in state.board.firewalls
         val removesHoneypot = action.target in state.board.honeypots.intersect(state.board.revealedHoneypots)
-        val removesDomino = state.board.placed.any { action.target in it.positions }
+        val removesDomino = state.board.placed.any { placed ->
+            action.target == placed.positions.first || action.target == placed.positions.second
+        }
         if (!removesFirewall && !removesHoneypot && !removesDomino) {
             return rejected(state, RejectReason.INVALID_TARGET)
         }
@@ -163,7 +165,9 @@ object GameEngine {
                 revealedHoneypots = current.board.revealedHoneypots - action.target,
                 triggeredHoneypots = current.board.triggeredHoneypots - action.target,
                 bridges = current.board.bridges.filterNot { it.center == action.target },
-                placed = current.board.placed.filterNot { action.target in it.positions },
+                placed = current.board.placed.filterNot { placed ->
+                    action.target == placed.positions.first || action.target == placed.positions.second
+                },
             ))
         }
     }
@@ -174,7 +178,7 @@ object GameEngine {
         val candidates = when (type) {
             ScriptType.BRIDGE -> state.board.firewalls
             ScriptType.KILL_PROCESS -> state.board.firewalls + state.board.revealedHoneypots +
-                state.board.placed.flatMapTo(mutableSetOf()) { it.positions }
+                state.board.placed.flatMapTo(mutableSetOf()) { listOf(it.positions.first, it.positions.second) }
             else -> return emptySet()
         }
         return candidates.filterTo(mutableSetOf()) { target ->
@@ -214,7 +218,7 @@ object GameEngine {
         for (card in state.scriptHand.filter { it.type in setOf(ScriptType.BRIDGE, ScriptType.KILL_PROCESS) && it.type.ramCost <= state.ram }) {
             val targets = if (card.type == ScriptType.BRIDGE) state.board.firewalls
             else state.board.firewalls + state.board.revealedHoneypots +
-                state.board.placed.flatMapTo(mutableSetOf()) { it.positions }
+                state.board.placed.flatMapTo(mutableSetOf()) { listOf(it.positions.first, it.positions.second) }
             for (target in targets) {
                 val actions = if (card.type == ScriptType.BRIDGE)
                     listOf(GameAction.PlayBridge(card.id, target, true), GameAction.PlayBridge(card.id, target, false))
