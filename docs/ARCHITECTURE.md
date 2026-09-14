@@ -81,7 +81,7 @@ BRIDGE mantiene su orientación junto a Cancelar en los controles fijos, tambié
 
 La rotación del tutorial comparte `RotationPreview` con la partida: ventana flotante junto al hardware, orientación, ficha y valores de puertos con los mismos tamaños. Rotar utiliza el mismo control de partida y sigue pasando por el reductor guiado del tutorial.
 
-La partida y el tutorial comparten `GameHeader`: fondo, indicadores de turno/RAM/rastreo y banda de scripts. El título y número de lección viven en la explicación. Siguiente, Repetir y la ayuda «?» pertenecen a esa ventana y desaparecen al cerrarla; no hay barra inferior permanente. Solo el texto se desplaza, conservando sus acciones visibles. Cerrar la explicación no desmonta el tablero ni reinicia el estado de la práctica.
+La partida y el tutorial comparten `GameHeader`: fondo, indicadores de turno/RAM/rastreo y banda de scripts. El título y número de lección viven en la explicación. Siguiente, Repetir y la ayuda «?» pertenecen a esa ventana y desaparecen al cerrarla; no hay barra inferior permanente. Solo el texto se desplaza, conservando sus acciones visibles. Las pausas se reservan para las explicaciones clave; las acciones encadenadas quedan disponibles sin una confirmación intermedia. Cerrar la explicación no desmonta el tablero ni reinicia el estado de la práctica.
 
 El tutorial reutiliza `SpoofDialog` de la partida y conecta sus selecciones al reductor del tutorial. Se muestra al cerrar la explicación y seleccionar una ficha; conserva el resaltado de la acción esperada. El editor limita su altura disponible, desplaza su contenido y reserva una fila fija para Aplicar y Cancelar.
 

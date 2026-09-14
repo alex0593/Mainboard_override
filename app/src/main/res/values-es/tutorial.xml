@@ -53,7 +53,7 @@
         <item>La trampa añade 20 de ruido y descarta un script. Ejecuta turno para ver cómo se acumula el rastreo.</item>
         <item>Vigila el rastreo y el daemon en cada turno. El enfriamiento resta 8 de rastreo y la reserva da 1 RAM, sin superar 3.</item>
         <item>Pulsa PING. Cuesta 1 RAM, no genera ruido, muestra la próxima ficha y revela una trampa oculta si existe.</item>
-        <item>Observa la trampa revelada. PING no elimina trampas ni cambia la bolsa. KILL puede destruir este honeypot en el mismo turno si tienes 3 RAM.</item>
+        <item>Observa la trampa revelada. PING no elimina trampas ni cambia la bolsa. Recoge la RAM de la ficha y usa KILL antes de terminar este turno.</item>
         <item>Selecciona SPOOF. Cuesta 2 RAM y genera 5 de ruido al confirmarlo; permite cambiar una mitad de una ficha a un valor de 0 a 6.</item>
         <item>Selecciona la ficha 1–2 que quieres modificar.</item>
         <item>Elige la segunda mitad.</item>
@@ -71,8 +71,8 @@
         <item>Selecciona 0–2: la casilla que estaba bloqueada ya está libre.</item>
         <item>Coloca la ficha en la casilla resaltada.</item>
         <item>Selecciona BRIDGE. Cuesta 2 RAM y genera 10 de ruido. Une los extremos de un firewall sin eliminarlo; necesita una ficha adyacente.</item>
-        <item>Cambia el puente a vertical para conocer el control.</item>
-        <item>Vuelve a horizontal: nuestra conexión cruza de izquierda a derecha.</item>
+        <item>Cambia el puente a horizontal: nuestra conexión cruza de izquierda a derecha.</item>
+        <item>El puente ya está horizontal y listo para conectar el firewall.</item>
         <item>Toca el firewall resaltado. El puente transmite el valor 2; si ambos extremos están ocupados, sus valores deben coincidir.</item>
         <item>Selecciona 2–6 para continuar al otro lado.</item>
         <item>Colócala en la casilla resaltada. No colocamos fichas encima del firewall.</item>
@@ -81,10 +81,10 @@
         <item>Ejecuta turno para comprobar la victoria. Conectar no basta: evita que el rastreo llegue a 100 o que el daemon alcance el inicio al resolver el turno.</item>
         <item>¡Victoria! También puedes perder por superar los límites del desafío, agotar las fichas sin llegar a la salida o no tener una jugada ni un script que te rescate.</item>
         <item>Fuera del tutorial, una victoria da 20 créditos y el primer éxito en cada desafío añade 40. Cada 5 desafíos completados se desbloquea un escenario. Las skins son cosméticas; en modo libre el tablero es aleatorio.</item>
-        <item>Para avanzar al siguiente turno, selecciona la ficha 0–2.</item>
-        <item>Coloca la ficha junto al inicio en la casilla resaltada.</item>
-        <item>Ejecuta turno. Esto repone la RAM necesaria para KILL.</item>
-        <item>Ya es el siguiente turno. Selecciona KILL PROCESS: cuesta 3 RAM y añade 15 de ruido.</item>
-        <item>Toca el honeypot resaltado para destruirlo. Su casilla deja de ser una trampa.</item>
+        <item>Selecciona la ficha 0–2 después de PING.</item>
+        <item>Colócala junto al inicio para recoger la reserva de RAM.</item>
+        <item>Selecciona KILL PROCESS en el mismo turno. Cuesta 3 RAM y añade 15 de ruido.</item>
+        <item>Toca el honeypot revelado para destruirlo antes de terminar el turno.</item>
+        <item>Ejecuta el turno después de resolver ambos scripts.</item>
     </string-array>
 </resources>

@@ -14,8 +14,17 @@ sealed interface TutorialInput {
     data object EndTurn : TutorialInput
 }
 
-data class TutorialStep(val instruction: Int, val input: TutorialInput)
-data class TutorialLesson(val initial: GameState, val steps: List<TutorialStep>)
+data class TutorialStep(
+    val instruction: Int,
+    val input: TutorialInput,
+    /** Keeps the instruction visible before a key teaching action. */
+    val pauseBeforeAction: Boolean = false,
+)
+data class TutorialLesson(
+    val initial: GameState,
+    val steps: List<TutorialStep>,
+    val initialHorizontalBridge: Boolean = true,
+)
 data class TutorialState(
     val lesson: Int = 0,
     val step: Int = 0,
@@ -44,52 +53,58 @@ object TutorialCatalog {
         scriptDeck = emptyList(),
     )
     private val first = PlacedDomino(Domino("a", 0, 2), Position(0, 2), Orientation.HORIZONTAL)
-    private fun step(id: Int, input: TutorialInput) = TutorialStep(id, input)
+    private fun step(id: Int, input: TutorialInput, pauseBeforeAction: Boolean = false) =
+        TutorialStep(id, input, pauseBeforeAction)
     val lessons: List<TutorialLesson> = listOf(
-        TutorialLesson(base(), listOf(step(0, TutorialInput.Next))),
+        TutorialLesson(base(), listOf(step(0, TutorialInput.Next, pauseBeforeAction = true))),
         TutorialLesson(base(), listOf(
-            step(1, TutorialInput.SelectTile("a")), step(2, TutorialInput.Cell(Position(0, 2))), step(3, TutorialInput.Next))),
+            step(1, TutorialInput.SelectTile("a"), pauseBeforeAction = true),
+            step(2, TutorialInput.Cell(Position(0, 2))), step(3, TutorialInput.Next, pauseBeforeAction = true))),
         TutorialLesson(base().copy(dominoHand = listOf(Domino("a", 2, 0))), listOf(
-            step(4, TutorialInput.SelectTile("a")), step(5, TutorialInput.Rotate),
+            step(4, TutorialInput.SelectTile("a"), pauseBeforeAction = true), step(5, TutorialInput.Rotate),
             step(6, TutorialInput.Rotate), step(7, TutorialInput.Cell(Position(0, 2))))),
         TutorialLesson(base().copy(board = base().board.copy(placed = listOf(first)),
             dominoHand = base().dominoHand.drop(1), tilePlacedThisTurn = true, ram = 1, pendingNoise = 5), listOf(
-            step(8, TutorialInput.EndTurn), step(9, TutorialInput.Next))),
+            step(8, TutorialInput.EndTurn, pauseBeforeAction = true), step(9, TutorialInput.Next, pauseBeforeAction = true))),
         TutorialLesson(base().copy(ram = 1, trace = 20, board = base().board.copy(
             firewalls = setOf(Position(4, 1)), honeypots = setOf(Position(2, 2)),
             daemon = Daemon(Position(6, 4)),
             buffs = mapOf(Position(1, 2) to BoardBuff.RAM_RESERVE, Position(2, 2) to BoardBuff.TRACE_COOLER))), listOf(
-            step(10, TutorialInput.Next), step(11, TutorialInput.SelectTile("a")),
+            step(10, TutorialInput.Next, pauseBeforeAction = true), step(11, TutorialInput.SelectTile("a")),
             step(12, TutorialInput.Cell(Position(0, 2))), step(13, TutorialInput.EndTurn), step(14, TutorialInput.Next))),
-        TutorialLesson(base().copy(board = base().board.copy(honeypots = setOf(Position(4, 3)))), listOf(
-            step(15, TutorialInput.SelectScript("PING")), step(16, TutorialInput.Next),
-            step(44, TutorialInput.SelectTile("a")), step(45, TutorialInput.Cell(Position(0, 2))),
-            step(46, TutorialInput.EndTurn), step(47, TutorialInput.SelectScript("KILL_PROCESS")),
-            step(48, TutorialInput.Cell(Position(4, 3))))),
+        TutorialLesson(base().copy(board = base().board.copy(
+            honeypots = setOf(Position(4, 3)),
+            buffs = mapOf(Position(0, 2) to BoardBuff.RAM_RESERVE))), listOf(
+            step(15, TutorialInput.SelectScript("PING"), pauseBeforeAction = true),
+            step(44, TutorialInput.SelectTile("a"), pauseBeforeAction = true), step(45, TutorialInput.Cell(Position(0, 2))),
+            step(46, TutorialInput.SelectScript("KILL_PROCESS"), pauseBeforeAction = true),
+            step(47, TutorialInput.Cell(Position(4, 3))),
+            step(48, TutorialInput.EndTurn))),
         TutorialLesson(base().copy(dominoHand = listOf(Domino("a", 1, 2))), listOf(
-            step(17, TutorialInput.SelectScript("SPOOF")), step(18, TutorialInput.SelectTile("a")),
+            step(17, TutorialInput.SelectScript("SPOOF"), pauseBeforeAction = true), step(18, TutorialInput.SelectTile("a")),
             step(19, TutorialInput.Half(1)), step(20, TutorialInput.Value(3)), step(21, TutorialInput.Cancel),
             step(22, TutorialInput.SelectScript("SPOOF")), step(23, TutorialInput.SelectTile("a")),
             step(24, TutorialInput.Half(0)), step(25, TutorialInput.Value(0)),
             step(26, TutorialInput.ApplySpoof), step(27, TutorialInput.SelectTile("a")),
             step(28, TutorialInput.Cell(Position(0, 2))))),
         TutorialLesson(base().copy(board = base().board.copy(firewalls = setOf(Position(0, 2)))), listOf(
-            step(29, TutorialInput.SelectScript("KILL_PROCESS")), step(30, TutorialInput.Cell(Position(0, 2))),
+            step(29, TutorialInput.SelectScript("KILL_PROCESS"), pauseBeforeAction = true), step(30, TutorialInput.Cell(Position(0, 2))),
             step(31, TutorialInput.SelectTile("a")), step(32, TutorialInput.Cell(Position(0, 2))))),
         TutorialLesson(base().copy(board = base().board.copy(placed = listOf(first), firewalls = setOf(Position(2, 2))),
             dominoHand = listOf(Domino("b", 2, 6))), listOf(
-            step(33, TutorialInput.SelectScript("BRIDGE")), step(34, TutorialInput.ToggleBridge),
-            step(35, TutorialInput.ToggleBridge), step(36, TutorialInput.Cell(Position(2, 2))),
-            step(37, TutorialInput.SelectTile("b")), step(38, TutorialInput.Cell(Position(3, 2))))),
+            step(33, TutorialInput.SelectScript("BRIDGE"), pauseBeforeAction = true), step(34, TutorialInput.ToggleBridge),
+            step(36, TutorialInput.Cell(Position(2, 2))), step(37, TutorialInput.SelectTile("b")),
+            step(38, TutorialInput.Cell(Position(3, 2)))), initialHorizontalBridge = false),
         TutorialLesson(base().copy(board = base().board.copy(placed = listOf(first,
             PlacedDomino(Domino("b", 2, 4), Position(2, 2), Orientation.HORIZONTAL))),
             dominoHand = listOf(Domino("c", 4, 6))), listOf(
-            step(39, TutorialInput.SelectTile("c")), step(40, TutorialInput.Cell(Position(4, 2))),
-            step(41, TutorialInput.EndTurn), step(42, TutorialInput.Next), step(43, TutorialInput.Next))),
+            step(39, TutorialInput.SelectTile("c"), pauseBeforeAction = true), step(40, TutorialInput.Cell(Position(4, 2))),
+            step(41, TutorialInput.EndTurn))),
     )
 
     fun start(lesson: Int) = lesson.coerceIn(0, lessons.lastIndex).let {
-        TutorialState(lesson = it, game = lessons[it].initial)
+        TutorialState(lesson = it, game = lessons[it].initial,
+            horizontalBridge = lessons[it].initialHorizontalBridge)
     }
 
     fun reduce(state: TutorialState, input: TutorialInput): TutorialState {

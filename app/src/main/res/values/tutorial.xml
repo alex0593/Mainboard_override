@@ -53,7 +53,7 @@
         <item>The trap adds 20 noise and discards a script. Execute turn to see trace accumulate.</item>
         <item>Watch trace and the daemon each turn. Cooling removes 8 trace; a reserve gives 1 RAM, capped at 3.</item>
         <item>Press PING. It costs 1 RAM, adds no noise, previews the next tile and reveals one hidden trap if present.</item>
-        <item>Observe the revealed trap. PING does not remove traps or change the bag. KILL can destroy this honeypot in the same turn if you have 3 RAM.</item>
+        <item>Observe the revealed trap. PING does not remove traps or change the bag. Collect the RAM from the tile, then use KILL before ending this turn.</item>
         <item>Select SPOOF. On confirmation it costs 2 RAM and adds 5 noise. It changes one half of a tile to a value from 0 to 6.</item>
         <item>Select the 1–2 tile to modify.</item>
         <item>Choose its second half.</item>
@@ -71,8 +71,8 @@
         <item>Select 0–2: the blocked cell is now free.</item>
         <item>Place the tile in the highlighted cell.</item>
         <item>Select BRIDGE. It costs 2 RAM and adds 10 noise. It joins the ends of a firewall without removing it and requires an adjacent tile.</item>
-        <item>Switch the bridge to vertical to try the control.</item>
-        <item>Switch back to horizontal: our connection runs left to right.</item>
+        <item>Switch the bridge to horizontal: our connection runs left to right.</item>
+        <item>The bridge is now horizontal and ready to connect the firewall.</item>
         <item>Tap the highlighted firewall. This bridge transmits value 2. If both ends are occupied, their values must match.</item>
         <item>Select 2–6 to continue on the other side.</item>
         <item>Place it in the highlighted cell. Tiles do not occupy the firewall.</item>
@@ -81,10 +81,10 @@
         <item>Execute turn to check victory. Connecting is not enough: keep trace below 100 and prevent the daemon reaching start during turn resolution.</item>
         <item>Victory! You can also lose by exceeding challenge limits, exhausting tiles before reaching extraction, or having neither a legal move nor a rescue script.</item>
         <item>Outside practice, victory earns 20 credits and the first win in each challenge adds 40. Every 5 completed challenges unlock a scenario. Skins are cosmetic; free play generates a random board.</item>
-        <item>To advance to the next turn, select the 0–2 tile.</item>
-        <item>Place the tile beside start at the highlighted cell.</item>
-        <item>Execute the turn. This restores the RAM needed for KILL.</item>
-        <item>It is now the next turn. Select KILL PROCESS: it costs 3 RAM and adds 15 noise.</item>
-        <item>Tap the highlighted honeypot to destroy it. Its cell is no longer a trap.</item>
+        <item>Select the 0–2 tile after PING.</item>
+        <item>Place it beside start to collect the RAM reserve.</item>
+        <item>Select KILL PROCESS in the same turn. It costs 3 RAM and adds 15 noise.</item>
+        <item>Tap the revealed honeypot to destroy it before ending the turn.</item>
+        <item>Execute the turn after both scripts have resolved.</item>
     </string-array>
 </resources>

@@ -27,7 +27,10 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
     var running by remember { mutableStateOf(false) }
     var repeat by remember { mutableIntStateOf(0) }
     val state by controller.state.collectAsState()
-    var instructionOpen by remember(running, state.lesson, state.step, repeat) { mutableStateOf(true) }
+    val stepDefinition = state.definition.steps.getOrNull(state.step)
+    var instructionOpen by remember(running, state.lesson, state.step, repeat) {
+        mutableStateOf(stepDefinition?.pauseBeforeAction == true || state.expected == TutorialInput.Next)
+    }
     var helpOpen by remember(instructionOpen, state.lesson, state.step) { mutableStateOf(false) }
     val expected = state.expected
     val titles = stringArrayResource(R.array.tutorial_titles)

@@ -100,8 +100,10 @@ class PuzzleTutorialUiTest {
             for ((step, definition) in TutorialCatalog.lessons[lesson].steps.withIndex()) {
                 compose.waitUntil(5000) { controller.state.value.lesson == lesson && controller.state.value.step == step }
                 compose.onNodeWithTag("tutorial-board").assertIsDisplayed()
-                compose.onNodeWithTag("tutorial-action-Next").assertIsDisplayed().performClick()
                 val input = definition.input
+                if (definition.pauseBeforeAction || input == TutorialInput.Next) {
+                    compose.onNodeWithTag("tutorial-action-Next").assertIsDisplayed().performClick()
+                }
                 if (input == TutorialInput.Next) continue
                 val tag = when (input) {
                     is TutorialInput.SelectTile -> "tutorial-tile-${input.id}"
