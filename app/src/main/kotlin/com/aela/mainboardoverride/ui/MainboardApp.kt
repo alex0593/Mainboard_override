@@ -442,9 +442,9 @@ internal fun Board(
         val cell = minOf((maxWidth - margin * 2) / (board.width + 2), (maxHeight - margin * 2) / board.height).coerceAtLeast(0.dp)
         Box(Modifier.width(cell * (board.width + 2)).height(cell * board.height)) {
             PortSprite(R.drawable.board_port_s0_v1, "S0", board.start.y, cell, start = true,
-                modifier = Modifier.testTag("board-port-s0"))
+                modifier = Modifier.offset(x = cell * .18f).testTag("board-port-s0"))
             PortSprite(R.drawable.board_port_x6_v1, "X6", board.extraction.y, cell, start = false,
-                modifier = Modifier.offset(x = cell * (board.width + 1)).testTag("board-port-x6"))
+                modifier = Modifier.offset(x = cell * (board.width + .82f)).testTag("board-port-x6"))
             Box(Modifier.offset(x = cell).width(cell * board.width).height(cell * board.height)
                 .background(Color.Transparent)
                 .border(1.dp, Muted.copy(alpha = .4f))) {
@@ -537,7 +537,7 @@ internal fun Board(
 @Composable
 private fun PortSprite(resource: Int, label: String, row: Int, size: Dp, start: Boolean, modifier: Modifier = Modifier) {
     Box(
-        modifier.offset(y = size * row).width(size).height(size),
+        modifier.offset(y = size * row).width(size).height(size).zIndex(2f),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Image(
