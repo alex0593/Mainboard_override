@@ -21,8 +21,7 @@ object GameEngine {
                 val revealed = hidden.randomOrNull(kotlin.random.Random(current.seed xor action.cardId.hashCode().toLong()))
                 current.copy(
                     board = current.board.copy(revealedHoneypots = current.board.revealedHoneypots + listOfNotNull(revealed)),
-                    pingPreview = current.dominoBag.take(1),
-                    pingRevealedThisTurn = current.pingRevealedThisTurn + listOfNotNull(revealed),
+                    pingPreview = current.dominoBag.take(current.pingPreview.size + 1),
                 )
             }
             is GameAction.PlaySpoof -> playSpoof(state, action)
@@ -151,9 +150,10 @@ object GameEngine {
     }
 
     private fun playKill(state: GameState, action: GameAction.PlayKillProcess): Transition {
-        if (action.target !in state.board.firewalls &&
-            (action.target !in state.board.honeypots.intersect(state.board.revealedHoneypots) ||
-                action.target in state.pingRevealedThisTurn)) {
+        val removesFirewall = action.target in state.board.firewalls
+        val removesHoneypot = action.target in state.board.honeypots.intersect(state.board.revealedHoneypots)
+        val removesDomino = state.board.placed.any { action.target in it.positions }
+        if (!removesFirewall && !removesHoneypot && !removesDomino) {
             return rejected(state, RejectReason.INVALID_TARGET)
         }
         return playCard(state, action.cardId, ScriptType.KILL_PROCESS) { current ->
@@ -163,6 +163,7 @@ object GameEngine {
                 revealedHoneypots = current.board.revealedHoneypots - action.target,
                 triggeredHoneypots = current.board.triggeredHoneypots - action.target,
                 bridges = current.board.bridges.filterNot { it.center == action.target },
+                placed = current.board.placed.filterNot { action.target in it.positions },
             ))
         }
     }
@@ -172,7 +173,8 @@ object GameEngine {
         val type = state.scriptHand.find { it.id == cardId }?.type ?: return emptySet()
         val candidates = when (type) {
             ScriptType.BRIDGE -> state.board.firewalls
-            ScriptType.KILL_PROCESS -> state.board.firewalls + state.board.revealedHoneypots
+            ScriptType.KILL_PROCESS -> state.board.firewalls + state.board.revealedHoneypots +
+                state.board.placed.flatMapTo(mutableSetOf()) { it.positions }
             else -> return emptySet()
         }
         return candidates.filterTo(mutableSetOf()) { target ->
@@ -210,7 +212,10 @@ object GameEngine {
     /** Search only resource-opening scripts; every recursive step consumes a card. */
     private fun canOpenPlacement(state: GameState): Boolean {
         for (card in state.scriptHand.filter { it.type in setOf(ScriptType.BRIDGE, ScriptType.KILL_PROCESS) && it.type.ramCost <= state.ram }) {
-            for (target in state.board.firewalls) {
+            val targets = if (card.type == ScriptType.BRIDGE) state.board.firewalls
+            else state.board.firewalls + state.board.revealedHoneypots +
+                state.board.placed.flatMapTo(mutableSetOf()) { it.positions }
+            for (target in targets) {
                 val actions = if (card.type == ScriptType.BRIDGE)
                     listOf(GameAction.PlayBridge(card.id, target, true), GameAction.PlayBridge(card.id, target, false))
                 else listOf(GameAction.PlayKillProcess(card.id, target))
@@ -233,6 +238,9 @@ object GameEngine {
         val card = state.scriptHand.find { it.id == cardId && it.type == expectedType }
             ?: return rejected(state, RejectReason.CARD_NOT_FOUND)
         if (state.ram < card.type.ramCost) return rejected(state, RejectReason.INSUFFICIENT_RAM)
+        if (expectedType == ScriptType.PING &&
+            (state.board.honeypots - state.board.revealedHoneypots - state.board.triggeredHoneypots).isEmpty() &&
+            state.pingPreview.size >= state.dominoBag.size) return rejected(state, RejectReason.INVALID_TARGET)
         val paid = state.copy(
             scriptHand = state.scriptHand.filterNot { it.id == card.id },
             ram = state.ram - card.type.ramCost,
@@ -276,7 +284,6 @@ object GameEngine {
             turn = state.turn + 1,
             tilePlacedThisTurn = false,
             pingPreview = emptyList(),
-            pingRevealedThisTurn = emptySet(),
         )
         return resolveForcedResult(next)
     }
@@ -334,7 +341,7 @@ object GameEngine {
                 if (position == ends.second) result += ends.first
             }
         }
-        return result.filter { inBounds(board, it) }
+        return result.filter { inBounds(board, it) || it == board.start || it == board.extraction }
     }
 
     private fun inBounds(board: BoardState, position: Position): Boolean =
@@ -343,7 +350,7 @@ object GameEngine {
     private fun neighbors(board: BoardState, position: Position): List<Position> = listOf(
         Position(position.x - 1, position.y), Position(position.x + 1, position.y),
         Position(position.x, position.y - 1), Position(position.x, position.y + 1),
-    ).filter { inBounds(board, it) }
+    ).filter { inBounds(board, it) || it == board.start || it == board.extraction }
 
     private fun rejected(state: GameState, reason: RejectReason) =
         Transition(state, listOf(GameEvent.Rejected(reason)))

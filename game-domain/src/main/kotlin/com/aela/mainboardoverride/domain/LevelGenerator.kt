@@ -25,27 +25,28 @@ object LevelGenerator {
         val random = Random(seed)
         if (scenario != null) {
             repeat(512) {
-                val start = Position(0, random.nextInt(1, scenario.height))
-                val extraction = Position(scenario.width - 1, random.nextInt(1, scenario.height))
+                val start = Position(-1, random.nextInt(1, scenario.height))
+                val extraction = Position(scenario.width, random.nextInt(1, scenario.height))
                 val path = findPath(random, scenario.route, start, extraction, scenario.width, scenario.height)
-                if (path != null) buildLevel(seed, random, path, start, extraction, scenario = scenario)?.let { return it }
+                if (path != null) buildLevel(seed, random, path, start, extraction, boardWidth = scenario.width, scenario = scenario)?.let { return it }
             }
             error("Unable to generate scenario ${scenario.id} for $seed")
         }
         val startY = random.nextInt(1, 6)
         val exitY = (startY + random.nextInt(1, 6)) % 6 + 1
-        val start = Position(0, startY)
-        // Some seeds use an eight-column board, others nine columns.
-        val extraction = Position(random.nextInt(7, MAX_GENERATED_BOARD_WIDTH), exitY)
+        val start = Position(-1, startY)
+        // Some seeds use an eight-column board, others nine or ten columns.
+        val boardWidth = random.nextInt(MIN_GENERATED_BOARD_WIDTH, MAX_GENERATED_BOARD_WIDTH + 1)
+        val extraction = Position(boardWidth, exitY)
         repeat(24) {
             val count = challengeLevel?.let { (4 + it / 2).coerceIn(5, 9) } ?: random.nextInt(5, 8)
-            val path = findPath(random, count, start, extraction)
-            if (path != null) buildLevel(seed, random, path, start, extraction, challengeLevel)?.let { return it }
+            val path = findPath(random, count, start, extraction, boardWidth)
+            if (path != null) buildLevel(seed, random, path, start, extraction, challengeLevel, boardWidth = boardWidth)?.let { return it }
         }
         // A five-tile detour; reflections retain valid board geometry.
         val fallback = listOf(1 to 3, 1 to 2, 2 to 2, 3 to 2, 4 to 2, 5 to 2, 6 to 2, 7 to 2, 7 to 3, 7 to 4)
         val reflect = random.nextBoolean()
-        return checkNotNull(buildLevel(seed, random, fallback.map { (x, y) -> Position(x, if (reflect) 6 - y else y) }, start, extraction, challengeLevel))
+        return checkNotNull(buildLevel(seed, random, fallback.map { (x, y) -> Position(x, if (reflect) 6 - y else y) }, start, extraction, challengeLevel, boardWidth = boardWidth))
     }
 
     private fun findPath(random: Random, count: Int, start: Position, extraction: Position, width: Int = MAX_GENERATED_BOARD_WIDTH, height: Int = BOARD_HEIGHT): List<Position>? {
@@ -54,13 +55,13 @@ object LevelGenerator {
         var budget = 12000
         fun visit(current: Position): Boolean {
             if (--budget <= 0) return false
-            if (path.size == count * 2) return path.takeLast(2).any { board.extraction in it.neighbors(board.width, board.height) }
+            if (path.size == count * 2) return path.takeLast(2).any { adjacent(it, board.extraction) }
             val remaining = count * 2 - path.size
             if (kotlin.math.abs(current.x - board.extraction.x) + kotlin.math.abs(current.y - board.extraction.y) > remaining + 1) return false
             for (next in current.neighbors(board.width, board.height).shuffled(random)) {
                 if (next == board.start || next == board.extraction || next in path) continue
                 // Only the final domino may touch extraction.
-                if (path.size < count * 2 - 2 && board.extraction in next.neighbors(width, height)) continue
+                if (path.size < count * 2 - 2 && adjacent(next, board.extraction)) continue
                 path.add(next)
                 if (visit(next)) return true
                 path.removeAt(path.lastIndex)
@@ -70,15 +71,11 @@ object LevelGenerator {
         return if (visit(board.start)) path.toList() else null
     }
 
-    private fun buildLevel(seed: Long, random: Random, path: List<Position>, start: Position = Position(0, BOARD_HEIGHT / 2), extraction: Position = Position(BOARD_WIDTH - 1, BOARD_HEIGHT / 2), challengeLevel: Int? = null, scenario: Scenario? = null): GeneratedLevel? {
+    private fun buildLevel(seed: Long, random: Random, path: List<Position>, start: Position = Position(-1, BOARD_HEIGHT / 2), extraction: Position = Position(BOARD_WIDTH, BOARD_HEIGHT / 2), challengeLevel: Int? = null, boardWidth: Int? = null, scenario: Scenario? = null): GeneratedLevel? {
         // Fit the generated witness while varying the playable footprint per seed.
-        val width = scenario?.width ?: when {
-            path.all { it.x < MIN_GENERATED_BOARD_WIDTH } && extraction.x < MIN_GENERATED_BOARD_WIDTH -> MIN_GENERATED_BOARD_WIDTH
-            path.all { it.x < 9 } && extraction.x < 9 -> 9
-            else -> MAX_GENERATED_BOARD_WIDTH
-        }
+        val width = boardWidth ?: scenario?.width ?: MAX_GENERATED_BOARD_WIDTH
         val height = scenario?.height ?: if (path.all { it.y < 6 } && extraction.y < 6) 6 else 7
-        if (start.x !in 0 until width || extraction.x !in 0 until width || start.y !in 0 until height || extraction.y !in 0 until height) return null
+        if (start.x !in -1..width || extraction.x !in -1..width || start.y !in 0 until height || extraction.y !in 0 until height) return null
         val base = BoardState(width = width, height = height, start = start, extraction = extraction)
         val positions = path + base.start + base.extraction
         val parent = IntArray(positions.size) { it }
@@ -90,7 +87,7 @@ object LevelGenerator {
         // External contacts must match; the two ports inside a domino need not.
         for (i in positions.indices) for (j in 0 until i) {
             if (i < path.size && j < path.size && i / 2 == j / 2) continue
-            if (positions[j] in positions[i].neighbors(width, height)) parent[root(i)] = root(j)
+            if (adjacent(positions[j], positions[i])) parent[root(i)] = root(j)
         }
         val startRoot = root(path.size)
         val exitRoot = root(path.size + 1)
@@ -140,4 +137,7 @@ object LevelGenerator {
         }
         return if (replay.result == GameResult.VICTORY) GeneratedLevel(state, actions) else null
     }
+
+    private fun adjacent(first: Position, second: Position): Boolean =
+        kotlin.math.abs(first.x - second.x) + kotlin.math.abs(first.y - second.y) == 1
 }

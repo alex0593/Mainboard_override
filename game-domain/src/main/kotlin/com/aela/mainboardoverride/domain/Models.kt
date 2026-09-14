@@ -80,14 +80,15 @@ enum class GameResult {
 /**
  * Immutable snapshot of every spatial element in a level.
  *
- * Start and extraction are virtual single-cell nodes. Honeypots do not occupy a
- * cell: they are hidden coordinates activated when hardware is placed over them.
+ * Start and extraction are virtual nodes just outside the left and right board
+ * edges. Honeypots do not occupy a cell: they are hidden coordinates activated
+ * when hardware is placed over them.
  */
 data class BoardState(
     val width: Int = BOARD_WIDTH,
     val height: Int = BOARD_HEIGHT,
-    val start: Position = Position(0, height / 2),
-    val extraction: Position = Position(width - 1, height / 2),
+    val start: Position = Position(-1, height / 2),
+    val extraction: Position = Position(width, height / 2),
     val placed: List<PlacedDomino> = emptyList(),
     val firewalls: Set<Position> = emptySet(),
     val honeypots: Set<Position> = emptySet(),
@@ -105,7 +106,8 @@ data class BoardState(
     }
 
     fun isOccupied(position: Position): Boolean =
-        position == start || position == extraction ||
+        ((position == start || position == extraction) &&
+            position.x in 0 until width && position.y in 0 until height) ||
             position in firewalls || placed.any { it.valueAt(position) != null }
 }
 
@@ -128,8 +130,6 @@ data class GameState(
     val turn: Int = 1,
     val tilePlacedThisTurn: Boolean = false,
     val pingPreview: List<Domino> = emptyList(),
-    /** PING discoveries cannot be destroyed by KILL until the next turn. */
-    val pingRevealedThisTurn: Set<Position> = emptySet(),
     val challengeRules: ChallengeRules? = null,
     val phase: TurnPhase = TurnPhase.ACTION,
     val result: GameResult? = null,

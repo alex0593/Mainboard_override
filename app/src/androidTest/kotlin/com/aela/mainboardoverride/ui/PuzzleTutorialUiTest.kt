@@ -121,8 +121,7 @@ class PuzzleTutorialUiTest {
                     compose.onNodeWithTag("tutorial-action-ApplySpoof").assertIsDisplayed()
                     compose.onNodeWithTag("tutorial-action-Cancel").assertIsDisplayed()
                 }
-                if (input is TutorialInput.SelectScript ||
-                    input == TutorialInput.ToggleBridge) node.performScrollTo()
+                if (input is TutorialInput.SelectScript) node.performScrollTo()
                 node.assertIsDisplayed().performClick()
             }
         }

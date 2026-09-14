@@ -3,31 +3,26 @@ package com.aela.mainboardoverride.domain
 import kotlin.test.*
 
 class ScriptRulesTest {
-    @Test fun `ping discovery is protected until next turn even with enough RAM`() {
+    @Test fun `ping then ram pickup allows kill in the same turn`() {
         val trap = Position(3, 2)
-        val initial = state(BoardState(width = 8, height = 5, honeypots = setOf(trap))).copy(
-            dominoHand = listOf(Domino("a", 0, 2), Domino("b", 2, 3)),
+        val initial = state(BoardState(width = 8, height = 5, honeypots = setOf(trap),
+            buffs = mapOf(Position(1, 2) to BoardBuff.RAM_RESERVE))).copy(
+            dominoHand = listOf(Domino("a", 0, 2)),
             scriptHand = listOf(ScriptCard("ping", ScriptType.PING), ScriptCard("kill", ScriptType.KILL_PROCESS)),
         )
-        val pinged = GameEngine.reduce(initial, GameAction.PlayPing("ping")).state.copy(ram = 3)
-        assertEquals(setOf(trap), pinged.pingRevealedThisTurn)
-        assertEquals(pinged, GameEngine.reduce(pinged, GameAction.PlayKillProcess("kill", trap)).state)
-        assertTrue(GameEngine.scriptTargets(pinged, "kill").isEmpty())
-        val placed = GameEngine.reduce(pinged, GameAction.PlaceDomino("a", Position(1, 2), Orientation.HORIZONTAL)).state
-        val next = GameEngine.reduce(placed, GameAction.EndTurn).state
-        assertNull(next.result)
-        assertTrue(next.pingRevealedThisTurn.isEmpty())
-        assertEquals(setOf(trap), GameEngine.scriptTargets(next, "kill"))
-        val killed = GameEngine.reduce(next, GameAction.PlayKillProcess("kill", trap)).state
+        val pinged = GameEngine.reduce(initial, GameAction.PlayPing("ping")).state
+        val insufficient = GameEngine.reduce(pinged, GameAction.PlayKillProcess("kill", trap))
+        assertEquals(pinged, insufficient.state)
+        assertEquals(listOf(GameEvent.Rejected(RejectReason.INSUFFICIENT_RAM)), insufficient.events)
+        val restored = GameEngine.reduce(pinged, GameAction.PlaceDomino("a", Position(1, 2), Orientation.HORIZONTAL)).state
+        assertEquals(setOf(trap), GameEngine.scriptTargets(restored, "kill"))
+        val killed = GameEngine.reduce(restored, GameAction.PlayKillProcess("kill", trap)).state
+        assertEquals(initial.turn, killed.turn)
         assertTrue(killed.board.honeypots.isEmpty())
         assertTrue(killed.board.revealedHoneypots.isEmpty())
         assertEquals(0, killed.ram)
         assertEquals(15, killed.pendingNoise)
         assertTrue(killed.scriptHand.isEmpty())
-        val covered = GameEngine.reduce(killed, GameAction.PlaceDomino("b", trap, Orientation.HORIZONTAL))
-        assertTrue(covered.events.contains(GameEvent.DominoPlaced))
-        assertFalse(covered.events.contains(GameEvent.HoneypotTriggered))
-        assertEquals(15, covered.state.pendingNoise)
     }
 
     @Test fun `kill rejects hidden traps and clears visible triggered traps without refund`() {
@@ -65,12 +60,33 @@ class ScriptRulesTest {
         assertEquals(initial.dominoBag, first.dominoBag)
         assertEquals(initial.dominoBag.take(1), first.pingPreview)
         val second = GameEngine.reduce(first, GameAction.PlayPing("ping-2")).state
-        assertEquals(second.board.revealedHoneypots - initial.board.revealedHoneypots, second.pingRevealedThisTurn)
+        assertEquals(initial.dominoBag, second.pingPreview)
+        assertEquals(1, second.ram)
         assertEquals(3, second.board.revealedHoneypots.size)
-        val third = GameEngine.reduce(second.copy(dominoBag = emptyList()), GameAction.PlayPing("ping-3")).state
-        assertEquals(second.board, third.board)
-        assertTrue(third.pingPreview.isEmpty())
-        assertEquals(0, third.ram)
+        val third = GameEngine.reduce(second, GameAction.PlayPing("ping-3"))
+        assertEquals(second, third.state)
+        assertEquals(listOf(GameEvent.Rejected(RejectReason.INVALID_TARGET)), third.events)
+    }
+
+    @Test fun `three pings preview three tiles then reset at end turn`() {
+        val initial = state(BoardState(height = 5)).copy(
+            dominoHand = listOf(Domino("place", 0, 2)),
+            dominoBag = (1..4).map { Domino("tile-$it", 2, 3) },
+            scriptHand = (1..4).map { ScriptCard("ping-$it", ScriptType.PING) },
+        )
+        var current = initial
+        for (i in 1..3) {
+            current = GameEngine.reduce(current, GameAction.PlayPing("ping-$i")).state
+            assertEquals(initial.dominoBag.take(i), current.pingPreview)
+            assertEquals(3 - i, current.ram)
+            assertEquals(4 - i, current.scriptHand.size)
+        }
+        assertEquals(current, GameEngine.reduce(current, GameAction.PlayPing("ping-4")).state)
+        val placed = GameEngine.reduce(current, GameAction.PlaceDomino("place", Position(1, 2), Orientation.HORIZONTAL)).state
+        val next = GameEngine.reduce(placed, GameAction.EndTurn).state
+        assertEquals(initial.turn + 1, next.turn)
+        assertTrue(next.pingPreview.isEmpty())
+        assertEquals(initial.dominoBag.drop(1), next.dominoBag)
     }
 
     @Test fun bridgeCopiesOnePortAndAllowsLaterPlacementFromEitherSideAndAxis() {
@@ -99,6 +115,18 @@ class ScriptRulesTest {
             assertEquals(GameResult.VICTORY, GameEngine.reduce(placed, GameAction.EndTurn).state.result)
             assertEquals(bridged, GameEngine.reduce(bridged, GameAction.PlayBridge("bridge", p(3, 3), horizontal)).state)
         }
+    }
+
+    @Test fun `kill removes a complete placed domino when either half is targeted`() {
+        val tile = PlacedDomino(Domino("tile", 0, 3), Position(1, 2), Orientation.HORIZONTAL)
+        val initial = state(BoardState(placed = listOf(tile))).copy(
+            scriptHand = listOf(ScriptCard("kill", ScriptType.KILL_PROCESS)), ram = 3,
+        )
+        assertEquals(setOf(Position(1, 2), Position(2, 2)), GameEngine.scriptTargets(initial, "kill"))
+        val killed = GameEngine.reduce(initial, GameAction.PlayKillProcess("kill", Position(2, 2))).state
+        assertTrue(killed.board.placed.isEmpty())
+        assertEquals(0, killed.ram)
+        assertEquals(15, killed.pendingNoise)
     }
 
     @Test fun invalidBridgeTargetsNeverSpendResources() {

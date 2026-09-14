@@ -1,0 +1,3 @@
+Built-in image_gen, 2026-09-13. Generated for this project; original preserved in originals/.
+
+Use case: stylized-concept. Asset type: transparent square game board sprite for Mainboard Override, dark PCB cyberpunk game with terminal green, cyan and warning yellow. Primary request: a horizontal electronic bridge bypass connector, top-down, two metallic terminals joined by luminous cyan parallel tracks, dark metal housing and yellow accents. Single centered isolated sprite, strong silhouette readable at 40 pixels, fills 85% of square. Genuine transparent background. No text, letters, numbers, watermark, UI card or surrounding scene.

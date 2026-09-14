@@ -1,5 +1,24 @@
 # Arquitectura del código
 
+## Pantalla completa y barras del sistema
+
+`MainActivity` y las ventanas de `GameDialog` comparten `bindGameImmersion`:
+ocultan navegación y estado mediante `WindowInsetsControllerCompat`, al adjuntar
+la ventana y recuperar su foco. La actividad también lo reaplica al reanudarse.
+Cada propietario retira sus callbacks al destruirse o salir de composición.
+`BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE` permite recuperar temporalmente las barras;
+no se usan bucles que interfieran con los gestos del sistema. El popup de SPOOF
+no toma foco y conserva la política de la ventana principal.
+
+El contenido navegable y los diálogos respetan `WindowInsets.safeDrawing`, que
+protege controles frente a recortes y barras persistentes sin reservar el tamaño
+de las barras ocultas. El fondo exterior permanece oscuro. La política aplica
+a menús, partida y tutorial; no depende del fabricante ni cambia preferencias
+de navegación del teléfono. El modo de escritorio o políticas del sistema pueden
+mantener controles visibles: en ese caso se respetan sus insets.
+
+Referencia: [modo inmersivo de Android](https://developer.android.com/develop/ui/views/layout/immersive).
+
 ## Módulos
 
 - `game-domain`: Kotlin puro y sin dependencias Android. Contiene tipos inmutables, reglas, generación de niveles y la máquina de estados.
@@ -38,7 +57,7 @@ El proyecto fija AGP, Kotlin, Compose BOM y Gradle para que una semilla y una re
 
 `DominoImage` usa los 28 PNG claros de Kenney en `drawable-nodpi`: normaliza el par para elegir imagen y transforma el dibujo para conservar el primer puerto a la izquierda o arriba. Las imágenes colocadas se dibujan bajo las celdas táctiles y sus insignias; las descripciones de celda siguen usando los valores del motor. La licencia viaja en los assets del APK.
 
-Las partidas usan directamente el generador de escenarios y el reductor del dominio. `GameState` y `GameAction` conservan sus contratos para partidas libres y desafíos.
+Las partidas usan directamente el generador de escenarios y el reductor del dominio. `GameState` y `GameAction` conservan sus contratos para partidas libres y desafíos. `BoardState.start` y `BoardState.extraction` son nodos virtuales fuera de la cuadrícula; `neighbors` los conecta con la primera y última columna sin tratarlos como celdas ocupables.
 
 `MainViewModel` conserva el constructor Android con `Application` y añade uno con `PlayerPreferencesRepository` inyectable para pruebas. Captura el tipo de sesión antes de iniciar la escritura asíncrona de resultados y solo persiste una transición inicial a victoria.
 
@@ -56,7 +75,7 @@ El diálogo de escenarios muestra únicamente las dimensiones, ruta, obstáculos
 
 El panel de partida mide sus controles al pie por separado del inventario desplazable. Cada control compacto conserva un objetivo táctil de al menos 48 dp. Las cards exclusivas de skins tienen altura mínima de 240 dp, contenido centrado y crecimiento libre para fuentes ampliadas.
 
-BRIDGE mantiene su orientación junto a Cancelar en los controles fijos, también en el tutorial. `GameEngine.scriptTargets` deriva los objetivos resaltados de la validación real de BRIDGE y KILL. `GameState.pingRevealedThisTurn` acumula los descubrimientos de PING y se vacía al avanzar turno: KILL rechaza esos honeypots hasta entonces. Destruirlos limpia los tres conjuntos de trampas del tablero; la UI elimina su insignia al observar el estado. La práctica de PING enseña a colocar, ejecutar turno y destruir la trampa con KILL.
+BRIDGE mantiene su orientación junto a Cancelar en los controles fijos, también en el tutorial. `GameEngine.scriptTargets` deriva los objetivos resaltados de la validación real de BRIDGE y KILL. PING amplía `pingPreview` por cada uso y conserva las trampas reveladas. KILL puede eliminar inmediatamente cualquier honeypot visible o una ficha completa seleccionando cualquiera de sus mitades, con RAM suficiente. PING sin información nueva se rechaza sin consumir recursos. Destruir un honeypot limpia sus tres conjuntos del tablero; eliminar una ficha retira el dominó completo. La UI elimina las insignias al observar el estado.
 
 ## Tutorial aislado
 

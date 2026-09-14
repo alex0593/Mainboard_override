@@ -1,0 +1,8 @@
+
+com.aela.mainboardoverride.ui.ImmersiveWindowUiTest:..
+
+Time: 7.581
+
+OK (2 tests)
+
+

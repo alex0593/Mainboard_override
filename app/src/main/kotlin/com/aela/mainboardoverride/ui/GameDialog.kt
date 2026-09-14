@@ -8,6 +8,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.window.DialogWindowProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -29,8 +32,14 @@ internal fun GameDialog(
     actions: @Composable FlowRowScope.() -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
-        BoxWithConstraints(modifier.padding(24.dp).widthIn(max = 620.dp).fillMaxWidth().heightIn(max = (LocalConfiguration.current.screenHeightDp.dp - 48.dp).coerceAtLeast(160.dp))) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        val view = LocalView.current
+        DisposableEffect(view) {
+            val window = (view.parent as DialogWindowProvider).window
+            val unbind = window.bindGameImmersion()
+            onDispose { unbind() }
+        }
+        BoxWithConstraints(modifier.windowInsetsPadding(WindowInsets.safeDrawing).padding(24.dp).widthIn(max = 620.dp).fillMaxWidth().heightIn(max = (LocalConfiguration.current.screenHeightDp.dp - 48.dp).coerceAtLeast(160.dp))) {
             val horizontalInset = maxOf(40.dp, maxWidth * .08f)
             val verticalInset = 24.dp
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

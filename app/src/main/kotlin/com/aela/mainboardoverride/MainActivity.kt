@@ -14,11 +14,16 @@ import androidx.core.os.LocaleListCompat
 import com.aela.mainboardoverride.ui.MainboardApp
 import com.aela.mainboardoverride.ui.MainboardTheme
 import com.aela.mainboardoverride.ui.WindowTransitionHost
+import com.aela.mainboardoverride.ui.bindGameImmersion
+import com.aela.mainboardoverride.ui.hideGameSystemBars
 
 class MainActivity : ComponentActivity() {
+    private var unbindImmersion: (() -> Unit)? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        unbindImmersion = window.bindGameImmersion()
         setContent {
             val viewModel: MainViewModel = viewModel()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -39,5 +44,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (window.decorView.hasWindowFocus()) window.hideGameSystemBars()
+    }
+
+    override fun onDestroy() {
+        unbindImmersion?.invoke()
+        super.onDestroy()
     }
 }

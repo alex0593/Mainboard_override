@@ -15,9 +15,9 @@ class GameEngineTest {
     @Test fun `first tile must connect to start with matching value`() {
         val board = BoardState()
         val route = Domino("route", 0, 3)
-        assertTrue(GameEngine.canPlace(board, route, Position(1, 3), Orientation.HORIZONTAL))
+        assertTrue(GameEngine.canPlace(board, route, Position(0, 3), Orientation.HORIZONTAL))
         assertFalse(GameEngine.canPlace(board, route, Position(4, 3), Orientation.HORIZONTAL))
-        assertFalse(GameEngine.canPlace(board, route.rotated(), Position(1, 3), Orientation.HORIZONTAL))
+        assertFalse(GameEngine.canPlace(board, route.rotated(), Position(0, 3), Orientation.HORIZONTAL))
     }
 
     @Test fun `external mismatches reject placement but domino halves remain internally connected`() {

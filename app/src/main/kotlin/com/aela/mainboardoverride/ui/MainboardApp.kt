@@ -21,6 +21,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -62,6 +65,7 @@ import com.aela.mainboardoverride.domain.RejectReason
 import com.aela.mainboardoverride.domain.TutorialInput
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -125,7 +129,8 @@ fun MainboardApp(
     onExitApp: () -> Unit = {},
 ) {
     val transition = LocalWindowTransition.current
-    NavHost(navController = nav, startDestination = MENU) {
+    NavHost(navController = nav, startDestination = MENU,
+        modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)) {
         composable(MENU) {
             MenuScreen(
                 state = state,
@@ -434,8 +439,11 @@ internal fun Board(
         }
         val margin = if (boardArtwork != null) maxOf(12.dp, minOf(maxWidth, maxHeight) * .1f)
             else if (maxHeight < 250.dp) 12.dp else 20.dp
-        val cell = minOf((maxWidth - margin * 2) / board.width, (maxHeight - margin * 2) / board.height).coerceAtLeast(0.dp)
-            Box(Modifier.width(cell * board.width).height(cell * board.height)
+        val cell = minOf((maxWidth - margin * 2) / (board.width + 2), (maxHeight - margin * 2) / board.height).coerceAtLeast(0.dp)
+        Box(Modifier.width(cell * (board.width + 2)).height(cell * board.height)) {
+            PortLabel("S0", board.start.y, cell, start = true)
+            PortLabel("X6", board.extraction.y, cell, start = false, modifier = Modifier.offset(x = cell * (board.width + 1)))
+            Box(Modifier.offset(x = cell).width(cell * board.width).height(cell * board.height)
                 .background(Color.Transparent)
                 .border(1.dp, Muted.copy(alpha = .4f))) {
             Canvas(Modifier.fillMaxSize()) {
@@ -490,10 +498,15 @@ internal fun Board(
                             p == board.start -> "S0"
                             p == board.extraction -> "X6"
                             p in board.firewalls || p in board.revealedHoneypots -> null
-                            p in board.buffs -> if (board.buffs[p] == BoardBuff.TRACE_COOLER) "−8" else "+R"
+                            p in board.buffs -> null
                             else -> null
                         }
                         if (label != null) drawContext.canvas.nativeCanvas.drawText(label, (x + .5f) * unit, (y + .65f) * unit, ink)
+                    }
+                }
+                (board.buffs.keys - board.collectedBuffs).forEach { position ->
+                    Box(Modifier.offset(cell * position.x, cell * position.y).size(cell).padding(2.dp)) {
+                        BoardBuffSprite(board.buffs.getValue(position))
                     }
                 }
                 (board.firewalls + board.revealedHoneypots).forEach { position ->
@@ -506,12 +519,7 @@ internal fun Board(
                             else Modifier.fillMaxSize().padding(1.dp),
                         )
                         board.bridges.find { it.center == position }?.let { bridge ->
-                            Text(
-                                if (bridge.horizontal) "═${bridge.value}" else "║${bridge.value}",
-                                modifier = Modifier.align(Alignment.Center).background(Void.copy(alpha = .85f)),
-                                color = Warning,
-                                fontWeight = FontWeight.Black,
-                            )
+                            BoardBridgeSprite(bridge.horizontal, bridge.value)
                         }
                     }
                 }
@@ -519,7 +527,21 @@ internal fun Board(
                 val position = Position(x, y)
                 BoardCell(board, position, cell, position in legalOrigins, position == target, onCell)
             }
+            }
         }
+    }
+}
+
+@Composable
+private fun PortLabel(label: String, row: Int, size: Dp, start: Boolean, modifier: Modifier = Modifier) {
+    Column(
+        modifier.offset(y = size * row).width(size).height(size),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(if (start) "▶" else "◀", color = Cyan, fontSize = (size.value * .22f).coerceAtLeast(8f).sp)
+        Text(label, color = Cyan, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black,
+            fontSize = (size.value * .18f).coerceAtLeast(7f).sp)
     }
 }
 
@@ -577,13 +599,9 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
             }
         } else if (firewall || (trap && !daemon && !isStart && !isExit)) {
             BoardThreatImage(firewall, Modifier.fillMaxSize().padding(1.dp))
-            if (bridge != null) Text(
-                if (bridge.horizontal) "═${bridge.value}" else "║${bridge.value}",
-                modifier = Modifier.background(Void.copy(alpha = .85f)),
-                color = Warning,
-                fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Black,
-            )
+            if (bridge != null) BoardBridgeSprite(bridge.horizontal, bridge.value)
+        } else if (buff != null && !daemon && !isStart && !isExit) {
+            BoardBuffSprite(buff)
         } else Text(
             when {
                 bridge != null -> if (bridge.horizontal) "═${bridge.value}" else "║${bridge.value}"
@@ -598,6 +616,27 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Black,
         )
+    }
+}
+
+@Composable
+private fun BoardBridgeSprite(horizontal: Boolean, value: Int) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
+        Image(painterResource(R.drawable.board_bridge_v1), contentDescription = null,
+            modifier = Modifier.fillMaxSize().rotate(if (horizontal) 0f else 90f))
+        Text("$value", color = Warning, fontWeight = FontWeight.Black, fontSize = 10.sp,
+            modifier = Modifier.background(Void.copy(alpha = .85f)).padding(horizontal = 2.dp))
+    }
+}
+
+@Composable
+private fun BoardBuffSprite(buff: BoardBuff) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+        Image(painterResource(if (buff == BoardBuff.TRACE_COOLER) R.drawable.board_trace_cooler_v1
+            else R.drawable.board_ram_reserve_v1), contentDescription = null, modifier = Modifier.fillMaxSize())
+        Text(if (buff == BoardBuff.TRACE_COOLER) "−8" else "+1R", color = Cyan,
+            fontSize = 10.sp, fontWeight = FontWeight.Black,
+            modifier = Modifier.background(Void.copy(alpha = .85f)).padding(horizontal = 2.dp))
     }
 }
 

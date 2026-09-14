@@ -5,6 +5,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
@@ -73,7 +74,7 @@ internal fun WindowTransitionHost(reducedMotion: Boolean, content: @Composable (
     }
     CompositionLocalProvider(LocalReducedMotion provides reducedMotion,
         LocalWindowTransition provides state::request) {
-        Box(Modifier.fillMaxSize().clipToBounds()) {
+        Box(Modifier.fillMaxSize().background(Void).clipToBounds()) {
             Box(Modifier.fillMaxSize().then(if (state.busy) Modifier.clearAndSetSemantics { } else Modifier)) {
                 content()
             }

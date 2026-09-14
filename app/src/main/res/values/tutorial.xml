@@ -53,7 +53,7 @@
         <item>The trap adds 20 noise and discards a script. Execute turn to see trace accumulate.</item>
         <item>Watch trace and the daemon each turn. Cooling removes 8 trace; a reserve gives 1 RAM, capped at 3.</item>
         <item>Press PING. It costs 1 RAM, adds no noise, previews the next tile and reveals one hidden trap if present.</item>
-        <item>Observe the revealed trap. PING does not remove traps or change the bag. KILL can destroy this honeypot starting next turn.</item>
+        <item>Observe the revealed trap. PING does not remove traps or change the bag. KILL can destroy this honeypot in the same turn if you have 3 RAM.</item>
         <item>Select SPOOF. On confirmation it costs 2 RAM and adds 5 noise. It changes one half of a tile to a value from 0 to 6.</item>
         <item>Select the 1–2 tile to modify.</item>
         <item>Choose its second half.</item>
@@ -66,7 +66,7 @@
         <item>Press Apply. RAM is spent, noise is added and the tile changes.</item>
         <item>Select the modified 0–2 tile.</item>
         <item>Place it beside start. SPOOF helps when no value matches.</item>
-        <item>Select KILL PROCESS. It costs 3 RAM and adds 15 noise. It removes a firewall or a visible honeypot. PING discoveries must wait until the next turn. It cannot remove the daemon.</item>
+        <item>Select KILL PROCESS. It costs 3 RAM and adds 15 noise. It removes a firewall, visible honeypot or a complete placed domino when you tap either half. PING discoveries can be removed in the same turn with enough RAM. It cannot remove the daemon.</item>
         <item>Tap the highlighted firewall. Any bridge on it is also removed.</item>
         <item>Select 0–2: the blocked cell is now free.</item>
         <item>Place the tile in the highlighted cell.</item>
@@ -83,7 +83,7 @@
         <item>Outside practice, victory earns 20 credits and the first win in each challenge adds 40. Every 5 completed challenges unlock a scenario. Skins are cosmetic; free play generates a random board.</item>
         <item>To advance to the next turn, select the 0–2 tile.</item>
         <item>Place the tile beside start at the highlighted cell.</item>
-        <item>Execute the turn. A honeypot discovered by PING can only be destroyed starting next turn.</item>
+        <item>Execute the turn. This restores the RAM needed for KILL.</item>
         <item>It is now the next turn. Select KILL PROCESS: it costs 3 RAM and adds 15 noise.</item>
         <item>Tap the highlighted honeypot to destroy it. Its cell is no longer a trap.</item>
     </string-array>
