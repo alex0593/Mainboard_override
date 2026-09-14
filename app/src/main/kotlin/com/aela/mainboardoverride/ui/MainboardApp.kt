@@ -441,9 +441,9 @@ internal fun Board(
             else if (maxHeight < 250.dp) 12.dp else 20.dp
         val cell = minOf((maxWidth - margin * 2) / (board.width + 2), (maxHeight - margin * 2) / board.height).coerceAtLeast(0.dp)
         Box(Modifier.width(cell * (board.width + 2)).height(cell * board.height)) {
-            PortSprite(R.drawable.board_port_s0_v1, "S0", board.start.y, cell,
+            PortSprite(R.drawable.board_port_s0_v1, "S0", board.start.y, cell, start = true,
                 modifier = Modifier.testTag("board-port-s0"))
-            PortSprite(R.drawable.board_port_x6_v1, "X6", board.extraction.y, cell,
+            PortSprite(R.drawable.board_port_x6_v1, "X6", board.extraction.y, cell, start = false,
                 modifier = Modifier.offset(x = cell * (board.width + 1)).testTag("board-port-x6"))
             Box(Modifier.offset(x = cell).width(cell * board.width).height(cell * board.height)
                 .background(Color.Transparent)
@@ -535,7 +535,7 @@ internal fun Board(
 }
 
 @Composable
-private fun PortSprite(resource: Int, label: String, row: Int, size: Dp, modifier: Modifier = Modifier) {
+private fun PortSprite(resource: Int, label: String, row: Int, size: Dp, start: Boolean, modifier: Modifier = Modifier) {
     Box(
         modifier.offset(y = size * row).width(size).height(size),
         contentAlignment = Alignment.BottomCenter,
@@ -551,8 +551,8 @@ private fun PortSprite(resource: Int, label: String, row: Int, size: Dp, modifie
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Black,
             fontSize = (size.value * .18f).coerceAtLeast(7f).sp,
-            modifier = Modifier.background(Void.copy(alpha = .9f), RoundedCornerShape(3.dp))
-                .padding(horizontal = 3.dp, vertical = 1.dp),
+            modifier = Modifier.align(if (start) Alignment.CenterStart else Alignment.CenterEnd)
+                .offset(x = if (start) -size * .24f else size * .24f),
         )
     }
 }
