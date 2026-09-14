@@ -1,4 +1,5 @@
-Board sprites: board_bridge_v1.png, board_trace_cooler_v1.png, board_ram_reserve_v1.png.
-Generated for Mainboard Override with OpenAI built-in image_gen on 2026-09-13.
+Board sprites: board_bridge_v1.png, board_trace_cooler_v1.png, board_ram_reserve_v1.png,
+board_port_s0_v1.png, board_port_x6_v1.png.
+Generated for Mainboard Override with OpenAI built-in image_gen on 2026-09-13 and 2026-09-14.
 No third-party reference artwork was supplied. These are AI-generated assets, not Kenney assets.
 Original images and exact prompts are preserved in assets/board/ in the project repository.

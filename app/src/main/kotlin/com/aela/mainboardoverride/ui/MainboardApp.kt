@@ -441,8 +441,10 @@ internal fun Board(
             else if (maxHeight < 250.dp) 12.dp else 20.dp
         val cell = minOf((maxWidth - margin * 2) / (board.width + 2), (maxHeight - margin * 2) / board.height).coerceAtLeast(0.dp)
         Box(Modifier.width(cell * (board.width + 2)).height(cell * board.height)) {
-            PortLabel("S0", board.start.y, cell, start = true)
-            PortLabel("X6", board.extraction.y, cell, start = false, modifier = Modifier.offset(x = cell * (board.width + 1)))
+            PortSprite(R.drawable.board_port_s0_v1, "S0", board.start.y, cell,
+                modifier = Modifier.testTag("board-port-s0"))
+            PortSprite(R.drawable.board_port_x6_v1, "X6", board.extraction.y, cell,
+                modifier = Modifier.offset(x = cell * (board.width + 1)).testTag("board-port-x6"))
             Box(Modifier.offset(x = cell).width(cell * board.width).height(cell * board.height)
                 .background(Color.Transparent)
                 .border(1.dp, Muted.copy(alpha = .4f))) {
@@ -533,15 +535,25 @@ internal fun Board(
 }
 
 @Composable
-private fun PortLabel(label: String, row: Int, size: Dp, start: Boolean, modifier: Modifier = Modifier) {
-    Column(
+private fun PortSprite(resource: Int, label: String, row: Int, size: Dp, modifier: Modifier = Modifier) {
+    Box(
         modifier.offset(y = size * row).width(size).height(size),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+        contentAlignment = Alignment.BottomCenter,
     ) {
-        Text(if (start) "▶" else "◀", color = Cyan, fontSize = (size.value * .22f).coerceAtLeast(8f).sp)
-        Text(label, color = Cyan, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black,
-            fontSize = (size.value * .18f).coerceAtLeast(7f).sp)
+        Image(
+            painterResource(resource), contentDescription = label,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+        )
+        Text(
+            label,
+            color = Cyan,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.Black,
+            fontSize = (size.value * .18f).coerceAtLeast(7f).sp,
+            modifier = Modifier.background(Void.copy(alpha = .9f), RoundedCornerShape(3.dp))
+                .padding(horizontal = 3.dp, vertical = 1.dp),
+        )
     }
 }
 
