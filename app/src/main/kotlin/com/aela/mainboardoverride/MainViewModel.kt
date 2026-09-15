@@ -203,8 +203,15 @@ class MainViewModel(application: Application, private val repository: PlayerPref
         if (current.result == null && resolved.state.result == GameResult.VICTORY) {
             val challengeLevel = session.value.challengeLevel
             val matchId = session.value.matchId
+            val scenarioId = session.value.scenarioId.takeUnless { challengeLevel != null }
             viewModelScope.launch {
-                val reward = repository.finishMatch(matchId, challengeLevel, resolved.state.turn, resolved.state.trace)
+                val reward = repository.finishMatch(
+                    matchId,
+                    challengeLevel,
+                    resolved.state.turn,
+                    resolved.state.trace,
+                    scenarioId,
+                )
                 session.update { if (it.matchId == matchId) it.copy(reward = reward) else it }
             }
         }

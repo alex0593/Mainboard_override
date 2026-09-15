@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -85,7 +86,6 @@ internal fun ProgressionHeader(
 internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () -> Unit) {
     var pcb by rememberSaveable { mutableStateOf(false) }
     var purchase by rememberSaveable { mutableStateOf<String?>(null) }
-    var locallyPurchased by remember { mutableStateOf(emptySet<String>()) }
     val prefs = state.preferences
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -93,14 +93,20 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                 Text(stringResource(R.string.credit_balance, prefs.credits), color = Warning, fontSize = 12.sp)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                FilterChip(selected = !pcb, onClick = { pcb = false }, label = { Text(stringResource(R.string.domino_skin)) })
-                FilterChip(selected = pcb, onClick = { pcb = true }, label = { Text(stringResource(R.string.board_skin)) })
+                val dominoChip = remember { MutableInteractionSource() }
+                val boardChip = remember { MutableInteractionSource() }
+                FilterChip(selected = !pcb, onClick = { pcb = false }, interactionSource = dominoChip,
+                    modifier = Modifier.pressFeedback(dominoChip, label = "skin filter", pressedScale = .96f),
+                    label = { Text(stringResource(R.string.domino_skin)) })
+                FilterChip(selected = pcb, onClick = { pcb = true }, interactionSource = boardChip,
+                    modifier = Modifier.pressFeedback(boardChip, label = "skin filter", pressedScale = .96f),
+                    label = { Text(stringResource(R.string.board_skin)) })
             }
             LazyVerticalGrid(columns = GridCells.Adaptive(220.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(if (pcb) boardSkins else dominoSkins, key = { it.id }) { skin ->
                     val paid = pcb && skin.id in Rewards.purchasableSkins
                     val price = Rewards.skinPrice(skin.id)
-                    val owned = !paid || skin.id in prefs.ownedSkins || skin.id in locallyPurchased
+                    val owned = !paid || skin.id in prefs.ownedSkins
                     val equipped = skin.id == if (pcb) prefs.boardSkin else prefs.dominoSkin
                     Box(
                         Modifier.fillMaxWidth().heightIn(min = 240.dp).clip(RoundedCornerShape(14.dp))
@@ -147,7 +153,7 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                     label = stringResource(R.string.buy_credits, Rewards.skinPrice(id)),
                     modifier = Modifier.testTag("confirm-purchase"), compact = true, primary = true, fillWidth = false,
                     enabled = prefs.credits >= Rewards.skinPrice(id) && id !in prefs.ownedSkins,
-                    onClick = { locallyPurchased = locallyPurchased + id; actions.buySkin(id); purchase = null },
+                    onClick = { actions.buySkin(id); purchase = null },
                 )
             },
         ) {

@@ -4,6 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class GameEngineTest {
@@ -178,6 +179,50 @@ class GameEngineTest {
         assertTrue(buff in transition.state.board.collectedBuffs)
         val repeated = GameEngine.reduce(transition.state.copy(tilePlacedThisTurn = false), action)
         assertTrue(repeated.events.none { it is GameEvent.BuffCollected })
+    }
+
+    @Test fun `the script hand deals one card and opens a slot every two turns`() {
+        assertEquals(1, scriptHandCapacity(1))
+        assertEquals(1, scriptHandCapacity(2))
+        assertEquals(2, scriptHandCapacity(3))
+        assertEquals(2, scriptHandCapacity(4))
+        assertEquals(3, scriptHandCapacity(5))
+
+        // A new match deals a single script and keeps the rest of the deck waiting.
+        val generated = LevelGenerator.generate(2024L)
+        assertEquals(1, generated.scriptHand.size)
+        assertEquals(11, generated.scriptDeck.size)
+
+        val deck = (1..8).map { ScriptCard("deck-$it", ScriptType.PING) }
+        var state = GameState(
+            seed = 7L,
+            board = BoardState(width = 6, height = 3, start = Position(-1, 1), extraction = Position(6, 1)),
+            dominoHand = listOf(Domino("tile", 0, 1)),
+            dominoBag = emptyList(),
+            scriptHand = listOf(ScriptCard("hand", ScriptType.BRIDGE)),
+            scriptDeck = deck,
+            tilePlacedThisTurn = true,
+        )
+        val sizes = mutableListOf(state.scriptHand.size)
+        repeat(6) {
+            // Closing a turn only needs a tile placed during it.
+            state = GameEngine.reduce(state.copy(tilePlacedThisTurn = true), GameAction.EndTurn).state
+            sizes += state.scriptHand.size
+        }
+        // Turns 1-2 hold one script, turns 3-4 two, turns 5-6 three and turn 7 opens a fourth.
+        assertEquals(listOf(1, 1, 2, 2, 3, 3, 4), sizes)
+        assertNull(state.result)
+
+        // A hand already at its ceiling neither draws nor spends the deck.
+        val full = state.copy(
+            turn = 3,
+            scriptHand = (1..3).map { ScriptCard("full-$it", ScriptType.SPOOF) },
+            scriptDeck = deck,
+            tilePlacedThisTurn = true,
+        )
+        val held = GameEngine.reduce(full, GameAction.EndTurn).state
+        assertEquals(3, held.scriptHand.size)
+        assertEquals(deck, held.scriptDeck)
     }
 
     private fun routeFixture(): GameState = GameState(

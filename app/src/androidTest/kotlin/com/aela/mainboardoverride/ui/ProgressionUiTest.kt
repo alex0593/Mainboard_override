@@ -59,10 +59,11 @@ class ProgressionUiTest {
         val reread = DataStorePlayerPreferencesRepository(app, store).preferences.first()
         assertEquals(setOf("copper"), reread.ownedSkins)
         assertEquals(1620, reread.credits)
-        val payouts = coroutineScope { List(4) { async { repository.finishMatch("free-match", null, 6, 48) } }.awaitAll() }
+        val payouts = coroutineScope { List(4) { async { repository.finishMatch("free-match", null, 6, 48, "classic") } }.awaitAll() }
         assertEquals(20, payouts.sumOf { it.base + it.bonus })
         assertEquals(1640, repository.preferences.first().credits)
         assertEquals(6, repository.preferences.first().bestTurns)
+        assertEquals(setOf("classic"), repository.preferences.first().completedScenarios)
     }
 
     @Test fun existingProgressMigratesWithoutRetroactiveCredits() = runBlocking {

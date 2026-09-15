@@ -34,9 +34,9 @@ Compose -> GameAction -> GameEngine -> Transition -> StateFlow -> Compose
 
 `LevelGenerator.generate(seed)` es determinista. La semilla y toda la lógica viven en el dominio, por lo que una partida puede reproducirse sin Android.
 
-La progresión local, el saldo y las compras viven en `PlayerPreferencesRepository` y DataStore. `finishMatch` guarda récord, recompensa e identificador de partida en una sola transacción; repetir el identificador no paga de nuevo. Las compras validan saldo y propiedad dentro de la misma transacción. `ScenarioCatalog` y `Rewards` no dependen de Android. Una economía futura con inventarios más complejos podrá migrar a Room.
+La progresión local, el saldo y las compras viven en `PlayerPreferencesRepository` y DataStore. `finishMatch` guarda récord, recompensa e identificador de partida en una sola transacción; repetir el identificador no paga de nuevo. Las compras validan saldo y propiedad dentro de la misma transacción. Las victorias de modo libre añaden `scenarioId` a `completedScenarios` en esa misma transacción, por lo que desbloquear un escenario mediante desafíos no lo marca como jugado. `ScenarioCatalog` y `Rewards` no dependen de Android. Una economía futura con inventarios más complejos podrá migrar a Room.
 
-`LevelGenerator.generateScenario(seed, scenarioId)` aplica dimensiones, longitud de ruta y obstáculos del escenario y valida la solución mediante el motor. El modo original conserva `generate(seed)`. El ViewModel valida los desbloqueos antes de generar una partida. Jugar de nuevo conserva el escenario y genera una semilla distinta en modo libre; los desafíos conservan la semilla del catálogo. Recuperar la última semilla desde el menú sigue siendo una acción explícita. La UI deriva los escenarios disponibles del número de desafíos distintos ganados.
+`LevelGenerator.generateScenario(seed, scenarioId)` aplica dimensiones, longitud de ruta y obstáculos del escenario y valida la solución mediante el motor. El modo original conserva `generate(seed)`. El ViewModel valida los desbloqueos antes de generar una partida. Jugar de nuevo conserva el escenario y genera una semilla distinta en modo libre; los desafíos conservan la semilla del catálogo. Recuperar la última semilla desde el menú sigue siendo una acción explícita. La UI deriva los escenarios disponibles del número de desafíos distintos ganados y marca como completados solo los escenarios presentes en `completedScenarios`.
 
 `GameUiState` identifica cada partida con UUID y conserva su recompensa y el estado de revisión del tablero. La revisión no altera `GameState`; el motor sigue rechazando acciones después de terminar. La galería comparte `Board` y `DominoImage` con la partida para que las vistas previas coincidan con las skins equipadas.
 
@@ -61,7 +61,12 @@ Las partidas usan directamente el generador de escenarios y el reductor del domi
 
 `MainViewModel` conserva el constructor Android con `Application` y añade uno con `PlayerPreferencesRepository` inyectable para pruebas. Captura el tipo de sesión antes de iniciar la escritura asíncrona de resultados y solo persiste una transición inicial a victoria.
 
-Compose presenta `SpoofDialog`, `BridgeControl` y `PingPreview`. Las asignaciones exhaustivas de enums a recursos obligan a considerar los textos al añadir errores o resultados. Las descripciones accesibles se construyen desde información visible del tablero.
+Compose presenta `SpoofDialog`, `BridgeControl` y `PingPreview`. `PingPreview`
+reutiliza `RotationPreview` para mostrar cada ficha con el mismo panel,
+orientación, skin y valores que la ficha seleccionada para rotar. Las
+asignaciones exhaustivas de enums a recursos obligan a considerar los textos al
+añadir errores o resultados. Las descripciones accesibles se construyen desde
+información visible del tablero.
 
 Durante una partida, los rechazos del motor se muestran en una ventana descartable y no se renderizan dentro del inventario. El editor SPOOF queda como panel flotante para conservar accesibles los controles inferiores; Cancelar ocupa temporalmente el lugar de Rotar. El inventario de hardware usa una fila compacta de fichas verticales y los controles de Rotar/Ejecutar turno permanecen juntos al pie del panel.
 
@@ -73,9 +78,22 @@ El diálogo de escenarios muestra únicamente las dimensiones, ruta, obstáculos
 
 `PuzzlePreviewCache` genera fuera del hilo principal y guarda PNG de 640 × 400: LRU de 8 MiB en memoria y límite de 24 MiB en disco. La clave SHA-256 incluye modo, identificador, semilla, revisión del generador/renderizado y ambas skins. Hay carga, reintento, recuperación de archivos inválidos y exclusión mutua para evitar generación duplicada. Las trampas ocultas y soluciones nunca se dibujan. Incrementar REVISION al cambiar la geometría del generador o el renderizado.
 
-El panel de partida mide sus controles al pie por separado del inventario desplazable. Cada control compacto conserva un objetivo táctil de al menos 48 dp. Las cards exclusivas de skins tienen altura mínima de 240 dp, contenido centrado y crecimiento libre para fuentes ampliadas.
+El panel de partida mide sus controles al pie por separado del inventario desplazable. Cada control compacto conserva un objetivo táctil de al menos 48 dp. Todas las superficies táctiles —botones, cartas de script, fichas de la mano, tarjetas de escenario y desafío, chips de skins y campos de SPOOF— comparten `Modifier.pressFeedback` (`PressFeedback.kt`): mientras el dedo está abajo la superficie se hunde con un muelle y se atenúa, y vuelve al soltar. `Modifier.pressable` combina `clickable` con esa respuesta para los componentes propios, y los de Material3 reciben el mismo `MutableInteractionSource` para conservar el ripple. Con `LocalReducedMotion` activo se omite el hundimiento y queda solo el atenuado. Las casillas del tablero no la usan: su respuesta es el resaltado de destinos legales y la animación de colocación. Las cards exclusivas de skins tienen altura mínima de 240 dp, contenido centrado y crecimiento libre para fuentes ampliadas. El header separa los indicadores de turno/RAM/rastreo de los scripts con una línea vertical; bajo él reserva 14 dp (`pending-trace-band`), solo para la línea de ruido y rastreo pendiente antes de ejecutar turno, de modo que la PCB quede pegada al header sin desplazarse cuando aparece el aviso. La banda mantiene 14 dp fijos y la línea se mide con `wrapContentHeight(unbounded)` dentro de ella: con fuentes ampliadas el texto se desborda sobre su propio hueco en vez de estirar la banda y mover la PCB. Cuando el rastreo aumenta, `TraceIndicator` anima el incremento real hacia arriba junto al indicador sin cambiar la altura del header.
 
-BRIDGE mantiene su orientación junto a Cancelar en los controles fijos, también en el tutorial. `GameEngine.scriptTargets` deriva los objetivos resaltados de la validación real de BRIDGE y KILL. PING amplía `pingPreview` por cada uso y conserva las trampas reveladas. KILL puede eliminar inmediatamente cualquier honeypot visible o una ficha completa seleccionando cualquiera de sus mitades, con RAM suficiente. PING sin información nueva se rechaza sin consumir recursos. Destruir un honeypot limpia sus tres conjuntos del tablero; eliminar una ficha retira el dominó completo. La UI elimina las insignias al observar el estado.
+BRIDGE mantiene su orientación junto a Cancelar en los controles fijos, también en el tutorial. `GameEngine.scriptTargets` deriva los objetivos resaltados de la validación real de BRIDGE y KILL. PING amplía `pingPreview` por cada uso y conserva las trampas reveladas. En la partida, `PingHeader` sustituye al header durante cinco segundos: oculta los indicadores de turno/RAM/rastreo, la banda de scripts, el botón «?» y el arte del header, y deja visibles las fichas acumuladas en una fila horizontal con el rótulo y la barra de cuenta atrás, todos con el acento del escenario activo; al agotarse el tiempo vuelve el header normal. El panel es un hermano excluyente de `GameHeader`, no una capa encima: no usa `fillMaxSize`, que estiraría la banda hasta el alto disponible y desplazaría la PCB, y respeta el mínimo de 64 dp del header. El tutorial sigue usando `PingPreview` en el panel lateral. KILL puede eliminar inmediatamente cualquier honeypot visible o una ficha completa seleccionando cualquiera de sus mitades, con RAM suficiente. La destrucción se dibuja dentro de `Board`: solo KILL quita firewalls, honeypots revelados y fichas del estado, así que la UI compara con la instantánea anterior y lanza `DestructionBurst` sobre la huella destruida —dos celdas cuando cae una ficha— durante 460 ms, con destello, barras glitch, dos anillos y chispas; con movimiento reducido queda solo el destello. `sessionKey` (el `matchId` de la partida y lección con repetición en el tutorial) evita que reiniciar o repetir dispare la ráfaga sobre un tablero nuevo. PING sin información nueva se rechaza sin consumir recursos. Destruir un honeypot limpia sus tres conjuntos del tablero; eliminar una ficha retira el dominó completo. La UI elimina las insignias al observar el estado.
+
+## Fondos de escenarios
+
+Los fondos de escenarios se resuelven en UI mediante `scenarioBackgroundResource`.
+`CircuitBackground` acepta un recurso opcional: `GameScreen` usa `scenarioId`
+solo en partidas libres (`challengeLevel == null`); los desafíos conservan el
+fondo compartido. Las tarjetas usan el mismo mapeo detrás de su miniatura y
+etiquetas. Estos recursos no forman parte de las skins ni del estado persistido.
+Los originales y prompts viven en `assets/scenarios/`; Android empaqueta solo
+las exportaciones de 1280×640 en `drawable-nodpi`.
+El menú principal también usa ese mapeo con `preferences.lastScenario`, que se
+actualiza al iniciar un escenario libre y conserva `classic` para perfiles nuevos
+o identificadores desconocidos. Los desafíos no cambian este valor.
 
 ## Tutorial aislado
 

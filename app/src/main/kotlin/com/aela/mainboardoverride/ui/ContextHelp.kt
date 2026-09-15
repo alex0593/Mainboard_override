@@ -1,10 +1,12 @@
 package com.aela.mainboardoverride.ui
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -50,7 +52,12 @@ internal fun ScriptType.helpTopic(): HelpTopic = when (this) {
 internal fun HelpButton(topic: HelpTopic, onHelp: (HelpTopic) -> Unit, visible: Boolean = true) {
     if (!visible && topic != HelpTopic.BOARD) return
     val label = stringResource(R.string.help_description, stringResource(topic.title))
-    TextButton(onClick = { onHelp(topic) }, modifier = Modifier.size(48.dp).semantics { contentDescription = label }) {
+    val interaction = remember { MutableInteractionSource() }
+    TextButton(
+        onClick = { onHelp(topic) },
+        interactionSource = interaction,
+        modifier = Modifier.size(48.dp).pressFeedback(interaction, label = "help").semantics { contentDescription = label },
+    ) {
         Text("?", color = Cyan)
     }
 }
@@ -100,9 +107,12 @@ internal fun GeneralGameHelp(onClose: () -> Unit) {
         MenuArtworkButton(close, onClose, compact = true, fillWidth = false)
     }) {
         groups.indices.forEach { index ->
+            val interaction = remember { MutableInteractionSource() }
             TextButton(
                 onClick = { expanded = if (expanded == index) null else index },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("help-section-$index"),
+                interactionSource = interaction,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("help-section-$index")
+                    .pressFeedback(interaction, label = "help section", pressedScale = .97f),
             ) { Text((if (expanded == index) "− " else "+ ") + titles[index]) }
             if (expanded == index) Text(bodies[index] + if (index == 0) "\n\n$buffs" else "")
         }

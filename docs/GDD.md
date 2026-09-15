@@ -20,7 +20,7 @@ Juego móvil de lógica táctica. El jugador es un analista que se infiltra en u
 
 ### Bucle y tablero
 
-1. Se repone la mano hasta tres dominós, se roba un script y la RAM vuelve a 3.
+1. Se repone la mano hasta tres dominós, se roba un script si la mano no llega a los cupos del turno y la RAM vuelve a 3.
 2. El jugador puede ejecutar tantos scripts como pueda pagar y debe colocar exactamente un dominó.
 3. El sistema suma 8 de rastreo más el ruido, activa trampas y mueve el daemon.
 4. Se comprueban primero las derrotas y después la conexión de victoria.
@@ -37,6 +37,8 @@ El modo libre tiene 6 filas: Red original 8 columnas, Laboratorio y Centro de da
 | `BRIDGE` | 2 | 10 | Copia un puerto de una ficha adyacente a través del firewall; la salida queda libre para colocar una ficha compatible. |
 
 Las derrotas posibles son rastreo al 100 %, daemon en el inicio, kernel panic sin acciones habilitables o bolsa de hardware agotada. BRIDGE y KILL_PROCESS pueden evitar kernel panic si abren una colocación legal. La victoria requiere una ruta continua hasta extracción después de resolver la fase del sistema.
+
+La mano de scripts arranca con un único cupo y abre uno más cada dos turnos: los turnos 1-2 sostienen un script, los turnos 3-4 dos, los turnos 5-6 tres, y así sucesivamente. Al ejecutar el turno se roba la primera carta del mazo solo si la mano está por debajo del cupo del turno nuevo y queda existencias, de modo que el tope crece lento pero nunca te quedas sin script por haber gastado el tuyo.
 
 PING conserva descubrimientos anteriores y selecciona entre trampas ocultas sin activar con azar reproducible por semilla y carta. La vista de la siguiente ficha se limpia al terminar el turno. Cada uso amplía la vista previa en una ficha y revela otra trampa disponible. Si no queda información nueva, rechaza el uso sin gastar carta ni RAM. No hay límite de scripts por turno aparte de las cartas disponibles, sus objetivos válidos y la RAM.
 

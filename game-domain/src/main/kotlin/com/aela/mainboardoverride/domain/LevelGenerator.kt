@@ -124,8 +124,8 @@ object LevelGenerator {
             board = board,
             dominoHand = bag.take(DOMINO_HAND_SIZE),
             dominoBag = bag.drop(DOMINO_HAND_SIZE),
-            scriptHand = scripts.take(2),
-            scriptDeck = scripts.drop(2),
+            scriptHand = scripts.take(STARTING_SCRIPT_HAND),
+            scriptDeck = scripts.drop(STARTING_SCRIPT_HAND),
             challengeRules = challengeLevel?.let { ChallengeCatalog.level(it)?.rules },
         )
         val actions = route.mapIndexed { index, tile -> GameAction.PlaceDomino(tile.domino.id, tile.origin, tile.orientation, flipped[index] != tile.domino) }

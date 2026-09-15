@@ -41,7 +41,11 @@ import kotlin.math.sin
 
 /** The image is static. Only a cached raster overlay moves, independently of menu layout. */
 @Composable
-internal fun MenuArtworkBackground(reducedMotion: Boolean, content: @Composable () -> Unit) {
+internal fun MenuArtworkBackground(
+    reducedMotion: Boolean,
+    @androidx.annotation.DrawableRes backgroundResource: Int = R.drawable.menu_background_v2,
+    content: @Composable () -> Unit,
+) {
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val animate = !reducedMotion && lifecycleState == Lifecycle.State.RESUMED
     val phase = if (animate) {
@@ -50,7 +54,7 @@ internal fun MenuArtworkBackground(reducedMotion: Boolean, content: @Composable 
         )
     } else null
     Box(Modifier.fillMaxSize().clip(RoundedCornerShape(0.dp)).background(Void)) {
-        Image(painterResource(R.drawable.menu_background_v2), null,
+        Image(painterResource(backgroundResource), null,
             Modifier.matchParentSize(), contentScale = ContentScale.Crop)
         if (animate) {
             Image(
@@ -100,6 +104,7 @@ internal fun MenuArtworkButton(
         modifier = (if (fillWidth) modifier.fillMaxWidth() else modifier)
             .heightIn(min = minHeight ?: if (compact) 48.dp else 54.dp)
             .graphicsLayer { alpha = if (enabled) 1f else .45f }
+            .pressFeedback(interaction, label = "menu button")
             .drawWithCache {
                 val sourceEdge = (image.height * .22f).roundToInt().coerceAtLeast(1)
                 val corner = minOf(12.dp.toPx().roundToInt(), (size.height / 2).toInt(), (size.width / 2).toInt())

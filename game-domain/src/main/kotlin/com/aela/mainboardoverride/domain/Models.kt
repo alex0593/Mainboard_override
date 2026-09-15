@@ -7,7 +7,19 @@ const val MAX_GENERATED_BOARD_WIDTH = 10
 const val MAX_RAM = 3
 const val MAX_TRACE = 100
 const val DOMINO_HAND_SIZE = 3
-const val SCRIPT_HAND_SIZE = 5
+
+/** Scripts the hand holds on the first turn. */
+const val STARTING_SCRIPT_HAND = 1
+
+/** One more script slot opens every this many turns. */
+const val SCRIPT_HAND_GROWTH_TURNS = 2
+
+/**
+ * Script slots open by [turn]: [STARTING_SCRIPT_HAND] to start and one more every
+ * [SCRIPT_HAND_GROWTH_TURNS] turns (turns 1-2 hold one, 3-4 hold two, 5-6 hold three).
+ */
+fun scriptHandCapacity(turn: Int): Int =
+    STARTING_SCRIPT_HAND + ((turn - 1).coerceAtLeast(0)) / SCRIPT_HAND_GROWTH_TURNS
 
 data class Position(val x: Int, val y: Int) {
     fun neighbors(width: Int = BOARD_WIDTH, height: Int = BOARD_HEIGHT): List<Position> = listOf(

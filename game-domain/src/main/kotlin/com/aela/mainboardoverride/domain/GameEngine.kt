@@ -272,10 +272,11 @@ object GameEngine {
 
         val replenishedHand = (state.dominoHand + state.dominoBag.take(1)).take(DOMINO_HAND_SIZE)
         val remainingBag = state.dominoBag.drop(1)
-        val drawnScripts = if (state.scriptHand.size < SCRIPT_HAND_SIZE) {
-            state.scriptHand + state.scriptDeck.take(1)
-        } else state.scriptHand
-        val nextDeck = if (state.scriptHand.size < SCRIPT_HAND_SIZE) state.scriptDeck.drop(1) else state.scriptDeck
+        // The hand draws back up to the slots the new turn opens; the ceiling grows every other turn.
+        val nextTurn = state.turn + 1
+        val drawsScript = state.scriptHand.size < scriptHandCapacity(nextTurn) && state.scriptDeck.isNotEmpty()
+        val drawnScripts = if (drawsScript) state.scriptHand + state.scriptDeck.first() else state.scriptHand
+        val nextDeck = if (drawsScript) state.scriptDeck.drop(1) else state.scriptDeck
         var next = state.copy(
             board = movedBoard,
             dominoHand = replenishedHand,
@@ -285,7 +286,7 @@ object GameEngine {
             ram = MAX_RAM,
             trace = traced,
             pendingNoise = 0,
-            turn = state.turn + 1,
+            turn = nextTurn,
             tilePlacedThisTurn = false,
             pingPreview = emptyList(),
         )

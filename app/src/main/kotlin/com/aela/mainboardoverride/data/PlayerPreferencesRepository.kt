@@ -31,6 +31,7 @@ data class PlayerPreferences(
     val credits: Int = 0,
     val ownedSkins: Set<String> = emptySet(),
     val lastScenario: String = "classic",
+    val completedScenarios: Set<String> = emptySet(),
     val tutorialLesson: Int = -1,
     val tutorialCompleted: Boolean = false,
 )
@@ -51,7 +52,7 @@ interface PlayerPreferencesRepository {
     suspend fun setBoardSkin(value: String)
     suspend fun setContextHelpEnabled(value: Boolean)
     suspend fun recordChallengeVictory(level: Int, turns: Int, trace: Int)
-    suspend fun finishMatch(id: String, level: Int?, turns: Int, trace: Int): MatchReward {
+    suspend fun finishMatch(id: String, level: Int?, turns: Int, trace: Int, scenarioId: String? = null): MatchReward {
         if (level != null) recordChallengeVictory(level, turns, trace) else recordVictory(turns, trace)
         return MatchReward()
     }
@@ -82,6 +83,7 @@ class DataStorePlayerPreferencesRepository(
             credits = values[CREDITS] ?: 0,
             ownedSkins = values[OWNED_SKINS] ?: emptySet(),
             lastScenario = values[LAST_SCENARIO] ?: "classic",
+            completedScenarios = values[COMPLETED_SCENARIOS] ?: emptySet(),
             tutorialLesson = values[TUTORIAL_LESSON] ?: -1,
             tutorialCompleted = values[TUTORIAL_COMPLETED] ?: false,
             challengeBest = values[CHALLENGE_BEST].orEmpty().split(",").mapNotNull { item ->
@@ -132,7 +134,7 @@ class DataStorePlayerPreferencesRepository(
         }
         return purchased
     }
-    override suspend fun finishMatch(id: String, level: Int?, turns: Int, trace: Int): MatchReward {
+    override suspend fun finishMatch(id: String, level: Int?, turns: Int, trace: Int, scenarioId: String?): MatchReward {
         var reward = MatchReward()
         store.edit { values ->
             val paid = values[PAID_MATCHES] ?: emptySet()
@@ -149,6 +151,9 @@ class DataStorePlayerPreferencesRepository(
                 if (previous == null || turns < previous || turns == previous && trace < (values[BEST_TRACE] ?: 101)) {
                     values[BEST_TURNS] = turns
                     values[BEST_TRACE] = trace
+                }
+                if (scenarioId != null) {
+                    values[COMPLETED_SCENARIOS] = (values[COMPLETED_SCENARIOS] ?: emptySet()) + scenarioId
                 }
             }
             reward = MatchReward(Rewards.VICTORY, if (first) Rewards.FIRST_CHALLENGE else 0,
@@ -180,6 +185,7 @@ class DataStorePlayerPreferencesRepository(
     private companion object {
         val TUTORIAL_LESSON = intPreferencesKey("tutorial_lesson")
         val TUTORIAL_COMPLETED = booleanPreferencesKey("tutorial_completed")
+        val COMPLETED_SCENARIOS = stringSetPreferencesKey("completed_scenarios")
         val CREDITS = intPreferencesKey("credits")
         val OWNED_SKINS = stringSetPreferencesKey("owned_skins")
         val PAID_MATCHES = stringSetPreferencesKey("paid_matches")

@@ -2,7 +2,6 @@ package com.aela.mainboardoverride.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -23,7 +22,7 @@ import com.aela.mainboardoverride.R
 internal fun GameControlButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier,
     enabled: Boolean = true, highlighted: Boolean = false) {
     Box(modifier.fillMaxWidth().requiredHeight(52.dp)
-        .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+        .pressable(enabled = enabled, role = Role.Button, label = "game control", onClick = onClick)
         .alpha(if (enabled) 1f else .45f), contentAlignment = Alignment.Center) {
         Box(Modifier.fillMaxWidth().heightIn(min = 32.dp)
             .then(if (highlighted) Modifier.border(1.dp, Warning, RoundedCornerShape(8.dp)) else Modifier),

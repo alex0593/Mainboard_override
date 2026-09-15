@@ -24,6 +24,9 @@
     <string name="free_scenarios">Free play scenarios</string>
     <string name="scenario_difficulty">Difficulty %1$d · %2$d × %3$d</string>
     <string name="scenario_locked">%1$d / %2$d distinct challenges completed</string>
+    <string name="scenario_completed">Completed</string>
+    <string name="scenario_available">Available</string>
+    <string name="scenario_accessibility">%1$s, %2$s</string>
     <string name="show_details">Show details</string>
     <string name="hide_details">Hide details</string>
     <string name="scenario_route">Route length: %1$d</string>
@@ -99,6 +102,7 @@
     <string name="status_noise">NOISE</string>
     <string name="status_seed">SEED</string>
     <string name="pending_noise">Next trace: 8 + noise (%1$d)</string>
+    <string name="pending_trace">TRACE +8%% +%1$d (NOISE)</string>
     <string name="node_description">Node %1$d, %2$d: %3$s</string>
     <string name="node_empty">empty</string>
     <string name="node_start">start</string>
@@ -143,12 +147,12 @@
     <string name="help_noise_body">Noise accumulates from scripts and newly triggered honeypots. It is added to the base 8 trace when you execute the turn, then resets for the next turn. Reading help adds no noise.</string>
     <string name="help_seed_title">Seed</string>
     <string name="help_seed_body">This number identifies the generated network and starting decks. Retry last seed in the menu starts the same challenge again; it does not resume your previous match.</string>
-    <string name="help_scripts_body">Select a script to use its effect. PING runs immediately; other scripts require a target. Each successful execution consumes the card and its RAM cost and adds its noise. Cancel a pending selection without spending resources. Use the ? beside each card for instructions.</string>
+    <string name="help_scripts_body">The hand starts with a single script: it opens one more slot every two turns, so turns 1-2 hold one, 3-4 hold two and 5-6 hold three. Select a script to use its effect. PING runs immediately; other scripts require a target. Each successful execution consumes the card and its RAM cost and adds its noise. Cancel a pending selection without spending resources. Use the ? beside each card for instructions.</string>
     <string name="help_hardware_body">Each domino has two ports with values from 0 to 6; a blank half means 0. Select a domino, rotate if needed, then tap a green outlined cell. Both cells must be free and every outside contact must match. The placement must touch the network connected to S0.</string>
     <string name="help_rotate_body">Cycles through horizontal, vertical, reversed horizontal and reversed vertical. The preview shows the exact port order: first on the left or top. Four presses restore the original orientation. Rotation spends no resources.</string>
     <string name="help_end_turn_body">Available after placing one domino. Applies 8 plus noise to trace, moves the daemon and checks defeat and victory. If play continues, restores 3 RAM, draws one domino and up to one script if there is room and stock, and clears the PING hardware preview.</string>
     <string name="help_ping_title">PING</string>
-    <string name="help_ping_body">Tap the card to preview the next domino and reveal one random hidden honeypot without triggering it. Earlier discoveries remain visible. Each PING previews one more domino. KILL can destroy the revealed honeypot immediately if you have enough RAM. The preview lasts until you execute the turn. If no new information remains, PING spends neither the card nor RAM.</string>
+    <string name="help_ping_body">Tap the card to preview the next domino and reveal one random hidden honeypot without triggering it. Earlier discoveries remain visible. Each PING previews one more domino. KILL can destroy the revealed honeypot immediately if you have enough RAM. The preview takes over the whole header for five seconds and then the normal header returns. If no new information remains, PING spends neither the card nor RAM.</string>
     <string name="help_spoof_title">SPOOF</string>
     <string name="help_spoof_body">Select the card, then a domino in your hand. Choose either port and a value from 0 to 6. Check the before/after images and apply to change that port permanently. Cancel or close to leave the domino and resources unchanged.</string>
     <string name="help_kill_title">KILL_PROCESS</string>

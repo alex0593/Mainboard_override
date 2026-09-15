@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -48,6 +49,11 @@ internal fun GameHeader(
                 Text(stringResource(R.string.ram, game.ram, MAX_RAM), color = Terminal, fontSize = 11.sp)
                 TraceIndicator(game.trace)
             }
+            Box(
+                Modifier.width(1.dp).height(44.dp)
+                    .background(Cyan.copy(alpha = .58f))
+                    .testTag("header-divider"),
+            )
             Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()).testTag("script-hand"),
                 horizontalArrangement = Arrangement.spacedBy(4.dp), content = scripts)
             trailing()

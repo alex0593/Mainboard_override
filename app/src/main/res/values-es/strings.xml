@@ -24,6 +24,9 @@
     <string name="free_scenarios">Escenarios de modo libre</string>
     <string name="scenario_difficulty">Dificultad %1$d · %2$d × %3$d</string>
     <string name="scenario_locked">%1$d / %2$d desafíos distintos completados</string>
+    <string name="scenario_completed">Completado</string>
+    <string name="scenario_available">Disponible</string>
+    <string name="scenario_accessibility">%1$s, %2$s</string>
     <string name="show_details">Mostrar detalles</string>
     <string name="hide_details">Ocultar detalles</string>
     <string name="scenario_route">Longitud de ruta: %1$d</string>
@@ -97,6 +100,7 @@
     <string name="status_noise">RUIDO</string>
     <string name="status_seed">SEMILLA</string>
     <string name="pending_noise">Próximo rastreo: 8 + ruido (%1$d)</string>
+    <string name="pending_trace">RASTREO +8%% +%1$d (RUIDO)</string>
     <string name="node_description">Nodo %1$d, %2$d: %3$s</string>
     <string name="node_empty">vacío</string>
     <string name="node_start">inicio</string>
@@ -141,12 +145,12 @@
     <string name="help_noise_body">El ruido se acumula con los scripts y los honeypots que activas por primera vez. Se suma a los 8 de rastreo base al ejecutar el turno y vuelve a cero para el siguiente. Consultar ayuda no añade ruido.</string>
     <string name="help_seed_title">Semilla</string>
     <string name="help_seed_body">Este número identifica la red generada y los mazos iniciales. Repetir última semilla en el menú inicia de nuevo el mismo desafío; no reanuda la partida anterior.</string>
-    <string name="help_scripts_body">Selecciona un script para usar su efecto. PING se ejecuta inmediatamente; los demás requieren un objetivo. Cada ejecución correcta consume la carta y su coste de RAM y añade su ruido. Puedes cancelar una selección pendiente sin gastar recursos. Consulta el ? de cada carta para ver sus instrucciones.</string>
+    <string name="help_scripts_body">La mano empieza con un solo script y abre un cupo más cada dos turnos: uno en los turnos 1-2, dos en 3-4 y tres en 5-6. Selecciona un script para usar su efecto. PING se ejecuta inmediatamente; los demás requieren un objetivo. Cada ejecución correcta consume la carta y su coste de RAM y añade su ruido. Puedes cancelar una selección pendiente sin gastar recursos. Consulta el ? de cada carta para ver sus instrucciones.</string>
     <string name="help_hardware_body">Cada ficha tiene dos puertos con valores de 0 a 6; una mitad vacía vale 0. Selecciona una ficha, rótala si hace falta y toca una celda con borde verde. Ambas celdas deben estar libres y todos los contactos externos deben coincidir. La colocación debe tocar la red conectada con S0.</string>
     <string name="help_rotate_body">Alterna entre horizontal, vertical, horizontal invertida y vertical invertida. La vista previa muestra el orden exacto: el primer puerto queda a la izquierda o arriba. Cuatro pulsaciones recuperan la orientación inicial. Rotar no gasta recursos.</string>
     <string name="help_end_turn_body">Disponible después de colocar una ficha. Suma 8 más el ruido al rastreo, mueve al daemon y comprueba derrota y victoria. Si la partida continúa, repone 3 RAM, roba una ficha y hasta un script si hay espacio y existencias, y limpia la vista de la siguiente ficha de PING.</string>
     <string name="help_ping_title">PING</string>
-    <string name="help_ping_body">Toca la carta para ver la siguiente ficha y revelar un honeypot oculto al azar, sin activarlo. Los descubrimientos anteriores se conservan. Cada PING muestra una ficha adicional. Puedes destruir el honeypot con KILL inmediatamente si tienes suficiente RAM. La vista de la ficha dura hasta ejecutar el turno. Si no queda información nueva, PING no gasta la carta ni RAM.</string>
+    <string name="help_ping_body">Toca la carta para ver la siguiente ficha y revelar un honeypot oculto al azar, sin activarlo. Los descubrimientos anteriores se conservan. Cada PING muestra una ficha adicional. Puedes destruir el honeypot con KILL inmediatamente si tienes suficiente RAM. La vista ocupa todo el header durante cinco segundos y después vuelve el header normal. Si no queda información nueva, PING no gasta la carta ni RAM.</string>
     <string name="help_spoof_title">SPOOF</string>
     <string name="help_spoof_body">Selecciona la carta y una ficha de tu mano. Elige cualquiera de los dos puertos y un valor de 0 a 6. Revisa las imágenes de antes y después y aplica para cambiar ese puerto permanentemente. Cancelar o cerrar conserva la ficha y los recursos.</string>
     <string name="help_kill_title">KILL_PROCESS</string>

@@ -1,0 +1,5 @@
+Scenario backgrounds: classic, lab, data, industry, archive, core, ghost.
+Generated for Mainboard Override on 2026-09-14 using the built-in imagegen tool.
+Prompts and unmodified originals: assets/scenarios/ in the source repository.
+Packaged files: drawable-nodpi/scenario_<id>.png (1280x640 RGB exports).
+These are AI-generated assets, not assets from the Kenney pack.

@@ -1,6 +1,7 @@
 package com.aela.mainboardoverride.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -67,7 +68,12 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
                             }
                         }
                     }
-                    TextButton(onBack, Modifier.width(92.dp)) { Text(stringResource(R.string.back)) }
+                    val backInteraction = remember { MutableInteractionSource() }
+                    TextButton(
+                        onClick = onBack,
+                        interactionSource = backInteraction,
+                        modifier = Modifier.width(92.dp).pressFeedback(backInteraction, label = "tutorial back", pressedScale = .97f),
+                    ) { Text(stringResource(R.string.back)) }
                 }
                 BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
                     val panelWidth = (maxWidth * .29f).coerceIn(160.dp, 230.dp)
@@ -77,15 +83,16 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
                             legalOrigins = setOfNotNull(target), target = target,
                             modifier = Modifier.weight(1f).fillMaxHeight().testTag("tutorial-board"),
                             animatePlacement = !preferences.reducedMotion,
+                            // Repeating or restarting a lesson rebuilds the board, not a kill.
+                            sessionKey = "${state.lesson}-$repeat",
                             onCell = { dispatch(TutorialInput.Cell(it)) })
                         Column(Modifier.width(panelWidth).fillMaxHeight(),
                             horizontalAlignment = Alignment.CenterHorizontally) {
                             Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 if (state.incorrect) Text(stringResource(R.string.tutorial_wrong), color = Warning)
-                                state.game.pingPreview.forEach { tile ->
-                                    Text(stringResource(R.string.ping_preview), color = Muted)
-                                    DominoImage(tile, Modifier.width(60.dp), skin = preferences.dominoSkin)
+                                if (state.game.pingPreview.isNotEmpty()) {
+                                    PingPreview(state.game.pingPreview, preferences.dominoSkin)
                                 }
 
                             }
@@ -131,11 +138,22 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
                                         color = Cyan)
                                 }
                                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                    TextButton({ controller.start(state.lesson); repeat++ },
-                                        Modifier.weight(1f).testTag("tutorial-repeat")) {
+                                    val repeatInteraction = remember { MutableInteractionSource() }
+                                    val helpInteraction = remember { MutableInteractionSource() }
+                                    TextButton(
+                                        onClick = { controller.start(state.lesson); repeat++ },
+                                        interactionSource = repeatInteraction,
+                                        modifier = Modifier.weight(1f).testTag("tutorial-repeat")
+                                            .pressFeedback(repeatInteraction, label = "tutorial repeat", pressedScale = .97f),
+                                    ) {
                                         Text(stringResource(R.string.tutorial_repeat))
                                     }
-                                    TextButton({ helpOpen = true }, Modifier.size(48.dp).testTag("tutorial-help")) {
+                                    TextButton(
+                                        onClick = { helpOpen = true },
+                                        interactionSource = helpInteraction,
+                                        modifier = Modifier.size(48.dp).testTag("tutorial-help")
+                                            .pressFeedback(helpInteraction, label = "tutorial help"),
+                                    ) {
                                         Text("?")
                                     }
                                 }

@@ -1,7 +1,9 @@
 package com.aela.mainboardoverride.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,10 +11,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aela.mainboardoverride.GameUiState
@@ -32,31 +38,56 @@ private fun ScenarioCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    Card(onClick = onClick, enabled = unlocked, modifier = modifier.fillMaxWidth().heightIn(min = 190.dp),
+    val status = when {
+        completed -> stringResource(R.string.scenario_completed)
+        unlocked -> stringResource(R.string.scenario_available)
+        else -> stringResource(R.string.locked_scenario)
+    }
+    val accessibilityDescription = stringResource(
+        R.string.scenario_accessibility,
+        stringResource(scenarioLabel(scenario.id)),
+        status,
+    )
+    val interaction = remember { MutableInteractionSource() }
+    Card(onClick = onClick, enabled = unlocked, interactionSource = interaction,
+        // The visual checkmark and lock icon are not enough for TalkBack users.
+        modifier = modifier.fillMaxWidth().heightIn(min = 190.dp)
+            .pressFeedback(interaction, label = "scenario card", pressedScale = .97f)
+            .semantics {
+            contentDescription = accessibilityDescription
+        },
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(1.dp, if (completed) Terminal else if (unlocked) Cyan.copy(alpha = .45f) else Muted),
         colors = CardDefaults.cardColors(containerColor = Panel)) {
-        Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box(Modifier.fillMaxWidth().height(108.dp), contentAlignment = Alignment.Center) {
-                PuzzlePreview("scenario:${scenario.id}:42", boardSkin, dominoSkin, Modifier.fillMaxSize()) {
-                    LevelGenerator.generateScenario(42, scenario.id).board
-                }
-                if (!unlocked) {
-                    Box(Modifier.fillMaxSize().background(Void.copy(alpha = .66f)), contentAlignment = Alignment.Center) {
-                        Icon(
-                            painterResource(R.drawable.ic_locked),
-                            stringResource(R.string.locked_scenario),
-                            modifier = Modifier.size(38.dp),
-                            tint = Warning,
-                        )
+        Box(Modifier.fillMaxWidth().heightIn(min = 190.dp)) {
+            Image(
+                painterResource(scenarioBackgroundResource(scenario.id)),
+                contentDescription = null,
+                modifier = Modifier.matchParentSize().alpha(.72f),
+                contentScale = ContentScale.Crop,
+            )
+            Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(Modifier.fillMaxWidth().height(108.dp), contentAlignment = Alignment.Center) {
+                    PuzzlePreview("scenario:${scenario.id}:42", boardSkin, dominoSkin, Modifier.fillMaxSize()) {
+                        LevelGenerator.generateScenario(42, scenario.id).board
+                    }
+                    if (!unlocked) {
+                        Box(Modifier.fillMaxSize().background(Void.copy(alpha = .66f)), contentAlignment = Alignment.Center) {
+                            Icon(
+                                painterResource(R.drawable.ic_locked),
+                                stringResource(R.string.locked_scenario),
+                                modifier = Modifier.size(38.dp),
+                                tint = Warning,
+                            )
+                        }
                     }
                 }
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(scenarioLabel(scenario.id)), Modifier.weight(1f), color = if (unlocked) Cyan else Muted)
+                    if (completed) Text("✓", color = Terminal)
+                }
+                if (!unlocked) Text(stringResource(R.string.scenario_locked, completedChallenges, scenario.required), color = Muted, fontSize = 10.sp)
             }
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(scenarioLabel(scenario.id)), Modifier.weight(1f), color = if (unlocked) Cyan else Muted)
-                if (completed) Text("✓", color = Terminal)
-            }
-            if (!unlocked) Text(stringResource(R.string.scenario_locked, completedChallenges, scenario.required), color = Muted, fontSize = 10.sp)
         }
     }
 }
@@ -77,7 +108,9 @@ private fun ChallengeCard(
         maxTurns != null -> stringResource(R.string.challenge_rules_turns, maxTurns)
         else -> stringResource(R.string.challenge_rules_trace, maxTrace ?: 0)
     }
-    Card(onClick = onClick, enabled = unlocked, modifier = modifier.fillMaxWidth(),
+    val interaction = remember { MutableInteractionSource() }
+    Card(onClick = onClick, enabled = unlocked, interactionSource = interaction,
+        modifier = modifier.fillMaxWidth().pressFeedback(interaction, label = "challenge card", pressedScale = .97f),
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(1.dp, if (completed) Terminal else if (unlocked) Cyan.copy(alpha = .45f) else Muted),
         colors = CardDefaults.cardColors(containerColor = Panel)) {
@@ -106,7 +139,7 @@ private fun ChallengeCard(
 internal fun ScenarioScreen(state: GameUiState, actions: MainViewModel, onStart: () -> Unit, onBack: () -> Unit) {
     var selected by rememberSaveable { mutableStateOf<String?>(null) }
     val transition = LocalWindowTransition.current
-    val completed = state.preferences.challengeBest.size
+    val completedChallenges = state.preferences.challengeBest.size
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             ProgressionHeader(stringResource(R.string.free_scenarios), onBack)
@@ -115,9 +148,9 @@ internal fun ScenarioScreen(state: GameUiState, actions: MainViewModel, onStart:
                 itemsIndexed(ScenarioCatalog.all, key = { _, item -> item.id }) { index, scenario ->
                     ScenarioCard(
                         scenario = scenario,
-                        unlocked = completed >= scenario.required,
-                        completed = completed >= scenario.required,
-                        completedChallenges = completed,
+                        unlocked = completedChallenges >= scenario.required,
+                        completed = scenario.id in state.preferences.completedScenarios,
+                        completedChallenges = completedChallenges,
                         boardSkin = state.preferences.boardSkin,
                         dominoSkin = state.preferences.dominoSkin,
                         modifier = Modifier.testTag("scenario-${scenario.id}"),
@@ -130,7 +163,7 @@ internal fun ScenarioScreen(state: GameUiState, actions: MainViewModel, onStart:
     }
     selected?.let { id ->
         val scenario = ScenarioCatalog.get(id)
-        if (completed >= scenario.required) GameDialog(
+        if (completedChallenges >= scenario.required) GameDialog(
             stringResource(scenarioLabel(id)), { selected = null }, modifier = Modifier.testTag("scenario-dialog"),
             actions = {
                 MenuArtworkButton(stringResource(R.string.back), { selected = null }, compact = true, fillWidth = false, modifier = Modifier.testTag("back-scenario"))
@@ -145,7 +178,7 @@ internal fun ScenarioScreen(state: GameUiState, actions: MainViewModel, onStart:
             Text(stringResource(R.string.scenario_route, scenario.route))
             Text(stringResource(R.string.scenario_firewalls, scenario.firewalls))
             Text(stringResource(R.string.scenario_traps, scenario.traps))
-            if (scenario.required > 0) Text(stringResource(R.string.scenario_locked, completed, scenario.required))
+            if (scenario.required > 0) Text(stringResource(R.string.scenario_locked, completedChallenges, scenario.required))
         }
     }
 }

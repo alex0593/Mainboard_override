@@ -57,10 +57,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import com.aela.mainboardoverride.domain.RejectReason
 import com.aela.mainboardoverride.domain.TutorialInput
 import androidx.compose.ui.Alignment
@@ -79,6 +81,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
@@ -266,30 +271,39 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
         Column(Modifier.fillMaxSize().padding(8.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.weight(1f).heightIn(min = 64.dp)) {
-                    GameHeader(
-                        game,
-                        Modifier.fillMaxWidth(),
-                        trailing = {
-                            TextButton(onClick = { helpOpen = true }, modifier = Modifier.size(46.dp).testTag("general-help")) { Text("?", color = Cyan) }
-                        },
-                    ) {
-                        game.scriptHand.groupBy { it.type }.values.forEach { stack ->
-                            ScriptStack(
-                                cards = stack,
-                                selectedId = state.selectedScriptId,
-                                enabled = game.ram >= stack.first().type.ramCost && game.result == null,
-                                onSelect = actions::selectScript,
-                            )
-                        }
-                    }
+                    // PING takes over the whole band while its preview lasts; the header comes back
+                    // on its own once the countdown reaches zero.
                     if (pingActive) {
-                        PingOverlay(
+                        PingHeader(
                             tiles = game.pingPreview,
                             skin = state.preferences.dominoSkin,
                             accent = scenarioAccentColor(state.scenarioId),
                             progress = pingProgress.value,
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier.fillMaxWidth(),
                         )
+                    } else {
+                        GameHeader(
+                            game,
+                            Modifier.fillMaxWidth(),
+                            trailing = {
+                                val helpInteraction = remember { MutableInteractionSource() }
+                                TextButton(
+                                    onClick = { helpOpen = true },
+                                    modifier = Modifier.size(46.dp).testTag("general-help")
+                                        .pressFeedback(helpInteraction, label = "help"),
+                                    interactionSource = helpInteraction,
+                                ) { Text("?", color = Cyan) }
+                            },
+                        ) {
+                            game.scriptHand.groupBy { it.type }.values.forEach { stack ->
+                                ScriptStack(
+                                    cards = stack,
+                                    selectedId = state.selectedScriptId,
+                                    enabled = game.ram >= stack.first().type.ramCost && game.result == null,
+                                    onSelect = actions::selectScript,
+                                )
+                            }
+                        }
                     }
                 }
                 Column(Modifier.width(92.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -297,8 +311,11 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                     LevelActionButton(stringResource(R.string.retry_level), R.drawable.ic_retry_level, { pendingExitAction = GameExitAction.RESTART }, Modifier.testTag("restart-game"))
                 }
             }
+            // Only the pending noise line lives between the header and the PCB. The strip keeps a
+            // fixed 14 dp and the line is measured unbounded inside it, so a taller font overflows
+            // its own band instead of growing it and pushing the PCB down.
             Box(
-                Modifier.fillMaxWidth().height(28.dp),
+                Modifier.fillMaxWidth().height(14.dp).testTag("pending-trace-band"),
                 contentAlignment = Alignment.Center,
             ) {
                 if (game.tilePlacedThisTurn && game.result == null) {
@@ -308,7 +325,9 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold,
                         fontSize = 11.sp,
-                        modifier = Modifier.testTag("pending-trace")
+                        maxLines = 1,
+                        modifier = Modifier.wrapContentHeight(unbounded = true, align = Alignment.CenterVertically)
+                            .testTag("pending-trace")
                             .semantics { liveRegion = LiveRegionMode.Polite },
                     )
                 }
@@ -335,6 +354,7 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                                 modifier = Modifier.fillMaxSize(),
                                 onCell = actions::placeAt,
                                 animatePlacement = !state.preferences.reducedMotion,
+                                sessionKey = state.matchId,
                             )
                         }
                     if (state.reviewingBoard) ReviewPanel(controlsWidth, actions)
@@ -430,6 +450,9 @@ internal fun Board(
     onCell: (Position) -> Unit,
     previewOnly: Boolean = false,
     animatePlacement: Boolean = true,
+    // Restarting, repeating a lesson or opening another match replaces the board: the key tells
+    // destruction feedback that nothing was killed.
+    sessionKey: Any? = null,
 ) {
     val boardArtwork = boardSkinResource(skin, previewOnly)
     val placementKeys = remember(board.placed) {
@@ -455,6 +478,32 @@ internal fun Board(
                 }
             }
         }
+    }
+    // Only KILL removes firewalls, revealed honeypots and whole dominoes from the state, so a diff
+    // against the previous snapshot is exactly the destruction signal.
+    val aliveEntities = remember(board.firewalls, board.revealedHoneypots, board.placed) {
+        buildMap<String, List<Position>> {
+            board.firewalls.forEach { put("firewall:${it.x}:${it.y}", listOf(it)) }
+            board.revealedHoneypots.forEach { put("honeypot:${it.x}:${it.y}", listOf(it)) }
+            board.placed.forEach { put("domino:${it.domino.id}", it.positions.toList()) }
+        }
+    }
+    var session by remember { mutableStateOf(sessionKey) }
+    var knownEntities by remember { mutableStateOf<Map<String, List<Position>>?>(null) }
+    var bursts by remember { mutableStateOf(emptyList<DestructionBurst>()) }
+    var burstIds by remember { mutableStateOf(0) }
+    LaunchedEffect(sessionKey, aliveEntities) {
+        val freshSession = session != sessionKey
+        session = sessionKey
+        val previous = knownEntities
+        knownEntities = aliveEntities
+        if (freshSession || previous == null) return@LaunchedEffect
+        val destroyed = previous.filterKeys { it !in aliveEntities }
+        if (destroyed.isEmpty()) return@LaunchedEffect
+        val created = destroyed.values.map { positions -> DestructionBurst(++burstIds, positions) }
+        bursts = bursts + created
+        delay(BurstDurationMillis)
+        bursts = bursts - created.toSet()
     }
     BoxWithConstraints(
         modifier.background(androidx.compose.ui.graphics.SolidColor(Void), RoundedCornerShape(10.dp))
@@ -574,6 +623,20 @@ internal fun Board(
                 val position = Position(x, y)
                 BoardCell(board, position, cell, position in legalOrigins, position == target, onCell)
             }
+            // Bursts cover the destroyed footprint, which is two cells for a removed domino.
+            for (burst in bursts) {
+                val minX = burst.positions.minOf { it.x }
+                val minY = burst.positions.minOf { it.y }
+                DestructionBurst(
+                    burstId = burst.id,
+                    modifier = Modifier
+                        .offset(x = cell * minX, y = cell * minY)
+                        .size(
+                            width = cell * (burst.positions.maxOf { it.x } - minX + 1),
+                            height = cell * (burst.positions.maxOf { it.y } - minY + 1),
+                        ),
+                )
+            }
             }
         }
     }
@@ -676,6 +739,55 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
     }
 }
 
+/** One KILL burst. The id keeps repeated destructions animating independently. */
+private data class DestructionBurst(val id: Int, val positions: List<Position>)
+
+/** How long a KILL burst stays on the board. */
+private const val BurstDurationMillis = 460L
+
+/**
+ * Reads as a digital impact: the destroyed cells flash, glitch bars sweep across them, two rings
+ * expand and sparks fly out. With [LocalReducedMotion] only the flash remains, so nothing moves.
+ */
+@Composable
+private fun DestructionBurst(burstId: Int, modifier: Modifier = Modifier) {
+    val reducedMotion = LocalReducedMotion.current
+    val progress = remember(burstId) { Animatable(0f) }
+    LaunchedEffect(burstId) { progress.animateTo(1f, tween(BurstDurationMillis.toInt(), easing = LinearEasing)) }
+    Canvas(modifier.testTag("kill-burst")) {
+        val elapsed = progress.value
+        val center = Offset(size.width / 2f, size.height / 2f)
+        val reach = size.minDimension
+        drawRect(Danger.copy(alpha = .45f * (1f - elapsed)))
+        if (reducedMotion) return@Canvas
+        val glitch = (.34f - elapsed).coerceAtLeast(0f) / .34f
+        if (glitch > 0f) repeat(3) { index ->
+            val y = size.height * (index + 1f) / 4f
+            val side = if (index % 2 == 0) 1f else -1f
+            drawLine(Danger.copy(alpha = .85f * glitch),
+                Offset(center.x + side * reach * .38f, y), Offset(center.x + side * reach * .12f, y),
+                strokeWidth = 1.5.dp.toPx())
+        }
+        repeat(2) { ring ->
+            val expansion = ((elapsed - ring * .18f) / .82f).coerceIn(0f, 1f)
+            if (expansion > 0f) drawCircle(
+                (if (ring == 0) Danger else Warning).copy(alpha = .9f * (1f - expansion)),
+                radius = reach * (.22f + .78f * expansion),
+                center = center,
+                style = Stroke(width = (2.dp.toPx() * (1f - expansion)).coerceAtLeast(.5f)),
+            )
+        }
+        repeat(8) { index ->
+            val angle = index * (PI.toFloat() / 4f)
+            val outward = Offset(cos(angle), sin(angle))
+            val start = reach * (.2f + .5f * elapsed)
+            drawLine(Warning.copy(alpha = .9f * (1f - elapsed)),
+                center + outward * start, center + outward * (start + reach * .26f),
+                strokeWidth = 1.5.dp.toPx())
+        }
+    }
+}
+
 @Composable
 private fun BoardBridgeSprite(horizontal: Boolean, value: Int) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
@@ -743,7 +855,7 @@ internal fun ScriptCardView(card: ScriptCard, selected: Boolean, enabled: Boolea
         modifier.then((if (compact) Modifier.width(88.dp) else Modifier.fillMaxWidth())
             .heightIn(min = 48.dp).clip(RoundedCornerShape(8.dp)).testTag("script-${card.id}")
             .semantics { this.selected = selected }.alpha(if (enabled) 1f else .4f)
-            .clickable(enabled = enabled, onClick = onClick)
+            .pressable(enabled = enabled, label = "script card", onClick = onClick)
             .border(1.dp, if (highlighted) Warning else if (selected) Cyan else Muted, RoundedCornerShape(8.dp))),
     ) {
         Image(
@@ -782,7 +894,7 @@ internal fun DominoView(tile: Domino, selected: Boolean, skin: String = "kenney"
     val label = stringResource(R.string.domino_description, tile.first, tile.second)
     Row(
         modifier.widthIn(min = 42.dp).heightIn(min = 64.dp).semantics { contentDescription = label; this.selected = selected }.background(if (selected) Terminal.copy(alpha = .2f) else Void)
-            .border(1.dp, if (highlighted) Warning else if (selected) Terminal else Muted).clickable(onClick = onClick).padding(3.dp),
+            .border(1.dp, if (highlighted) Warning else if (selected) Terminal else Muted).pressable(label = "hand tile", onClick = onClick).padding(3.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -854,11 +966,12 @@ private fun TerminalButton(label: String, onClick: () -> Unit, modifier: Modifie
 
 @Composable
 private fun LevelActionButton(label: String, icon: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Box(modifier.size(48.dp).semantics { contentDescription = label }, contentAlignment = Alignment.Center) {
+    val interaction = remember { MutableInteractionSource() }
+    Box(modifier.size(48.dp).pressFeedback(interaction, label = "level action").semantics { contentDescription = label }, contentAlignment = Alignment.Center) {
         Box(Modifier.size(36.dp).clip(RoundedCornerShape(8.dp))) {
           Image(painterResource(R.drawable.menu_button_compact_v2), contentDescription = null, modifier = Modifier.matchParentSize(), contentScale = androidx.compose.ui.layout.ContentScale.FillBounds)
         }
-        androidx.compose.material3.IconButton(onClick = onClick, modifier = Modifier.matchParentSize()) {
+        androidx.compose.material3.IconButton(onClick = onClick, modifier = Modifier.matchParentSize(), interactionSource = interaction) {
             androidx.compose.material3.Icon(painterResource(icon), contentDescription = null, tint = Cyan, modifier = Modifier.size(18.dp))
         }
     }
@@ -972,27 +1085,37 @@ internal fun PingPreview(tiles: List<Domino>, skin: String) {
     }
 }
 
+/**
+ * Stands in for [GameHeader] while PING keeps a preview on screen. The opaque panel hides the turn,
+ * RAM and trace indicators, the script hand, the help button and the header artwork, leaving only
+ * the revealed tiles and the countdown; the slot keeps its 64 dp floor like the header itself, so
+ * the PCB underneath never moves.
+ */
 @Composable
-private fun PingOverlay(
+private fun PingHeader(
     tiles: List<Domino>,
     skin: String,
     accent: Color,
     progress: Float,
     modifier: Modifier = Modifier,
 ) {
+    val shape = RoundedCornerShape(10.dp)
     Box(
         modifier
-            .zIndex(4f)
-            .testTag("ping-overlay"),
+            .heightIn(min = 64.dp)
+            .testTag("ping-header")
+            .clip(shape)
+            .background(Panel.copy(alpha = .98f))
+            .border(BorderStroke(1.dp, accent.copy(alpha = .6f)), shape),
     ) {
         Row(
-            Modifier.fillMaxSize().padding(start = 112.dp, end = 18.dp, top = 6.dp, bottom = 6.dp),
+            Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 18.dp, vertical = 9.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(stringResource(R.string.ping_preview), color = accent, fontSize = 11.sp)
             Row(
-                Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+                Modifier.weight(1f).horizontalScroll(rememberScrollState()).testTag("ping-tiles"),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
@@ -1053,10 +1176,13 @@ internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?,
                 }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     listOf(R.string.first_half, R.string.second_half).forEachIndexed { index, label ->
+                        val halfInteraction = remember { MutableInteractionSource() }
                         OutlinedButton(onClick = { onHalf(index) }, modifier = Modifier.weight(1f).heightIn(min = 48.dp)
                             .testTag("tutorial-half-$index")
+                            .pressFeedback(halfInteraction, label = "spoof half")
                             .then(if (tutorialExpected == TutorialInput.Half(index)) Modifier.border(2.dp, Terminal) else Modifier)
                             .semantics { selected = half == index },
+                            interactionSource = halfInteraction,
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 4.dp)) {
                             Text(stringResource(label), fontSize = 12.sp)
                         }
@@ -1070,22 +1196,29 @@ internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     items((0..6).toList()) { candidate ->
+                        val valueInteraction = remember { MutableInteractionSource() }
                         TextButton(
                             onClick = { onValue(candidate) },
                             modifier = Modifier.fillMaxWidth().height(48.dp).testTag("tutorial-value-$candidate")
+                                .pressFeedback(valueInteraction, label = "spoof value", pressedScale = .96f)
                                 .then(if (tutorialExpected == TutorialInput.Value(candidate)) Modifier.border(2.dp, Terminal) else Modifier)
                                 .semantics { selected = value == candidate },
+                            interactionSource = valueInteraction,
                         ) { Text("$candidate", color = if (value == candidate) Terminal else Muted, fontSize = 18.sp, maxLines = 1) }
                     }
             }
             error?.let { Text(stringResource(it), color = Danger, maxLines = 2, fontSize = 10.sp) }
           }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onCancel, modifier = Modifier.weight(1f).height(48.dp)
+                val cancelInteraction = remember { MutableInteractionSource() }
+                val applyInteraction = remember { MutableInteractionSource() }
+                TextButton(onClick = onCancel, interactionSource = cancelInteraction, modifier = Modifier.weight(1f).height(48.dp)
                     .testTag(if (tutorialExpected != null) "tutorial-action-Cancel" else "spoof-cancel")
+                    .pressFeedback(cancelInteraction, label = "spoof cancel")
                     .then(if (tutorialExpected == TutorialInput.Cancel) Modifier.border(2.dp, Terminal) else Modifier)) { Text(stringResource(R.string.cancel)) }
-                TextButton(onClick = onApply, modifier = Modifier.weight(1f).height(48.dp)
+                TextButton(onClick = onApply, interactionSource = applyInteraction, modifier = Modifier.weight(1f).height(48.dp)
                     .testTag(if (tutorialExpected != null) "tutorial-action-ApplySpoof" else "spoof-apply")
+                    .pressFeedback(applyInteraction, label = "spoof apply")
                     .then(if (tutorialExpected == TutorialInput.ApplySpoof) Modifier.border(2.dp, Terminal) else Modifier)) { Text(stringResource(R.string.apply)) }
             }
         }
