@@ -178,7 +178,10 @@ private fun MenuScreen(
 ) {
     var exitRequested by rememberSaveable { mutableStateOf(false) }
     BackHandler(enabled = !exitRequested) { exitRequested = true }
-    MenuArtworkBackground(reducedMotion = state.preferences.reducedMotion) {
+    MenuArtworkBackground(
+        reducedMotion = state.preferences.reducedMotion,
+        backgroundResource = menuBackgroundResource(state.preferences.lastScenario),
+    ) {
         Row(
             Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -246,58 +249,100 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
     }
     var helpOpen by rememberSaveable { mutableStateOf(false) }
     var pendingExitAction by rememberSaveable { mutableStateOf<GameExitAction?>(null) }
+    val pingProgress = remember { Animatable(0f) }
+    LaunchedEffect(game.pingPreview) {
+        if (game.pingPreview.isEmpty()) {
+            pingProgress.snapTo(0f)
+        } else {
+            pingProgress.snapTo(1f)
+            pingProgress.animateTo(0f, animationSpec = tween(5_000, easing = LinearEasing))
+        }
+    }
+    val pingActive = pingProgress.value > 0f && game.pingPreview.isNotEmpty()
     BackHandler(enabled = pendingExitAction == null) { pendingExitAction = GameExitAction.EXIT }
-    CircuitBackground {
+    CircuitBackground(backgroundResource = if (state.challengeLevel == null) {
+        scenarioBackgroundResource(state.scenarioId)
+    } else R.drawable.menu_background_v2) {
         Column(Modifier.fillMaxSize().padding(8.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-              GameHeader(game, Modifier.weight(1f), trailing = {
-                  TextButton(onClick = { helpOpen = true }, modifier = Modifier.size(46.dp).testTag("general-help")) { Text("?", color = Cyan) }
-              }) {
-                    game.scriptHand.groupBy { it.type }.values.forEach { stack ->
-                        ScriptStack(
-                            cards = stack,
-                            selectedId = state.selectedScriptId,
-                            enabled = game.ram >= stack.first().type.ramCost && game.result == null,
-                            onSelect = actions::selectScript,
+                Box(Modifier.weight(1f).heightIn(min = 64.dp)) {
+                    GameHeader(
+                        game,
+                        Modifier.fillMaxWidth(),
+                        trailing = {
+                            TextButton(onClick = { helpOpen = true }, modifier = Modifier.size(46.dp).testTag("general-help")) { Text("?", color = Cyan) }
+                        },
+                    ) {
+                        game.scriptHand.groupBy { it.type }.values.forEach { stack ->
+                            ScriptStack(
+                                cards = stack,
+                                selectedId = state.selectedScriptId,
+                                enabled = game.ram >= stack.first().type.ramCost && game.result == null,
+                                onSelect = actions::selectScript,
+                            )
+                        }
+                    }
+                    if (pingActive) {
+                        PingOverlay(
+                            tiles = game.pingPreview,
+                            skin = state.preferences.dominoSkin,
+                            accent = scenarioAccentColor(state.scenarioId),
+                            progress = pingProgress.value,
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
-              }
-              // Actions live beside the decorative header, with compact visuals and full touch targets.
-              Column(Modifier.width(92.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                LevelActionButton(stringResource(R.string.exit_match), R.drawable.ic_leave_level, { pendingExitAction = GameExitAction.EXIT }, Modifier.testTag("exit-game"))
-                LevelActionButton(stringResource(R.string.retry_level), R.drawable.ic_retry_level, { pendingExitAction = GameExitAction.RESTART }, Modifier.testTag("restart-game"))
-              }
+                }
+                Column(Modifier.width(92.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    LevelActionButton(stringResource(R.string.exit_match), R.drawable.ic_leave_level, { pendingExitAction = GameExitAction.EXIT }, Modifier.testTag("exit-game"))
+                    LevelActionButton(stringResource(R.string.retry_level), R.drawable.ic_retry_level, { pendingExitAction = GameExitAction.RESTART }, Modifier.testTag("restart-game"))
+                }
             }
-            Spacer(Modifier.height(8.dp))
+            Box(
+                Modifier.fillMaxWidth().height(28.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (game.tilePlacedThisTurn && game.result == null) {
+                    Text(
+                        stringResource(R.string.pending_trace, game.pendingNoise),
+                        color = scenarioAccentColor(state.scenarioId),
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp,
+                        modifier = Modifier.testTag("pending-trace")
+                            .semantics { liveRegion = LiveRegionMode.Polite },
+                    )
+                }
+            }
             BoxWithConstraints(Modifier.weight(1f)) {
                 val controlsWidth = (maxWidth * .29f).coerceIn(190.dp, 260.dp)
                 Box(Modifier.fillMaxSize()) {
                   Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Board(
-                            board = game.board,
-                            skin = state.preferences.boardSkin,
-                            dominoSkin = state.preferences.dominoSkin,
-                            legalOrigins = state.selectedScriptId?.let {
-                                GameEngine.scriptTargets(game, it, state.bridgeHorizontal)
-                            } ?: state.selectedDominoId?.takeIf { !game.tilePlacedThisTurn && state.selectedScriptId == null && game.result == null }?.let { id ->
-                                GameEngine.legalPlacements(game).filter {
-                                    it.dominoId == id &&
-                                        it.orientation == (if (state.rotationSteps % 2 == 0) Orientation.HORIZONTAL else Orientation.VERTICAL) &&
-                                        (it.rotated == (state.rotationSteps >= 2) || game.dominoHand.any { tile -> tile.id == id && tile.first == tile.second })
-                                }.map { it.origin }.toSet()
-                            }.orEmpty(),
-                            target = null,
-                            modifier = Modifier.weight(1f).fillMaxHeight(),
-                            onCell = actions::placeAt,
-                            animatePlacement = !state.preferences.reducedMotion,
-                    )
+                        Box(Modifier.weight(1f).fillMaxHeight()) {
+                            Board(
+                                board = game.board,
+                                skin = state.preferences.boardSkin,
+                                dominoSkin = state.preferences.dominoSkin,
+                                legalOrigins = state.selectedScriptId?.let {
+                                    GameEngine.scriptTargets(game, it, state.bridgeHorizontal)
+                                } ?: state.selectedDominoId?.takeIf { !game.tilePlacedThisTurn && state.selectedScriptId == null && game.result == null }?.let { id ->
+                                    GameEngine.legalPlacements(game).filter {
+                                        it.dominoId == id &&
+                                            it.orientation == (if (state.rotationSteps % 2 == 0) Orientation.HORIZONTAL else Orientation.VERTICAL) &&
+                                            (it.rotated == (state.rotationSteps >= 2) || game.dominoHand.any { tile -> tile.id == id && tile.first == tile.second })
+                                    }.map { it.origin }.toSet()
+                                }.orEmpty(),
+                                target = null,
+                                modifier = Modifier.fillMaxSize(),
+                                onCell = actions::placeAt,
+                                animatePlacement = !state.preferences.reducedMotion,
+                            )
+                        }
                     if (state.reviewingBoard) ReviewPanel(controlsWidth, actions)
                     if (!state.reviewingBoard) Column(Modifier.width(controlsWidth).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
                             state.lastBuff?.let { buff ->
                                 Text(stringResource(if (buff == BoardBuff.TRACE_COOLER) R.string.buff_trace_collected else R.string.buff_ram_collected), color = Cyan, fontSize = 11.sp)
                             }
-                            if (game.pingPreview.isNotEmpty()) PingPreview(game.pingPreview)
                         }
                         HardwareHand(game.dominoHand, state.selectedDominoId, state.preferences.dominoSkin,
                             Modifier.align(Alignment.CenterHorizontally), onSelect = actions::selectDomino)
@@ -849,14 +894,18 @@ private fun PanelHeading(label: String, topic: HelpTopic, onHelp: (HelpTopic) ->
 }
 
 @Composable
-internal fun CircuitBackground(animated: Boolean = false, content: @Composable () -> Unit) {
+internal fun CircuitBackground(
+    animated: Boolean = false,
+    @androidx.annotation.DrawableRes backgroundResource: Int = R.drawable.menu_background_v2,
+    content: @Composable () -> Unit,
+) {
     val progress = if (animated) {
         val transition = rememberInfiniteTransition(label = "menu circuits")
         transition.animateFloat(0f, 1f, infiniteRepeatable(tween(6000, easing = LinearEasing)), label = "pulse")
     } else null
     Box(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Void, Panel, Void)))) {
         Image(
-            painterResource(R.drawable.menu_background_v2),
+            painterResource(backgroundResource),
             contentDescription = null,
             modifier = Modifier.matchParentSize().alpha(.72f),
             contentScale = androidx.compose.ui.layout.ContentScale.Crop,
@@ -916,10 +965,58 @@ internal fun resultText(result: GameResult): Int = when (result) {
 }
 
 @Composable
-internal fun PingPreview(tiles: List<Domino>) {
+internal fun PingPreview(tiles: List<Domino>, skin: String) {
     Column {
         Text(stringResource(R.string.ping_preview), color = Cyan)
-        tiles.forEach { DominoImage(it, Modifier.width(96.dp).padding(vertical = 3.dp)) }
+        tiles.forEach { tile -> RotationPreview(tile, rotation = 0, skin = skin) }
+    }
+}
+
+@Composable
+private fun PingOverlay(
+    tiles: List<Domino>,
+    skin: String,
+    accent: Color,
+    progress: Float,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier
+            .zIndex(4f)
+            .testTag("ping-overlay"),
+    ) {
+        Row(
+            Modifier.fillMaxSize().padding(start = 112.dp, end = 18.dp, top = 6.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(stringResource(R.string.ping_preview), color = accent, fontSize = 11.sp)
+            Row(
+                Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                tiles.forEach { tile ->
+                    DominoImage(
+                        tile,
+                        Modifier.width(60.dp),
+                        orientation = Orientation.HORIZONTAL,
+                        skin = skin,
+                    )
+                }
+            }
+        }
+        Box(
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(3.dp)
+                .background(accent.copy(alpha = .18f))
+                .testTag("ping-timer"),
+        ) {
+            Box(
+                Modifier.fillMaxWidth(progress.coerceIn(0f, 1f))
+                    .fillMaxHeight()
+                    .background(accent),
+            )
+        }
     }
 }
 
