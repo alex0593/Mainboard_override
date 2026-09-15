@@ -66,6 +66,7 @@
     <string name="turn">TURN %1$d</string>
     <string name="ram" translatable="false">RAM %1$d/%2$d</string>
     <string name="trace">TRACE %1$d%%</string>
+    <string name="trace_delta">+%1$d</string>
     <string name="end_turn">EXECUTE TURN</string>
     <string name="rotate">ROTATE</string>
     <string name="seed">SEED %1$d</string>

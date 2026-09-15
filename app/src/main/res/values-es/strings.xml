@@ -64,6 +64,7 @@
     <string name="back">VOLVER</string>
     <string name="turn">TURNO %1$d</string>
     <string name="trace">RASTREO %1$d%%</string>
+    <string name="trace_delta">+%1$d</string>
     <string name="end_turn">EJECUTAR TURNO</string>
     <string name="rotate">ROTAR</string>
     <string name="seed">SEMILLA %1$d</string>
