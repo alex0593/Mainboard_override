@@ -3,6 +3,7 @@ package com.aela.mainboardoverride.audio
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -152,7 +153,7 @@ private class AmbientSoundtrack {
             .setBufferSizeInBytes(bufferSize)
             .setTransferMode(AudioTrack.MODE_STREAM)
             .build()
-    }.getOrNull()
+    }.getOrNull().also { if (it == null) Log.w(TAG, "AudioTrack unavailable, soundtrack silent") }
 
     private suspend fun render(track: AudioTrack) = withContext(Dispatchers.Default) {
         val samples = ShortArray(BUFFER_SAMPLES)
@@ -165,7 +166,10 @@ private class AmbientSoundtrack {
             val leadTarget = if (targetScene == SoundtrackScene.VICTORY) 1.0 else 0.0
             lead += (leadTarget - lead) * LEAD_SMOOTHING
             renderBuffer(samples, cursor, energy, lead, rendered)
-            if (track.write(samples, 0, samples.size) < 0) break
+            if (track.write(samples, 0, samples.size) < 0) {
+                Log.w(TAG, "AudioTrack write failed, stopping soundtrack")
+                break
+            }
             cursor += samples.size
             rendered += samples.size
         }
@@ -313,6 +317,7 @@ private class AmbientSoundtrack {
     private fun midiFrequency(note: Int): Double = 440.0 * 2.0.pow((note - 69) / 12.0)
 
     private companion object {
+        const val TAG = "AmbientSoundtrack"
         const val SAMPLE_RATE = 22_050
         const val BUFFER_SAMPLES = 2_048
         const val BPM = 100.0

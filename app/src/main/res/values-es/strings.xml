@@ -65,6 +65,7 @@
     <string name="settings">AJUSTES</string>
     <string name="help">PROTOCOLO</string>
     <string name="back">VOLVER</string>
+    <string name="app_version">VERSIÓN %1$s</string>
     <string name="turn">TURNO %1$d</string>
     <string name="trace">RASTREO %1$d%%</string>
     <string name="trace_delta">+%1$d</string>

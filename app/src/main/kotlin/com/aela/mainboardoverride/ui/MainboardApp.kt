@@ -1,5 +1,7 @@
 package com.aela.mainboardoverride.ui
 
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -28,6 +30,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -917,6 +920,19 @@ internal fun DominoView(tile: Domino, selected: Boolean, skin: String = "kenney"
 
 @Composable
 private fun SettingsScreen(state: GameUiState, actions: MainViewModel, onBack: () -> Unit) {
+    val context = LocalContext.current
+    val versionName = remember {
+        runCatching {
+            val packageManager = context.packageManager
+            val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                packageManager.getPackageInfo(context.packageName, PackageManager.PackageInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.getPackageInfo(context.packageName, 0)
+            }
+            info.versionName
+        }.getOrNull()
+    }
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(36.dp).verticalScroll(rememberScrollState())) {
             Text(stringResource(R.string.settings), color = Terminal, fontSize = 32.sp, fontWeight = FontWeight.Black)
@@ -932,6 +948,15 @@ private fun SettingsScreen(state: GameUiState, actions: MainViewModel, onBack: (
             SettingSwitch(stringResource(R.string.context_help), state.preferences.contextHelpEnabled, actions::setContextHelpEnabled)
             Spacer(Modifier.height(20.dp))
             SmallButton(stringResource(R.string.back), onBack)
+            versionName?.let {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    stringResource(R.string.app_version, it),
+                    color = Muted,
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 12.sp,
+                )
+            }
         }
     }
 }

@@ -66,6 +66,7 @@
     <string name="settings">SETTINGS</string>
     <string name="help">PROTOCOL</string>
     <string name="back">BACK</string>
+    <string name="app_version">VERSION %1$s</string>
     <string name="turn">TURN %1$d</string>
     <string name="ram" translatable="false">RAM %1$d/%2$d</string>
     <string name="trace">TRACE %1$d%%</string>
