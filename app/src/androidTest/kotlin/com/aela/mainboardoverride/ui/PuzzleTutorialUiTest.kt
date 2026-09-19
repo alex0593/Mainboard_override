@@ -74,6 +74,8 @@ class PuzzleTutorialUiTest {
         compose.setContent { MainboardTheme { TutorialScreen(PlayerPreferences(), controller, {}) } }
         compose.onNodeWithTag("tutorial-start").performClick()
         compose.onNodeWithTag("tutorial-action-Next").performClick()
+        compose.waitUntil(5000) { controller.state.value.finished }
+        compose.onNodeWithTag("tutorial-next-lesson").performClick()
         compose.waitUntil(5000) { controller.state.value.lesson == 1 }
         assertEquals(1, controller.state.value.lesson)
         compose.onNodeWithTag("tutorial-board").assertIsDisplayed()
@@ -87,7 +89,7 @@ class PuzzleTutorialUiTest {
         assertEquals(0, controller.state.value.step)
         compose.onNodeWithTag("tutorial-tile-a").performClick()
         assertEquals(1, controller.state.value.step)
-        compose.onNodeWithTag("tutorial-repeat").performClick()
+        compose.onNodeWithTag("tutorial-repeat-lesson").performClick()
         assertEquals(0, controller.state.value.step)
         assertNull(controller.state.value.tile)
     }
@@ -125,6 +127,10 @@ class PuzzleTutorialUiTest {
                 }
                 if (input is TutorialInput.SelectScript) node.performScrollTo()
                 node.assertIsDisplayed().performClick()
+            }
+            if (lesson < TutorialCatalog.lessons.lastIndex) {
+                compose.waitUntil(5000) { controller.state.value.finished }
+                compose.onNodeWithTag("tutorial-next-lesson").assertIsDisplayed().performClick()
             }
         }
         compose.waitUntil(5000) { controller.state.value.finished }

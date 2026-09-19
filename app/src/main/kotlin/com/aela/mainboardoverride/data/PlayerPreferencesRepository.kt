@@ -54,8 +54,8 @@ interface PlayerPreferencesRepository {
     suspend fun setDominoSkin(value: String)
     suspend fun setBoardSkin(value: String)
     suspend fun setContextHelpEnabled(value: Boolean)
-    suspend fun setMusicVolume(value: Float)
-    suspend fun setSfxVolume(value: Float)
+    suspend fun setMusicVolume(value: Float) {}
+    suspend fun setSfxVolume(value: Float) {}
     suspend fun recordChallengeVictory(level: Int, turns: Int, trace: Int)
     suspend fun finishMatch(id: String, level: Int?, turns: Int, trace: Int, scenarioId: String? = null): MatchReward {
         if (level != null) recordChallengeVictory(level, turns, trace) else recordVictory(turns, trace)

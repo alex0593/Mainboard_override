@@ -172,8 +172,14 @@ private class AmbientSoundtrack {
             lead += (leadTarget - lead) * LEAD_SMOOTHING
             level += (targetVolume.toDouble().coerceIn(0.0, 1.0) - level) * VOLUME_SMOOTHING
             renderBuffer(samples, cursor, energy, lead, level, rendered)
-            if (track.write(samples, 0, samples.size) < 0) {
-                Log.w(TAG, "AudioTrack write failed, stopping soundtrack")
+            try {
+                if (track.write(samples, 0, samples.size) < 0) {
+                    Log.w(TAG, "AudioTrack write failed, stopping soundtrack")
+                    break
+                }
+            } catch (e: Exception) {
+                // The track can be released by stop() while a blocking write is in flight.
+                Log.w(TAG, "AudioTrack write threw, stopping soundtrack", e)
                 break
             }
             cursor += samples.size

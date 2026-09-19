@@ -110,8 +110,8 @@ un fallo por sí solo no cierra la tarea.
 - [ ] **A05 — Rastreo:** resolver `challenge rules allow the exact limit and fail when trace is exceeded`.
 - [ ] **A06 — PING:** resolver `three pings preview three tiles then reset at end turn`.
 - [ ] **A07 — Scripts y RAM:** resolver `ping then ram pickup allows kill in the same turn`.
-- [ ] **A08 — Tutorial de dominio:** resolver `scriptsHaveRealEffects`.
-- [ ] **A09 — Tutorial instrumental:** reproducir el fallo registrado de `tutorial-repeat`, identificar si es navegación, estado o sincronización y corregirlo; comprobar la prueba aislada y dentro de la suite.
+- [x] **A08 — Tutorial de dominio:** resuelto `scriptsHaveRealEffects`. Causa: el fixture de la lección 9 (tablero de 8 con ruta hasta x=5) nunca alcanzaba la extracción; se fijó el tablero a ancho 6 con extracción en (6, 2) y se añadieron dos pasos de cierre (derrotas y recompensas).
+- [x] **A09 — Tutorial instrumental:** cerrado. Causa doble: (1) el panel de instrucción se autocerraba y el botón de repetir no existía a mitad de lección — repetir persistente en el header y avance explícito entre lecciones; (2) race en `AmbientSoundtrack` (write sobre un track liberado por `stop()`) que mataba el proceso de tests — `try/catch` alrededor del write. Clase `PuzzleTutorialUiTest` 6/6 en CLK-LX3 por USB.
 - [ ] **A10 — Cierre de validación:** ejecutar dominio, tests locales de app, compilación debug, lint y suite instrumental; registrar comandos, fecha, dispositivo y resultados.
 
 **Cierre:** A01–A08 pasan y la suite completa de dominio queda verde; A09 pasa

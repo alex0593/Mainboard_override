@@ -39,9 +39,6 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
     val dispatch: (TutorialInput) -> Unit = { input ->
         if (!instructionOpen && !state.finished) controller.dispatch(input)
     }
-    LaunchedEffect(running, state.lesson, state.finished) {
-        if (running && state.finished && state.lesson < titles.lastIndex) controller.advance()
-    }
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             if (!running) {
@@ -68,6 +65,13 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
                             }
                         }
                     }
+                    val restartLessonInteraction = remember { MutableInteractionSource() }
+                    TextButton(
+                        onClick = { controller.start(state.lesson); repeat++ },
+                        interactionSource = restartLessonInteraction,
+                        modifier = Modifier.width(92.dp).testTag("tutorial-repeat-lesson")
+                            .pressFeedback(restartLessonInteraction, label = "tutorial repeat lesson", pressedScale = .97f),
+                    ) { Text(stringResource(R.string.tutorial_repeat)) }
                     val backInteraction = remember { MutableInteractionSource() }
                     TextButton(
                         onClick = onBack,
@@ -123,7 +127,7 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
                     }
                     // In-layout overlay: the board stays mounted, with no modal window or dim layer.
                     if (instructionOpen || state.finished) {
-                        Surface(Modifier.align(Alignment.TopEnd).widthIn(max = 360.dp).fillMaxWidth(.55f)
+                        Surface(Modifier.align(Alignment.TopEnd).widthIn(max = 320.dp).fillMaxWidth(.5f)
                             .fillMaxHeight().testTag("tutorial-instruction-dialog"),
                             color = Panel.copy(alpha = .98f), shape = RoundedCornerShape(10.dp),
                             border = BorderStroke(1.dp, Cyan)) {
@@ -132,8 +136,14 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
                                 Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text("${state.lesson + 1}/${titles.size} · ${titles[state.lesson]}", color = Terminal)
-                                    Text(if (state.finished) stringResource(R.string.tutorial_complete)
-                                        else instructions[state.definition.steps[state.step].instruction],
+                                    if (!state.finished) Text(
+                                        stringResource(R.string.tutorial_step_progress, state.step + 1, state.definition.steps.size),
+                                        color = Muted,
+                                    )
+                                    Text(if (state.finished) {
+                                        stringResource(if (state.lesson < titles.lastIndex) R.string.tutorial_lesson_complete
+                                            else R.string.tutorial_complete)
+                                    } else instructions[state.definition.steps[state.step].instruction],
                                         Modifier.testTag("tutorial-instruction").semantics { liveRegion = LiveRegionMode.Polite },
                                         color = Cyan)
                                 }
@@ -157,15 +167,22 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
                                         Text("?")
                                     }
                                 }
-                                GameControlButton(
-                                    stringResource(if (state.finished) R.string.tutorial_finish else R.string.tutorial_next),
-                                    {
-                                        if (state.finished) onBack()
-                                        else {
-                                            instructionOpen = false
-                                            if (expected == TutorialInput.Next) controller.dispatch(TutorialInput.Next)
-                                        }
-                                    }, Modifier.fillMaxWidth().testTag("tutorial-action-Next"))
+                                if (state.finished && state.lesson < titles.lastIndex) {
+                                    GameControlButton(
+                                        stringResource(R.string.tutorial_next_lesson),
+                                        { controller.advance() },
+                                        Modifier.fillMaxWidth().testTag("tutorial-next-lesson"))
+                                } else {
+                                    GameControlButton(
+                                        stringResource(if (state.finished) R.string.tutorial_finish else R.string.tutorial_next),
+                                        {
+                                            if (state.finished) onBack()
+                                            else {
+                                                instructionOpen = false
+                                                if (expected == TutorialInput.Next) controller.dispatch(TutorialInput.Next)
+                                            }
+                                        }, Modifier.fillMaxWidth().testTag("tutorial-action-Next"))
+                                }
                             }
                         }
                         if (helpOpen) GeneralGameHelp { helpOpen = false }

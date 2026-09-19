@@ -22,8 +22,13 @@ class TutorialController(
     }
     fun dispatch(input: TutorialInput) {
         mutableState.value = TutorialCatalog.reduce(mutableState.value, input)
-        onCue(SoundCue.Tick)
-        if (mutableState.value.finished && mutableState.value.lesson == TutorialCatalog.lessons.lastIndex) save(true)
+        val current = mutableState.value
+        onCue(when {
+            current.finished && current.lesson == TutorialCatalog.lessons.lastIndex -> SoundCue.Victory
+            current.finished -> SoundCue.Coin
+            else -> SoundCue.Tick
+        })
+        if (current.finished && current.lesson == TutorialCatalog.lessons.lastIndex) save(true)
     }
     fun advance() {
         val current = mutableState.value
