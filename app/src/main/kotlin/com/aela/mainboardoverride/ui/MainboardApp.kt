@@ -103,6 +103,7 @@ import androidx.navigation.compose.composable
 import com.aela.mainboardoverride.MainViewModel
 import com.aela.mainboardoverride.GameUiState
 import com.aela.mainboardoverride.R
+import com.aela.mainboardoverride.audio.AmbientSoundtrackHost
 import com.aela.mainboardoverride.domain.BoardState
 import com.aela.mainboardoverride.domain.Domino
 import com.aela.mainboardoverride.domain.GameEngine
@@ -133,6 +134,7 @@ fun MainboardApp(
     actions: MainViewModel,
     onExitApp: () -> Unit = {},
 ) {
+    AmbientSoundtrackHost(enabled = state.preferences.audioEnabled)
     val transition = LocalWindowTransition.current
     NavHost(navController = nav, startDestination = MENU,
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)) {
