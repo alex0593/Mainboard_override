@@ -1,7 +1,7 @@
 package com.aela.mainboardoverride
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
@@ -17,7 +17,9 @@ import com.aela.mainboardoverride.ui.WindowTransitionHost
 import com.aela.mainboardoverride.ui.bindGameImmersion
 import com.aela.mainboardoverride.ui.hideGameSystemBars
 
-class MainActivity : ComponentActivity() {
+// Per-app locales only take effect through AppCompatDelegate, which requires
+// an AppCompatActivity; with ComponentActivity the language switch was a silent no-op.
+class MainActivity : AppCompatActivity() {
     private var unbindImmersion: (() -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {

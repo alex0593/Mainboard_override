@@ -1,5 +1,6 @@
 package com.aela.mainboardoverride.ui
 
+import com.aela.mainboardoverride.audio.SoundCue
 import com.aela.mainboardoverride.data.PlayerPreferencesRepository
 import com.aela.mainboardoverride.domain.*
 import kotlinx.coroutines.CoroutineScope
@@ -8,7 +9,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /** Owns a practice session, never the player's active match or reward pipeline. */
-class TutorialController(private val repository: PlayerPreferencesRepository, private val scope: CoroutineScope) {
+class TutorialController(
+    private val repository: PlayerPreferencesRepository,
+    private val scope: CoroutineScope,
+    private val onCue: (SoundCue) -> Unit = {},
+) {
     private val mutableState = MutableStateFlow(TutorialCatalog.start(0))
     val state = mutableState.asStateFlow()
     fun start(lesson: Int) {
@@ -17,11 +22,13 @@ class TutorialController(private val repository: PlayerPreferencesRepository, pr
     }
     fun dispatch(input: TutorialInput) {
         mutableState.value = TutorialCatalog.reduce(mutableState.value, input)
+        onCue(SoundCue.Tick)
         if (mutableState.value.finished && mutableState.value.lesson == TutorialCatalog.lessons.lastIndex) save(true)
     }
     fun advance() {
         val current = mutableState.value
         if (current.finished && current.lesson < TutorialCatalog.lessons.lastIndex) start(current.lesson + 1)
+        onCue(SoundCue.Boot)
     }
     private fun save(completed: Boolean) {
         val lesson = mutableState.value.lesson

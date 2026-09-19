@@ -83,6 +83,8 @@
     <string name="main_menu">MAIN MENU</string>
     <string name="language">LANGUAGE</string>
     <string name="audio">AUDIO</string>
+    <string name="music_volume">MUSIC VOLUME</string>
+    <string name="sfx_volume">SOUND FX VOLUME</string>
     <string name="vibration">VIBRATION</string>
     <string name="reduced_motion">REDUCED MOTION</string>
     <string name="english">ENGLISH</string>

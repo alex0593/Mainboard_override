@@ -28,7 +28,11 @@ import com.aela.mainboardoverride.domain.ScenarioCatalog
 import com.aela.mainboardoverride.domain.ChallengeCatalog
 import com.aela.mainboardoverride.domain.BoardBuff
 import com.aela.mainboardoverride.data.MatchReward
+import com.aela.mainboardoverride.audio.SoundCue
 import java.util.UUID
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 data class GameUiState(
     val game: GameState? = null,
@@ -52,8 +56,21 @@ data class GameUiState(
 /** Coordinates navigation-facing selection state, the pure engine and player preferences. */
 class MainViewModel(application: Application, private val repository: PlayerPreferencesRepository) : AndroidViewModel(application) {
     constructor(application: Application) : this(application, DataStorePlayerPreferencesRepository(application))
-    val tutorial = com.aela.mainboardoverride.ui.TutorialController(repository, viewModelScope)
+    val tutorial = com.aela.mainboardoverride.ui.TutorialController(repository, viewModelScope) { _cues.tryEmit(it) }
     private val session = MutableStateFlow(GameUiState())
+
+    private val _cues = MutableSharedFlow<SoundCue>(extraBufferCapacity = 16)
+    /** One-shot sound cues for game events and UI feedback. */
+    val soundCues: SharedFlow<SoundCue> = _cues.asSharedFlow()
+
+    /** UI-only feedback tick (selection, toggles, navigation). */
+    fun playUiTick() {
+        _cues.tryEmit(SoundCue.Tick)
+    }
+
+    private fun emitCue(cue: SoundCue) {
+        _cues.tryEmit(cue)
+    }
 
     val uiState: StateFlow<GameUiState> = combine(session, repository.preferences) { game, preferences ->
         game.copy(preferences = preferences)
@@ -62,6 +79,7 @@ class MainViewModel(application: Application, private val repository: PlayerPref
     fun start(seed: Long = Random.nextLong()) {
         val game = GameEngine.resolveForcedResult(LevelGenerator.generate(seed)).state
         session.value = GameUiState(game = game)
+        emitCue(SoundCue.Boot)
         viewModelScope.launch { repository.setLastSeed(seed) }
     }
 
@@ -72,20 +90,24 @@ class MainViewModel(application: Application, private val repository: PlayerPref
     fun startChallenge(level: Int, seed: Long) {
         if (level !in 1..com.aela.mainboardoverride.domain.ChallengeCatalog.COUNT || level > uiState.value.preferences.challengeUnlocked) return
         session.value = GameUiState(game = GameEngine.resolveForcedResult(LevelGenerator.generateChallenge(level, seed)).state, challengeLevel = level)
+        emitCue(SoundCue.Boot)
     }
 
     fun startScenario(id: String, seed: Long = Random.nextLong()) {
         val scenario = ScenarioCatalog.get(id)
         if (scenario.required > uiState.value.preferences.challengeBest.size) return
         session.value = GameUiState(game = GameEngine.resolveForcedResult(LevelGenerator.generateScenario(seed, scenario.id)).state, scenarioId = scenario.id)
+        emitCue(SoundCue.Boot)
         viewModelScope.launch { repository.setLastSeed(seed); repository.setLastScenario(scenario.id) }
     }
 
     fun retryLast() { uiState.value.preferences.let { prefs -> prefs.lastSeed?.let { startScenario(prefs.lastScenario, it) } } }
-    fun reviewBoard() { session.update { it.copy(reviewingBoard = true, selectedDominoId = null, selectedScriptId = null) } }
-    fun showResult() { session.update { it.copy(reviewingBoard = false) } }
-    fun dismissMessage() { session.update { it.copy(message = null) } }
-    fun buySkin(id: String) = viewModelScope.launch { repository.buySkin(id) }
+    fun reviewBoard() { session.update { it.copy(reviewingBoard = true, selectedDominoId = null, selectedScriptId = null) }; playUiTick() }
+    fun showResult() { session.update { it.copy(reviewingBoard = false) }; playUiTick() }
+    fun dismissMessage() { session.update { it.copy(message = null) }; playUiTick() }
+    fun buySkin(id: String) = viewModelScope.launch {
+        if (repository.buySkin(id)) emitCue(SoundCue.Coin) else playUiTick()
+    }
 
     /** Plays again in the same mode, generating a new seed for free play. */
     fun retry() = restartNetwork()
@@ -122,17 +144,19 @@ class MainViewModel(application: Application, private val repository: PlayerPref
                 it.copy(selectedDominoId = if (it.selectedDominoId == id) null else id, selectedScriptId = null, message = null)
             }
         }
+        playUiTick()
     }
 
     fun rotate() {
         if (session.value.game?.result != null) return
         session.update { it.copy(rotationSteps = (it.rotationSteps + 1) % 4) }
+        playUiTick()
     }
 
-    fun cancelScript() = session.update { it.copy(selectedScriptId = null, selectedDominoId = null, message = null) }
+    fun cancelScript() { session.update { it.copy(selectedScriptId = null, selectedDominoId = null, message = null) }; playUiTick() }
     fun setSpoofHalf(half: Int) { if (half in 0..1) session.update { it.copy(spoofHalf = half) } }
     fun setSpoofValue(value: Int) { if (value in 0..6) session.update { it.copy(spoofValue = value) } }
-    fun toggleBridge() = session.update { it.copy(bridgeHorizontal = !it.bridgeHorizontal) }
+    fun toggleBridge() { session.update { it.copy(bridgeHorizontal = !it.bridgeHorizontal) }; playUiTick() }
     fun placeAt(position: Position) {
         val ui = session.value
         val game = ui.game ?: return
@@ -159,7 +183,10 @@ class MainViewModel(application: Application, private val repository: PlayerPref
         val card = game.scriptHand.find { it.id == id } ?: return
         if (session.value.game?.result != null) return
         if (card.type == ScriptType.PING) dispatch(GameAction.PlayPing(id))
-        else session.update { it.copy(selectedScriptId = id, selectedDominoId = null, message = null, spoofHalf = 0, spoofValue = 0, bridgeHorizontal = true) }
+        else {
+            session.update { it.copy(selectedScriptId = id, selectedDominoId = null, message = null, spoofHalf = 0, spoofValue = 0, bridgeHorizontal = true) }
+            playUiTick()
+        }
     }
 
     fun spoof(value: Int) {
@@ -172,18 +199,21 @@ class MainViewModel(application: Application, private val repository: PlayerPref
     fun endTurn() = dispatch(GameAction.EndTurn)
 
     fun setLanguage(value: String) = viewModelScope.launch { repository.setLanguage(value) }
-    fun setAudio(value: Boolean) = viewModelScope.launch { repository.setAudio(value) }
-    fun setVibration(value: Boolean) = viewModelScope.launch { repository.setVibration(value) }
-    fun setReducedMotion(value: Boolean) = viewModelScope.launch { repository.setReducedMotion(value) }
-    fun setDominoSkin(value: String) = viewModelScope.launch { repository.setDominoSkin(value) }
-    fun setBoardSkin(value: String) = viewModelScope.launch { repository.setBoardSkin(value) }
-    fun setContextHelpEnabled(value: Boolean) = viewModelScope.launch { repository.setContextHelpEnabled(value) }
+    fun setAudio(value: Boolean) = viewModelScope.launch { repository.setAudio(value); playUiTick() }
+    fun setVibration(value: Boolean) = viewModelScope.launch { repository.setVibration(value); playUiTick() }
+    fun setReducedMotion(value: Boolean) = viewModelScope.launch { repository.setReducedMotion(value); playUiTick() }
+    fun setDominoSkin(value: String) = viewModelScope.launch { repository.setDominoSkin(value); playUiTick() }
+    fun setBoardSkin(value: String) = viewModelScope.launch { repository.setBoardSkin(value); playUiTick() }
+    fun setContextHelpEnabled(value: Boolean) = viewModelScope.launch { repository.setContextHelpEnabled(value); playUiTick() }
+    fun setMusicVolume(value: Float) = viewModelScope.launch { repository.setMusicVolume(value) }
+    fun setSfxVolume(value: Float) = viewModelScope.launch { repository.setSfxVolume(value) }
 
     private fun dispatch(action: GameAction) {
         val current = session.value.game ?: return
         val transition = GameEngine.reduce(current, action)
         val resolved = GameEngine.resolveForcedResult(transition.state)
         val rejection = transition.events.filterIsInstance<GameEvent.Rejected>().lastOrNull()?.reason
+        emitDispatchCues(action, current.trace, resolved.state.trace, transition.events + resolved.events, rejection)
         session.update {
             val collectedBuff = resolved.events.filterIsInstance<GameEvent.BuffCollected>().lastOrNull()?.buff
             it.copy(
@@ -215,5 +245,48 @@ class MainViewModel(application: Application, private val repository: PlayerPref
                 session.update { if (it.matchId == matchId) it.copy(reward = reward) else it }
             }
         }
+    }
+
+    /** Maps engine transitions to one-shot sound cues. Rejections short-circuit to an error buzz. */
+    private fun emitDispatchCues(
+        action: GameAction,
+        traceBefore: Int,
+        traceAfter: Int,
+        events: List<GameEvent>,
+        rejection: RejectReason?,
+    ) {
+        if (rejection != null) {
+            emitCue(SoundCue.Error)
+            return
+        }
+        if (action is GameAction.EndTurn) emitCue(SoundCue.Turn)
+        events.forEach { event ->
+            when (event) {
+                is GameEvent.DominoPlaced -> emitCue(SoundCue.Place)
+                is GameEvent.ScriptExecuted -> emitCue(
+                    when (event.type) {
+                        ScriptType.PING -> SoundCue.Ping
+                        ScriptType.SPOOF -> SoundCue.Spoof
+                        ScriptType.KILL_PROCESS -> SoundCue.Kill
+                        ScriptType.BRIDGE -> SoundCue.Bridge
+                    },
+                )
+                is GameEvent.HoneypotTriggered -> emitCue(SoundCue.Alarm)
+                is GameEvent.BuffCollected -> emitCue(
+                    if (event.buff == BoardBuff.TRACE_COOLER) SoundCue.Cooler else SoundCue.Ram,
+                )
+                is GameEvent.Finished -> emitCue(
+                    if (event.result == GameResult.VICTORY) SoundCue.Victory else SoundCue.Defeat,
+                )
+                is GameEvent.Rejected -> emitCue(SoundCue.Error)
+            }
+        }
+        if (traceBefore < TRACE_WARNING_THRESHOLD && traceAfter >= TRACE_WARNING_THRESHOLD) {
+            emitCue(SoundCue.TraceWarning)
+        }
+    }
+
+    private companion object {
+        const val TRACE_WARNING_THRESHOLD = 80
     }
 }

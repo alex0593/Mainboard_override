@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.MainboardOverride" parent="android:style/Theme.Material.NoActionBar">
+    <style name="Theme.MainboardOverride" parent="Theme.AppCompat.NoActionBar">
         <item name="android:fontFamily">monospace</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowActionModeOverlay">true</item>

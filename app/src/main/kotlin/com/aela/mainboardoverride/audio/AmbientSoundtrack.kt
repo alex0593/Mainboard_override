@@ -45,18 +45,20 @@ fun AmbientSoundtrackHost(
     enabled: Boolean,
     scene: SoundtrackScene = SoundtrackScene.MENU,
     trace: Int = 0,
+    volume: Float = 1f,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val soundtrack = remember { AmbientSoundtrack() }
     val currentEnabled by rememberUpdatedState(enabled)
     val currentScene by rememberUpdatedState(scene)
     val currentTrace by rememberUpdatedState(trace)
+    val currentVolume by rememberUpdatedState(volume)
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_START -> {
-                    soundtrack.configure(currentScene, currentTrace)
+                    soundtrack.configure(currentScene, currentTrace, currentVolume)
                     if (currentEnabled) soundtrack.start() else soundtrack.stop()
                 }
                 Lifecycle.Event.ON_STOP -> soundtrack.stop()
@@ -65,7 +67,7 @@ fun AmbientSoundtrackHost(
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) && currentEnabled) {
-            soundtrack.configure(currentScene, currentTrace)
+            soundtrack.configure(currentScene, currentTrace, currentVolume)
             soundtrack.start()
         }
         onDispose {
@@ -82,8 +84,8 @@ fun AmbientSoundtrackHost(
         }
     }
 
-    LaunchedEffect(scene, trace) {
-        soundtrack.configure(scene, trace)
+    LaunchedEffect(scene, trace, volume) {
+        soundtrack.configure(scene, trace, volume)
     }
 }
 
@@ -94,10 +96,12 @@ private class AmbientSoundtrack {
 
     @Volatile private var targetScene: SoundtrackScene = SoundtrackScene.MENU
     @Volatile private var targetTrace: Int = 0
+    @Volatile private var targetVolume: Float = 1f
 
-    fun configure(scene: SoundtrackScene, trace: Int) {
+    fun configure(scene: SoundtrackScene, trace: Int, volume: Float = 1f) {
         targetScene = scene
         targetTrace = trace
+        targetVolume = volume
     }
 
     fun start() {
@@ -161,11 +165,13 @@ private class AmbientSoundtrack {
         var rendered = 0L
         var energy = 0.0
         var lead = 0.0
+        var level = 0.0
         while (isActive) {
             energy += (targetEnergy(targetScene, targetTrace) - energy) * ENERGY_SMOOTHING
             val leadTarget = if (targetScene == SoundtrackScene.VICTORY) 1.0 else 0.0
             lead += (leadTarget - lead) * LEAD_SMOOTHING
-            renderBuffer(samples, cursor, energy, lead, rendered)
+            level += (targetVolume.toDouble().coerceIn(0.0, 1.0) - level) * VOLUME_SMOOTHING
+            renderBuffer(samples, cursor, energy, lead, level, rendered)
             if (track.write(samples, 0, samples.size) < 0) {
                 Log.w(TAG, "AudioTrack write failed, stopping soundtrack")
                 break
@@ -180,6 +186,7 @@ private class AmbientSoundtrack {
         startSample: Long,
         energy: Double,
         leadLevel: Double,
+        masterLevel: Double,
         rendered: Long,
     ) {
         val drumGate = gate(energy, .35, .55)
@@ -284,7 +291,7 @@ private class AmbientSoundtrack {
 
             val fade = ((rendered + index).toDouble() / (SAMPLE_RATE * 1.2)).coerceIn(0.0, 1.0)
             val out = (pad + sub + bass + arp + kick + snare + hat + tick + riser + leadVoice) *
-                .8 * fade
+                .8 * fade * masterLevel
             buffer[index] = (out.coerceIn(-.85, .85) * Short.MAX_VALUE).toInt().toShort()
         }
     }
@@ -329,6 +336,7 @@ private class AmbientSoundtrack {
         const val TAU = 2.0 * PI
         const val ENERGY_SMOOTHING = 2048.0 / 22050.0 / 3.0
         const val LEAD_SMOOTHING = 2048.0 / 22050.0 / 1.5
+        const val VOLUME_SMOOTHING = 2048.0 / 22050.0 / 0.4
         val BASS_ROOTS = intArrayOf(33, 29, 31, 28)
         val PAD_TONES = arrayOf(
             intArrayOf(45, 48, 52),

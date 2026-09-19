@@ -40,6 +40,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -107,6 +108,7 @@ import com.aela.mainboardoverride.MainViewModel
 import com.aela.mainboardoverride.GameUiState
 import com.aela.mainboardoverride.R
 import com.aela.mainboardoverride.audio.AmbientSoundtrackHost
+import com.aela.mainboardoverride.audio.SoundEffectsHost
 import com.aela.mainboardoverride.audio.SoundtrackScene
 import com.aela.mainboardoverride.domain.BoardState
 import com.aela.mainboardoverride.domain.Domino
@@ -144,10 +146,16 @@ fun MainboardApp(
         state.game != null -> SoundtrackScene.GAME
         else -> SoundtrackScene.MENU
     }
+    SoundEffectsHost(
+        enabled = state.preferences.audioEnabled,
+        volume = state.preferences.sfxVolume,
+        cues = actions.soundCues,
+    )
     AmbientSoundtrackHost(
         enabled = state.preferences.audioEnabled,
         scene = soundtrackScene,
         trace = state.game?.trace ?: 0,
+        volume = state.preferences.musicVolume,
     )
     val transition = LocalWindowTransition.current
     NavHost(navController = nav, startDestination = MENU,
@@ -155,12 +163,12 @@ fun MainboardApp(
         composable(MENU) {
             MenuScreen(
                 state = state,
-                onNew = { transition { nav.navigate("scenarios") } },
-                onChallenge = { transition { nav.navigate(CHALLENGE) } },
+                onNew = { actions.playUiTick(); transition { nav.navigate("scenarios") } },
+                onChallenge = { actions.playUiTick(); transition { nav.navigate(CHALLENGE) } },
                 onRetry = { transition { actions.retryLast(); nav.navigate(GAME) } },
-                onSettings = { transition { nav.navigate(SETTINGS) } },
-                onSkins = { transition { nav.navigate(SKINS) } },
-                onHelp = { transition { nav.navigate(HELP) } },
+                onSettings = { actions.playUiTick(); transition { nav.navigate(SETTINGS) } },
+                onSkins = { actions.playUiTick(); transition { nav.navigate(SKINS) } },
+                onHelp = { actions.playUiTick(); transition { nav.navigate(HELP) } },
                 onExitApp = onExitApp,
             )
         }
@@ -168,21 +176,21 @@ fun MainboardApp(
             GameScreen(
                 state = state,
                 actions = actions,
-                onMenu = { transition { nav.popBackStack(MENU, inclusive = false) } },
+                onMenu = { actions.playUiTick(); transition { nav.popBackStack(MENU, inclusive = false) } },
             )
         }
-        composable(SETTINGS) { SettingsScreen(state, actions) { transition { nav.popBackStack() } } }
-        composable(SKINS) { SkinGallery(state, actions) { transition { nav.popBackStack() } } }
-        composable("scenarios") { ScenarioScreen(state, actions, { nav.navigate(GAME) }, { transition { nav.popBackStack() } }) }
+        composable(SETTINGS) { SettingsScreen(state, actions) { actions.playUiTick(); transition { nav.popBackStack() } } }
+        composable(SKINS) { SkinGallery(state, actions) { actions.playUiTick(); transition { nav.popBackStack() } } }
+        composable("scenarios") { ScenarioScreen(state, actions, { nav.navigate(GAME) }, { actions.playUiTick(); transition { nav.popBackStack() } }) }
         composable(CHALLENGE) {
             ChallengeScreen(
                 state = state,
                 actions = actions,
                 onStart = { nav.navigate(GAME) },
-                onBack = { transition { nav.popBackStack() } },
+                onBack = { actions.playUiTick(); transition { nav.popBackStack() } },
             )
         }
-        composable(HELP) { TutorialScreen(state.preferences, actions.tutorial, onBack = { transition { nav.popBackStack() } }) }
+        composable(HELP) { TutorialScreen(state.preferences, actions.tutorial, onBack = { actions.playUiTick(); transition { nav.popBackStack() } }) }
     }
 }
 
@@ -943,6 +951,8 @@ private fun SettingsScreen(state: GameUiState, actions: MainViewModel, onBack: (
                 TerminalButton(stringResource(R.string.english), { actions.setLanguage("en") }, Modifier.weight(1f), state.preferences.language == "en")
             }
             SettingSwitch(stringResource(R.string.audio), state.preferences.audioEnabled, actions::setAudio)
+            VolumeSlider(stringResource(R.string.music_volume), state.preferences.musicVolume, actions::setMusicVolume)
+            VolumeSlider(stringResource(R.string.sfx_volume), state.preferences.sfxVolume, actions::setSfxVolume)
             SettingSwitch(stringResource(R.string.vibration), state.preferences.vibrationEnabled, actions::setVibration)
             SettingSwitch(stringResource(R.string.reduced_motion), state.preferences.reducedMotion, actions::setReducedMotion)
             SettingSwitch(stringResource(R.string.context_help), state.preferences.contextHelpEnabled, actions::setContextHelpEnabled)
@@ -966,6 +976,23 @@ private fun SettingSwitch(label: String, value: Boolean, onChange: (Boolean) -> 
     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(label, Modifier.weight(1f), color = Color.White)
         Switch(checked = value, onCheckedChange = onChange)
+    }
+    HorizontalDivider(color = Muted.copy(alpha = .3f))
+}
+
+@Composable
+private fun VolumeSlider(label: String, value: Float, onChange: (Float) -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(label, Modifier.weight(1f), color = Color.White)
+            Text(
+                "${(value * 100).toInt()}%",
+                color = Muted,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 12.sp,
+            )
+        }
+        Slider(value = value, onValueChange = onChange, valueRange = 0f..1f)
     }
     HorizontalDivider(color = Muted.copy(alpha = .3f))
 }

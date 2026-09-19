@@ -3,6 +3,7 @@ package com.aela.mainboardoverride.data
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -34,6 +35,8 @@ data class PlayerPreferences(
     val completedScenarios: Set<String> = emptySet(),
     val tutorialLesson: Int = -1,
     val tutorialCompleted: Boolean = false,
+    val musicVolume: Float = .8f,
+    val sfxVolume: Float = 1f,
 )
 
 data class ChallengeRecord(val turns: Int, val trace: Int)
@@ -51,6 +54,8 @@ interface PlayerPreferencesRepository {
     suspend fun setDominoSkin(value: String)
     suspend fun setBoardSkin(value: String)
     suspend fun setContextHelpEnabled(value: Boolean)
+    suspend fun setMusicVolume(value: Float)
+    suspend fun setSfxVolume(value: Float)
     suspend fun recordChallengeVictory(level: Int, turns: Int, trace: Int)
     suspend fun finishMatch(id: String, level: Int?, turns: Int, trace: Int, scenarioId: String? = null): MatchReward {
         if (level != null) recordChallengeVictory(level, turns, trace) else recordVictory(turns, trace)
@@ -86,6 +91,8 @@ class DataStorePlayerPreferencesRepository(
             completedScenarios = values[COMPLETED_SCENARIOS] ?: emptySet(),
             tutorialLesson = values[TUTORIAL_LESSON] ?: -1,
             tutorialCompleted = values[TUTORIAL_COMPLETED] ?: false,
+            musicVolume = (values[MUSIC_VOLUME] ?: .8f).coerceIn(0f, 1f),
+            sfxVolume = (values[SFX_VOLUME] ?: 1f).coerceIn(0f, 1f),
             challengeBest = values[CHALLENGE_BEST].orEmpty().split(",").mapNotNull { item ->
                 val fields = item.split(":")
                 if (fields.size == 3) fields[0].toIntOrNull()?.let { level ->
@@ -164,6 +171,8 @@ class DataStorePlayerPreferencesRepository(
         return reward
     }
     override suspend fun setContextHelpEnabled(value: Boolean) { store.edit { it[CONTEXT_HELP] = value } }
+    override suspend fun setMusicVolume(value: Float) { store.edit { it[MUSIC_VOLUME] = value.coerceIn(0f, 1f) } }
+    override suspend fun setSfxVolume(value: Float) { store.edit { it[SFX_VOLUME] = value.coerceIn(0f, 1f) } }
     override suspend fun recordChallengeVictory(level: Int, turns: Int, trace: Int) {
         store.edit { values ->
             val records = parseRecords(values[CHALLENGE_BEST])
@@ -192,6 +201,8 @@ class DataStorePlayerPreferencesRepository(
         val LAST_SCENARIO = stringPreferencesKey("last_scenario")
         val LANGUAGE = stringPreferencesKey("language")
         val AUDIO = booleanPreferencesKey("audio")
+        val MUSIC_VOLUME = floatPreferencesKey("music_volume")
+        val SFX_VOLUME = floatPreferencesKey("sfx_volume")
         val VIBRATION = booleanPreferencesKey("vibration")
         val REDUCED_MOTION = booleanPreferencesKey("reduced_motion")
         val LAST_SEED = longPreferencesKey("last_seed")
