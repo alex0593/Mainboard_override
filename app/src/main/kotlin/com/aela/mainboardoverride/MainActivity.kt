@@ -23,6 +23,7 @@ class MainActivity : AppCompatActivity() {
     private var unbindImmersion: (() -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(R.style.Theme_MainboardOverride)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         unbindImmersion = window.bindGameImmersion()

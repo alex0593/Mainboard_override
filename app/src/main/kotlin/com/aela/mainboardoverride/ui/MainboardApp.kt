@@ -824,12 +824,15 @@ private fun BoardBridgeSprite(horizontal: Boolean, value: Int) {
 
 @Composable
 private fun BoardBuffSprite(buff: BoardBuff) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+    // The label is a small corner chip so the pickup artwork underneath stays visible.
+    Box(Modifier.fillMaxSize()) {
         Image(painterResource(if (buff == BoardBuff.TRACE_COOLER) R.drawable.board_trace_cooler_v1
-            else R.drawable.board_ram_reserve_v1), contentDescription = null, modifier = Modifier.fillMaxSize())
+            else R.drawable.board_ram_reserve_v1), contentDescription = null, modifier = Modifier.fillMaxSize().padding(1.dp))
         Text(if (buff == BoardBuff.TRACE_COOLER) "−8" else "+1R", color = Cyan,
-            fontSize = 10.sp, fontWeight = FontWeight.Black,
-            modifier = Modifier.background(Void.copy(alpha = .85f)).padding(horizontal = 2.dp))
+            fontSize = 9.sp, fontWeight = FontWeight.Black, maxLines = 1,
+            modifier = Modifier.align(Alignment.TopEnd)
+                .background(Void.copy(alpha = .65f), RoundedCornerShape(2.dp))
+                .padding(horizontal = 3.dp, vertical = 1.dp))
     }
 }
 

@@ -15,3 +15,16 @@ captures/
 # Artwork drafts kept at the repository root while they are being edited.
 /*.jpg
 /*.jpeg
+
+# Build outputs that must never be committed (use itch.io / GitHub releases).
+*.apk
+*.aab
+
+# Signing keys stay out of the repository.
+*.jks
+*.keystore
+
+# Misc local junk.
+.DS_Store
+*.hprof
+*.log

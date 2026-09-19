@@ -7,4 +7,9 @@
         <item name="android:colorAccent">#B6FF2E</item>
         <item name="android:navigationBarColor">#07110F</item>
     </style>
+    <style name="Theme.MainboardOverride.Starting" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/ic_launcher_background</item>
+        <item name="android:windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+    </style>
 </resources>
