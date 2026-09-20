@@ -38,15 +38,21 @@ object LevelGenerator {
         // Some seeds use an eight-column board, others nine or ten columns.
         val boardWidth = random.nextInt(MIN_GENERATED_BOARD_WIDTH, MAX_GENERATED_BOARD_WIDTH + 1)
         val extraction = Position(boardWidth, exitY)
+        // Challenge routes need enough dominoes to span from start to extraction:
+        // the walk must cover (0, startY) through (width - 1, exitY) at minimum.
+        val minChallengeCount = if (challengeLevel != null)
+            (boardWidth + kotlin.math.abs(extraction.y - start.y) + 1) / 2 else 0
         repeat(24) {
-            val count = challengeLevel?.let { (4 + it / 2).coerceIn(5, 9) } ?: random.nextInt(5, 8)
+            val base = challengeLevel?.let { (4 + it / 2).coerceIn(5, 9) } ?: random.nextInt(5, 8)
+            val count = maxOf(base, minChallengeCount)
             val path = findPath(random, count, start, extraction, boardWidth)
             if (path != null) buildLevel(seed, random, path, start, extraction, challengeLevel, boardWidth = boardWidth)?.let { return it }
         }
-        // A five-tile detour; reflections retain valid board geometry.
-        val fallback = listOf(1 to 3, 1 to 2, 2 to 2, 3 to 2, 4 to 2, 5 to 2, 6 to 2, 7 to 2, 7 to 3, 7 to 4)
-        val reflect = random.nextBoolean()
-        return checkNotNull(buildLevel(seed, random, fallback.map { (x, y) -> Position(x, if (reflect) 6 - y else y) }, start, extraction, challengeLevel, boardWidth = boardWidth))
+        // Deterministic detour built from the actual endpoints, so the first cell
+        // always neighbors start and the last always neighbors extraction.
+        val fallbackCount = maxOf((4 + (challengeLevel ?: 4) / 2).coerceIn(5, 9), minChallengeCount)
+        val fallback = fallbackPath(random, fallbackCount, start, extraction, boardWidth)
+        return checkNotNull(fallback?.let { buildLevel(seed, random, it, start, extraction, challengeLevel, boardWidth = boardWidth) })
     }
 
     private fun findPath(random: Random, count: Int, start: Position, extraction: Position, width: Int = MAX_GENERATED_BOARD_WIDTH, height: Int = BOARD_HEIGHT): List<Position>? {
@@ -140,4 +146,64 @@ object LevelGenerator {
 
     private fun adjacent(first: Position, second: Position): Boolean =
         kotlin.math.abs(first.x - second.x) + kotlin.math.abs(first.y - second.y) == 1
+
+    /**
+     * Deterministic fallback walk with exactly [count] dominoes from the only
+     * start neighbor (0, startY) to the only extraction neighbor (width - 1,
+     * exitY). An L-shaped spine covers the span; paired side-steps grow it to
+     * the requested length without revisiting cells. Returns null when no
+     * detour fits, letting the caller surface the failure instead of emitting
+     * a disconnected board.
+     */
+    private fun fallbackPath(random: Random, count: Int, start: Position, extraction: Position, width: Int): List<Position>? {
+        val spine = mutableListOf<Position>()
+        if (random.nextBoolean()) {
+            for (x in 0 until width) spine += Position(x, start.y)
+            val step = if (extraction.y >= start.y) 1 else -1
+            var y = start.y
+            while (y != extraction.y) {
+                y += step
+                spine += Position(width - 1, y)
+            }
+        } else {
+            spine += Position(0, start.y)
+            val step = if (extraction.y >= start.y) 1 else -1
+            var y = start.y
+            while (y != extraction.y) {
+                y += step
+                spine += Position(0, y)
+            }
+            for (x in 1 until width) spine += Position(x, extraction.y)
+        }
+        var target = count * 2
+        if (spine.size > target) target = spine.size + (spine.size % 2)
+        val path = spine.toMutableList()
+        var guard = 0
+        while (path.size < target && guard++ < 1000) {
+            var grew = false
+            for (i in 0 until path.size - 1) {
+                if (path.size >= target) break
+                val a = path[i]
+                val b = path[i + 1]
+                val perps = if (b.x != a.x) listOf(Position(0, 1), Position(0, -1))
+                else listOf(Position(1, 0), Position(-1, 0))
+                val sides = if (random.nextBoolean()) perps else perps.reversed()
+                for (side in sides) {
+                    val first = Position(a.x + side.x, a.y + side.y)
+                    val second = Position(b.x + side.x, b.y + side.y)
+                    if (first.x !in 0 until width || first.y !in 0..BOARD_HEIGHT - 1) continue
+                    if (second.x !in 0 until width || second.y !in 0..BOARD_HEIGHT - 1) continue
+                    if (first in path || second in path) continue
+                    if (first == start || first == extraction || second == start || second == extraction) continue
+                    path.add(i + 1, second)
+                    path.add(i + 1, first)
+                    grew = true
+                    break
+                }
+                if (grew) break
+            }
+            if (!grew) return null
+        }
+        return path.takeIf { it.size == target }
+    }
 }

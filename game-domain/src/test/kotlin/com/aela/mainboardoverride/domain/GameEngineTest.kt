@@ -22,9 +22,9 @@ class GameEngineTest {
     }
 
     @Test fun `external mismatches reject placement but domino halves remain internally connected`() {
-        val board = BoardState(placed = listOf(PlacedDomino(Domino("existing", 0, 2), Position(1, 3), Orientation.HORIZONTAL)))
-        assertTrue(GameEngine.canPlace(board, Domino("match", 2, 5), Position(3, 3), Orientation.HORIZONTAL))
-        assertFalse(GameEngine.canPlace(board, Domino("mismatch", 4, 5), Position(3, 3), Orientation.HORIZONTAL))
+        val board = BoardState(placed = listOf(PlacedDomino(Domino("existing", 0, 2), Position(0, 3), Orientation.HORIZONTAL)))
+        assertTrue(GameEngine.canPlace(board, Domino("match", 2, 5), Position(2, 3), Orientation.HORIZONTAL))
+        assertFalse(GameEngine.canPlace(board, Domino("mismatch", 4, 5), Position(2, 3), Orientation.HORIZONTAL))
     }
 
     @Test fun `generated networks are varied reproducible and winnable across a thousand seeds`() {
@@ -94,10 +94,10 @@ class GameEngineTest {
     @Test fun `loss takes priority over extraction when trace reaches maximum`() {
         var state = routeFixture()
         val placements = listOf(
-            Position(1, 3) to Orientation.HORIZONTAL,
-            Position(3, 3) to Orientation.HORIZONTAL,
-            Position(5, 3) to Orientation.HORIZONTAL,
-            Position(7, 2) to Orientation.VERTICAL,
+            Position(0, 3) to Orientation.HORIZONTAL,
+            Position(2, 3) to Orientation.HORIZONTAL,
+            Position(4, 3) to Orientation.HORIZONTAL,
+            Position(6, 2) to Orientation.VERTICAL,
         )
         placements.forEachIndexed { index, target ->
             state = GameEngine.reduce(state, GameAction.PlaceDomino("route-${index + 1}", target.first, target.second)).state
@@ -110,7 +110,7 @@ class GameEngineTest {
     @Test fun `challenge rules allow the exact limit and fail when trace is exceeded`() {
         val rules = ChallengeRules(maxTrace = 48)
         val state = routeFixture().copy(challengeRules = rules, trace = 40)
-        val placed = GameEngine.reduce(state, GameAction.PlaceDomino("route-1", Position(1, 3), Orientation.HORIZONTAL)).state
+        val placed = GameEngine.reduce(state, GameAction.PlaceDomino("route-1", Position(0, 3), Orientation.HORIZONTAL)).state
         val result = GameEngine.reduce(placed, GameAction.EndTurn).state
         assertNotEquals(GameResult.CHALLENGE_LIMIT, result.result)
 
@@ -121,7 +121,7 @@ class GameEngineTest {
     @Test fun `challenge turn limit fails only when extraction is not reached`() {
         val rules = ChallengeRules(maxTurns = 1)
         val state = routeFixture().copy(challengeRules = rules)
-        val placed = GameEngine.reduce(state, GameAction.PlaceDomino("route-1", Position(1, 3), Orientation.HORIZONTAL)).state
+        val placed = GameEngine.reduce(state, GameAction.PlaceDomino("route-1", Position(0, 3), Orientation.HORIZONTAL)).state
         assertEquals(GameResult.CHALLENGE_LIMIT, GameEngine.reduce(placed, GameAction.EndTurn).state.result)
     }
 

@@ -14,8 +14,8 @@ class ScriptRulesTest {
         val insufficient = GameEngine.reduce(pinged, GameAction.PlayKillProcess("kill", trap))
         assertEquals(pinged, insufficient.state)
         assertEquals(listOf(GameEvent.Rejected(RejectReason.INSUFFICIENT_RAM)), insufficient.events)
-        val restored = GameEngine.reduce(pinged, GameAction.PlaceDomino("a", Position(1, 2), Orientation.HORIZONTAL)).state
-        assertEquals(setOf(trap), GameEngine.scriptTargets(restored, "kill"))
+        val restored = GameEngine.reduce(pinged, GameAction.PlaceDomino("a", Position(0, 2), Orientation.HORIZONTAL)).state
+        assertTrue(trap in GameEngine.scriptTargets(restored, "kill"))
         val killed = GameEngine.reduce(restored, GameAction.PlayKillProcess("kill", trap)).state
         assertEquals(initial.turn, killed.turn)
         assertTrue(killed.board.honeypots.isEmpty())
@@ -82,7 +82,7 @@ class ScriptRulesTest {
             assertEquals(4 - i, current.scriptHand.size)
         }
         assertEquals(current, GameEngine.reduce(current, GameAction.PlayPing("ping-4")).state)
-        val placed = GameEngine.reduce(current, GameAction.PlaceDomino("place", Position(1, 2), Orientation.HORIZONTAL)).state
+        val placed = GameEngine.reduce(current, GameAction.PlaceDomino("place", Position(0, 2), Orientation.HORIZONTAL)).state
         val next = GameEngine.reduce(placed, GameAction.EndTurn).state
         assertEquals(initial.turn + 1, next.turn)
         assertTrue(next.pingPreview.isEmpty())

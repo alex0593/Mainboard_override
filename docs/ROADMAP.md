@@ -8,8 +8,8 @@ Este documento recoge, estructura y prioriza las ideas de mejora para el juego, 
 de trabajo. Los hilos temáticos son propuestas; no representan funciones aprobadas
 ni tareas terminadas. `[ ]` significa pendiente; marcar `[x]` solo con evidencia
 de cierre. Las decisiones de producto se registran antes de implementar sus ramas.
-A08/A09 (tutorial) cerrados y verificados; audio procedural completo y verificado
-en dispositivo; A01–A07 siguen abiertos.
+A01–A09 (reglas y tutorial) cerrados y verificados; audio procedural completo y verificado
+en dispositivo.
 
 ## 2. Estado actual como punto de partida
 
@@ -17,7 +17,7 @@ en dispositivo; A01–A07 siguen abiertos.
 - Scripts actuales: PING, SPOOF, KILL_PROCESS, BRIDGE.
 - Progresión de desafíos desbloqueables y escenarios de modo libre.
 - Persistencia con DataStore; compras y recompensas implementadas en el repositorio concreto.
-- Última ejecución de `:game-domain:test`: 28 pruebas, 7 fallos A01–A07 (2026-09-20).
+- Última ejecución de `:game-domain:test`: 28 pruebas, 0 fallos (2026-09-20).
 - Tutorial con 10 lecciones deterministas, textos EN/ES en paridad (47 instrucciones), progreso visible y avance explícito; `TutorialTest` 5/5 y `PuzzleTutorialUiTest` 6/6 en CLK-LX3 por USB.
 - Audio procedural completo: soundtrack synthwave adaptativo, 16 cues de SFX, volúmenes de música/EFX en ajustes, silencio y movimiento reducido cableados. Vibración solo persistida, sin cablear.
 - Localización por-app con AppCompat (ES/EN aplican en todos los API), icono adaptativo con capa monocroma y splash propio.
@@ -108,16 +108,16 @@ y `app/src/androidTest/`. Para cada fallo, contrastar GDD, estado de prueba y
 motor; registrar la causa antes de corregir código o expectativas. Documentar
 un fallo por sí solo no cierra la tarea.
 
-- [ ] **A01 — Contactos:** resolver `external mismatches reject placement but domino halves remain internally connected`.
-- [ ] **A02 — Generación:** resolver `challenge catalog contains thirty constrained solvable levels`; conservar nivel y semilla que provocan el fallo.
-- [ ] **A03 — Derrota:** resolver `loss takes priority over extraction when trace reaches maximum`.
-- [ ] **A04 — Turnos:** resolver `challenge turn limit fails only when extraction is not reached`.
-- [ ] **A05 — Rastreo:** resolver `challenge rules allow the exact limit and fail when trace is exceeded`.
-- [ ] **A06 — PING:** resolver `three pings preview three tiles then reset at end turn`.
-- [ ] **A07 — Scripts y RAM:** resolver `ping then ram pickup allows kill in the same turn`.
+- [x] **A01 — Contactos:** resuelto `external mismatches reject placement but domino halves remain internally connected`. Causa: fixture desconectado — la ficha existente en (1, 3) no era vecina del inicio (-1, 3), así que el motor la rechazaba correctamente según GDD. Se fijó la existente en (0, 3) y las candidatas en (2, 3); el motor ya ignoraba el contacto interno (2 contra 5).
+- [x] **A02 — Generación:** resuelto `challenge catalog contains thirty constrained solvable levels`. Causa: el nivel 2 (inicio (-1, 4), extracción (10, 6), ancho 10) necesita ≥12 celdas pero el conteo fijo era 5 dominós, y el fallback de 10 celdas tampoco era vecino del inicio. Se calcula un conteo mínimo por geometría (`(ancho + |Δy| + 1) / 2`) y el fallback se construye desde los extremos reales (espina en L + desvíos pareados). El nivel 2 queda en 6 dominós con traza 48 = límite exacto; los otros 29 niveles conservan semilla y solución.
+- [x] **A03 — Derrota:** resuelto `loss takes priority over extraction when trace reaches maximum`. Causa: mismo off-by-one que A01 — las colocaciones dejaban un hueco en x=0 y `EndTurn` rechazaba con `MUST_PLACE_DOMINO`. Fijadas en (0, 3), (2, 3), (4, 3) y (6, 2)V, que encadenan valores 0-1-2-6.
+- [x] **A04 — Turnos:** resuelto `challenge turn limit fails only when extraction is not reached`. Causa: colocación en (1, 3) desconectada; fijada en (0, 3). Semántica del motor intacta (el límite de turnos se comprueba tras la victoria, así que ganar en el último turno cuenta).
+- [x] **A05 — Rastreo:** resuelto `challenge rules allow the exact limit and fail when trace is exceeded`. Causa: colocación en (1, 3) desconectada; fijada en (0, 3). Semántica intacta (`traced > max` permite el límite exacto 48).
+- [x] **A06 — PING:** resuelto `three pings preview three tiles then reset at end turn`. Causa: colocación en (1, 2) con inicio en (-1, 2); fijada en (0, 2). El cuarto PING ya se rechazaba por RAM agotada.
+- [x] **A07 — Scripts y RAM:** resuelto `ping then ram pickup allows kill in the same turn`. Causa: colocación en (1, 2) desconectada, así que el buff de RAM nunca se recogía; fijada en (0, 2). La comprobación intermedia pasó de igualdad exacta a `trap in targets` porque la ficha recién colocada también es objetivo válido de KILL según GDD (cubierto por `kill removes a complete placed domino`).
 - [x] **A08 — Tutorial de dominio:** resuelto `scriptsHaveRealEffects`. Causa: el fixture de la lección 9 (tablero de 8 con ruta hasta x=5) nunca alcanzaba la extracción; se fijó el tablero a ancho 6 con extracción en (6, 2) y se añadieron dos pasos de cierre (derrotas y recompensas).
 - [x] **A09 — Tutorial instrumental:** cerrado. Causa doble: (1) el panel de instrucción se autocerraba y el botón de repetir no existía a mitad de lección — repetir persistente en el header y avance explícito entre lecciones; (2) race en `AmbientSoundtrack` (write sobre un track liberado por `stop()`) que mataba el proceso de tests — `try/catch` alrededor del write. Clase `PuzzleTutorialUiTest` 6/6 en CLK-LX3 por USB.
-- [ ] **A10 — Cierre de validación:** parcial — dominio 28/7 (A01–A07 abiertos), `:app:testDebugUnitTest` 3/3, `:app:lintDebug` verde (2026-09-20, splash attrs movidos a `values-v31/` por minSdk 26), `PuzzleTutorialUiTest` 6/6 en CLK-LX3 por USB, `:app:installDebug` verificado en dispositivo; pendiente suite instrumental completa con resultados registrados.
+- [ ] **A10 — Cierre de validación:** parcial — dominio 28/28 verde (A01–A07 cerrados 2026-09-20), `:app:testDebugUnitTest` 3/3, `:app:lintDebug` verde (2026-09-20, splash attrs movidos a `values-v31/` por minSdk 26), `PuzzleTutorialUiTest` 6/6 en CLK-LX3 por USB, `:app:installDebug` verificado en dispositivo; pendiente suite instrumental completa con resultados registrados.
 
 **Cierre:** A01–A08 pasan y la suite completa de dominio queda verde; A09 pasa
 aislada y en suite; A10 no presenta fallos sin resolver. Si falta dispositivo,
