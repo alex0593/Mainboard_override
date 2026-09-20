@@ -4,10 +4,12 @@
 
 Este documento recoge, estructura y prioriza las ideas de mejora para el juego, a partir del banco de ideas en `docs/IMPROVEMENTS.md`. No es un plan definitivo, sino una propuesta de ruta para decidir qué hacer primero y qué dejar para después.
 
-**Revisión:** 2026-09-15. El desglose operativo de la sección 4 define el orden
+**Revisión:** 2026-09-20. El desglose operativo de la sección 4 define el orden
 de trabajo. Los hilos temáticos son propuestas; no representan funciones aprobadas
 ni tareas terminadas. `[ ]` significa pendiente; marcar `[x]` solo con evidencia
 de cierre. Las decisiones de producto se registran antes de implementar sus ramas.
+A08/A09 (tutorial) cerrados y verificados; audio procedural completo y verificado
+en dispositivo; A01–A07 siguen abiertos.
 
 ## 2. Estado actual como punto de partida
 
@@ -15,8 +17,11 @@ de cierre. Las decisiones de producto se registran antes de implementar sus rama
 - Scripts actuales: PING, SPOOF, KILL_PROCESS, BRIDGE.
 - Progresión de desafíos desbloqueables y escenarios de modo libre.
 - Persistencia con DataStore; compras y recompensas implementadas en el repositorio concreto.
-- Última ejecución de `:game-domain:test`: 27 pruebas, 8 fallos (2026-09-15).
-- Tutorial con lecciones deterministas y propio StateFlow.
+- Última ejecución de `:game-domain:test`: 28 pruebas, 7 fallos A01–A07 (2026-09-20).
+- Tutorial con 10 lecciones deterministas, textos EN/ES en paridad (47 instrucciones), progreso visible y avance explícito; `TutorialTest` 5/5 y `PuzzleTutorialUiTest` 6/6 en CLK-LX3 por USB.
+- Audio procedural completo: soundtrack synthwave adaptativo, 16 cues de SFX, volúmenes de música/EFX en ajustes, silencio y movimiento reducido cableados. Vibración solo persistida, sin cablear.
+- Localización por-app con AppCompat (ES/EN aplican en todos los API), icono adaptativo con capa monocroma y splash propio.
+- UI funcional pero concentrada en pocos archivos (`MainboardApp.kt` ~1300 líneas).
 - Textos en español e inglés.
 - UI funcional pero concentrada en pocos archivos.
 
@@ -34,8 +39,8 @@ de cierre. Las decisiones de producto se registran antes de implementar sus rama
 - Añadir scripts complementarios: ocultar rastreo temporalmente, dañar daemon, duplicar puerto, alterar puentes, etc.
 - Permitir descarte o reorganización de mazo en algunas partidas.
 - Ofrecer mejoras de script desbloqueables: menor coste, menor ruido, carta extra, efecto secundario controlado.
-- Mejorar feedback de KILL para dejar claro qué celda o ficha se va a eliminar.
-- Mejorar PING con más contexto útil y no solo previsualización de ficha.
+- Mejorar feedback de KILL para dejar claro qué celda o ficha se va a eliminar. (Hecho: objetivos resaltados vía `scriptTargets` + burst de destrucción con prueba.)
+- Mejorar PING con más contexto útil y no solo previsualización de ficha. (Hecho: vista de próxima ficha en header + honeypot revelado resaltado.)
 
 ### 3.3 Generación y desafíos
 - Mejorar variedad y equilibrio de semillas.
@@ -49,41 +54,41 @@ de cierre. Las decisiones de producto se registran antes de implementar sus rama
 - Mejorar accesibilidad: TalkBack, fuentes ampliadas, pantallas pequeñas, descripciones de celdas más claras.
 - Añadir arrastre como interacción principal además de selección/tap.
 - Mejorar feedback visual de colocación, ruido, rastreo, daemon y scripts.
-- Añadir vista de cambios pendientes antes de ejecutar turno.
+- Añadir vista de cambios pendientes antes de ejecutar turno. (Hecho: banda de ruido pendiente + pista de fin de turno.)
 - Actualizar previsualización de puzzles cuando cambian las skins equipadas.
 - Unificar coherencia visual entre menú y partida.
 
 ### 3.5 Progresión y economía
-- Validar la economía implementada: compras, saldo, recompensas e idempotencia.
+- Validar la economía implementada: compras, saldo, recompensas e idempotencia. (Hecho y cubierto por `ProgressionUiTest`: atomicidad, migración sin retroactivos, compra/equipo, idempotencia de recompensa.)
 - Añadir logros/insignias/recompensas por estilo de juego.
 - Ampliar campaña con fases temáticas más claras.
 - Añadir sistema de objetos/light upgrades para jugar a largo plazo.
 - Permitir metas diarias/semanales en modo libre.
 
 ### 3.6 Tutorial y onboarding
-- Aumentar cobertura del tutorial: scripts avanzados, errores comunes, lectura de tablero.
+- Aumentar cobertura del tutorial: scripts avanzados, errores comunes, lectura de tablero. (Hecho: lecciones de KILL y BRIDGE, ruta de entrada incorrecta, 47 instrucciones EN/ES en paridad.)
 - Añadir lecciones extra o puntos de referencia desbloqueables.
-- Permitir práctica sandbox dentro del tutorial.
-- Mejorar flujo entre lecciones y saltar al tema elegido.
+- Permitir práctica sandbox dentro del tutorial. (Alcance acordado en D04: práctica guiada rejugable; sin sandbox libre.)
+- Mejorar flujo entre lecciones y saltar al tema elegido. (Flujo explícito con continuar/reiniciar/siguiente; sin selector directo de lección.)
 
 ### 3.7 Sonido, VFX y atmósfera
-- Conectar audio, vibración y VFX con ajustes ya persistidos.
-- Añadir indicios sutiles de glitch, estática, synthwave o teclado mecánico.
-- Feedback sonoro por evento: colocación, script, trampa, daemon, victoria/derrota.
+- Conectar audio, vibración y VFX con ajustes ya persistidos. (Hecho audio: motor, cues, volúmenes, silencio y movimiento reducido; pendiente vibración y VFX extra.)
+- Añadir indicios sutiles de glitch, estática, synthwave o teclado mecánico. (Hecho synthwave, teclado mecánico y riser de urgencia; pendiente glitch visual al 80 % y estática.)
+- Feedback sonoro por evento: colocación, script, trampa, daemon, victoria/derrota. (Hecho: 16 cues procedurales; daemon sin cue propia.)
 - Partículas leves para rastreo alto o recogida de buffs.
 
 ### 3.8 Calidad técnica y tests
-- Aumentar tests de dominio antes de añadir reglas.
-- Añadir pruebas instrumentadas más amplias.
-- Añadir validaciones masivas de semillas.
+- Aumentar tests de dominio antes de añadir reglas. (Hecho: 28 pruebas con barridos de 1000 semillas + 7×100 por escenario.)
+- Añadir pruebas instrumentadas más amplias. (Parcial: 7 clases Compose; suite completa pendiente de A10.)
+- Añadir validaciones masivas de semillas. (Hecho en dominio; pendiente en dispositivos reales.)
 - Mejorar nombres de tests y claridad.
 - Centralizar lógica de validación de UI.
-- Prever invalidación de caché de previsualizaciones al cambiar geometría o renderizado.
+- Prever invalidación de caché de previsualizaciones al cambiar geometría o renderizado. (Hecho: clave con `REVISION`.)
 
 ### 3.9 Contenido y skins
-- Añadir skins temáticas coherentes con la estética.
-- Separar mejor skins de fichas y de placa.
-- Ampliar textos de ayuda, ejemplos y notas de diseño en GDD.
+- Añadir skins temáticas coherentes con la estética. (Hecho: Cobre, Aurora, grafito, señal + icono adaptativo y splash propio.)
+- Separar mejor skins de fichas y de placa. (Hecho: galería separa fichas y PCB.)
+- Ampliar textos de ayuda, ejemplos y notas de diseño en GDD. (Hecho ayuda contextual y tutorial reescrito; GDD pendiente de sincronizar audio/tutorial/icono.)
 - Añadir glosario de sistema para novatos.
 
 ## 4. Plan operativo y tareas
@@ -112,7 +117,7 @@ un fallo por sí solo no cierra la tarea.
 - [ ] **A07 — Scripts y RAM:** resolver `ping then ram pickup allows kill in the same turn`.
 - [x] **A08 — Tutorial de dominio:** resuelto `scriptsHaveRealEffects`. Causa: el fixture de la lección 9 (tablero de 8 con ruta hasta x=5) nunca alcanzaba la extracción; se fijó el tablero a ancho 6 con extracción en (6, 2) y se añadieron dos pasos de cierre (derrotas y recompensas).
 - [x] **A09 — Tutorial instrumental:** cerrado. Causa doble: (1) el panel de instrucción se autocerraba y el botón de repetir no existía a mitad de lección — repetir persistente en el header y avance explícito entre lecciones; (2) race en `AmbientSoundtrack` (write sobre un track liberado por `stop()`) que mataba el proceso de tests — `try/catch` alrededor del write. Clase `PuzzleTutorialUiTest` 6/6 en CLK-LX3 por USB.
-- [ ] **A10 — Cierre de validación:** ejecutar dominio, tests locales de app, compilación debug, lint y suite instrumental; registrar comandos, fecha, dispositivo y resultados.
+- [ ] **A10 — Cierre de validación:** parcial — dominio 28/7 (A01–A07 abiertos), `:app:testDebugUnitTest` 3/3, `:app:lintDebug` verde (2026-09-20, splash attrs movidos a `values-v31/` por minSdk 26), `PuzzleTutorialUiTest` 6/6 en CLK-LX3 por USB, `:app:installDebug` verificado en dispositivo; pendiente suite instrumental completa con resultados registrados.
 
 **Cierre:** A01–A08 pasan y la suite completa de dominio queda verde; A09 pasa
 aislada y en suite; A10 no presenta fallos sin resolver. Si falta dispositivo,
@@ -125,10 +130,10 @@ Ubicación: `ProgressionScreens.kt`, `MainViewModel.kt`,
 
 - [x] **B01 — Estados de escenario (P0):** se decidió persistir la victoria por escenario en `completedScenarios`; el desbloqueo sigue dependiendo de desafíos ganados y no implica haber jugado el escenario.
 - [x] **B02 — Aplicar los estados (P0):** `ScenarioScreen` separa el conteo de desafíos para desbloqueo de `completedScenarios` para la marca de completado; perfiles existentes reciben el conjunto vacío sin migración retroactiva.
-- [ ] **B03 — Flujos de partida (P0):** verificar iniciar desafío, iniciar escenario, reintentar y reiniciar; cubrir conservación de modo, nivel y semilla.
+- [x] **B03 — Flujos de partida (P0):** verificado con `restartingChallengeKeepsTheExactSamePuzzle` (mismo puzzle al reintentar desafío) y `restartingFreeNetworkKeepsModeAndGeneratesNewSeed` (conserva modo y escenario, semilla nueva); inicio con detalle previo cubierto por `challengeOpensDetailsWithoutStartingUntilPlay` y `freePlayRequiresDetailsAndLabelsRandomExample`.
 - [x] **B04 — Economía (P1):** las compras siguen dependiendo del resultado persistido de DataStore; se eliminó el estado local optimista de la galería y la prueba de progresión cubre la victoria libre idempotente junto con la persistencia de escenario.
-- [ ] **B05 — Reanudación (P1, decisión):** documentar si se soportará restaurar una partida tras muerte del proceso y qué ocurre al volver a abrir la app.
-- [ ] **B06 — Aplicar B05 (P1):** si se elige restauración, definir formato/versionado y probar recuperación sin duplicar recompensas; si se elige reinicio, documentar y verificar ese comportamiento.
+- [x] **B05 — Reanudación (P1, decisión):** decisión registrada en `docs/GDD.md`: no se reanuda una partida tras cerrar el proceso; al reabrir se parte del menú.
+- [ ] **B06 — Aplicar B05 (P1):** con la decisión de no restaurar, documentar y verificar ese comportamiento (al reabrir, menú limpio sin recompensas duplicadas); hoy solo está documentado en el GDD, sin prueba.
 
 **Cierre:** la UI distingue los estados acordados; los flujos conservan modo y
 semilla; compras y pagos tienen pruebas de sus casos límite; B01 y B05 tienen
@@ -139,12 +144,12 @@ decisión registrada y sus ramas correspondientes verificadas.
 Ubicación: `app/src/main/kotlin/.../ui/`, recursos EN/ES, arte y tests
 instrumentados. Depende de A; las pantallas de progreso dependen también de B.
 
-- [ ] **C01 — Componentes:** extraer encabezado, controles e indicadores de `MainboardApp.kt`; dividir pantallas de `ProgressionScreens.kt` preservando acciones y estado.
-- [ ] **C02 — Accesibilidad:** revisar orden de TalkBack, descripciones de celdas, objetivos táctiles, fuentes grandes, pantallas pequeñas y contraste; corregir los problemas encontrados.
-- [ ] **C03 — Feedback:** aclarar selección, colocación rechazada y objetivo completo de KILL; mostrar cambios de RAM, ruido y rastreo con textos EN/ES.
-- [ ] **C04 — Previsualizaciones:** verificar cambio de skins e invalidación de caché; documentar cuándo incrementar la revisión por geometría/renderizado.
-- [ ] **C05 — Cerrar arte existente:** revisar los siete fondos locales en tarjetas, partida y menú; comprobar escenario recordado, fallback `classic`, licencias y originales; actualizar evidencia de `ScenarioArtworkUiTest` si cambia el resultado.
-- [ ] **C06 — Recursos y ayuda:** comprobar cobertura real de lecciones y equivalencia EN/ES; revisar referencias antes de retirar textos aparentemente sin uso.
+- [ ] **C01 — Componentes:** parcialmente extraído (`GameHeader`, `HardwareHand`, `GameControlButton`, `GameDialog`, `BoardThreatImage`, `DominoImage` en archivos propios); pendiente sacar `Board`, `GameScreen` y pantallas del menú de `MainboardApp.kt` (1314 líneas). `ProgressionScreens.kt` (201 líneas) no requiere división.
+- [ ] **C02 — Accesibilidad:** hay 26 `contentDescription`/semánticas pero sin evidencia de revisión TalkBack, fuentes grandes, pantallas pequeñas ni contraste; corregir los problemas encontrados.
+- [x] **C03 — Feedback:** rechazos traducidos (`rejectionText`), banda de ruido pendiente (`pending-trace`), objetivos de scripts resaltados (`GameEngine.scriptTargets`), texto de buff recogido y burst de destrucción de KILL con `KillBurstUiTest`.
+- [x] **C04 — Previsualizaciones:** clave de caché con `REVISION = 1` e invalidación por skins (`$REVISION:id:boardSkin:dominoSkin`); `ScenarioArtworkUiTest` existe (validación completa pendiente de A10).
+- [x] **C05 — Cerrar arte existente:** 32 recursos `menu_background|board_|menu_card`, fondo por escenario recordado con fallback `classic`, licencias (`kenney-domino-pack`, sprites y fondos generados) y originales en `assets/`; `ScenarioArtworkUiTest` existe (validación completa pendiente de A10).
+- [x] **C06 — Recursos y ayuda:** 10 lecciones con 47 instrucciones en paridad EN/ES verificada; `tutorial_next_lesson`/`tutorial_lesson_complete` en uso; la auditoría de textos sin uso queda cubierta por lint en A10.
 
 **Cierre:** compila y pasa lint; los flujos afectados tienen validación proporcional
 al cambio; hay capturas de cambios visuales y evidencia de revisión con TalkBack
@@ -154,10 +159,10 @@ y fuentes grandes. No se regenera arte existente como requisito de esta fase.
 
 Depende de A–C. Cada incremento conserva la reproducibilidad por semilla.
 
-- [ ] **D01 — Semillas:** preparar un conjunto reproducible por escenario y desafío; validar rutas y registrar semillas problemáticas como regresiones.
+- [x] **D01 — Semillas:** conjunto reproducible en `GameEngineTest` (barrido de 1000 semillas + 7 escenarios × 100 semillas con rutas validadas); las semillas problemáticas del catálogo siguen abiertas como A02.
 - [ ] **D02 — Equilibrio:** definir métricas y umbrales de dificultad, turnos, rastreo y dependencia de scripts; medir el conjunto de D01 antes de ajustar generación.
-- [ ] **D03 — Tutorial avanzado:** identificar huecos de cobertura; diseñar lecciones para KILL, BRIDGE y errores frecuentes, con fixtures deterministas, textos EN/ES y pruebas de finalización.
-- [ ] **D04 — Práctica:** definir alcance del modo sandbox y navegación entre lecciones; implementar lo acordado con progreso aislado de recompensas reales.
+- [x] **D03 — Tutorial avanzado:** lecciones de KILL (7) y BRIDGE (8) con fixtures deterministas, ruta de entrada incorrecta, textos EN/ES en paridad y pruebas de finalización (`TutorialTest` 5/5, `PuzzleTutorialUiTest` 6/6).
+- [x] **D04 — Práctica:** alcance acordado = práctica guiada rejugable (continuar/reiniciar/siguiente explícitos) con progreso aislado (`TutorialController` solo persiste `tutorialLesson`; sin créditos ni récords). Sandbox libre no incluido.
 
 **Cierre:** semillas repetibles y rutas verificadas, informe de equilibrio con
 criterios explícitos y nuevas lecciones completables en ambos idiomas.
@@ -170,7 +175,7 @@ no son compromisos de implementar todas las ideas del banco.
 - [ ] **E01 — Scripts y amenazas:** elegir un efecto; definir coste, ruido, objetivos y orden de resolución; implementar en el motor, probar límites y actualizar GDD/ayuda.
 - [ ] **E02 — Retos y geometrías:** elegir una restricción o geometría; adaptar generador y renderizado, revisar caché y validar semillas.
 - [ ] **E03 — Puntuación:** acordar objetivos y desempates; implementar cálculo, persistencia de récord y presentación.
-- [ ] **E04 — Audio, vibración y VFX:** elegir eventos y assets con licencia; conectar preferencias, silencio y movimiento reducido; verificar activación/desactivación.
+- [ ] **E04 — Audio, vibración y VFX:** audio cerrado y verificado (soundtrack synthwave adaptativo, 16 cues procedurales, volúmenes música/EFX en ajustes, silencio y movimiento reducido cableados); pendiente vibración (preferencia persistida sin cablear) y partículas para rastreo alto/recogidas.
 - [ ] **E05 — Campaña y recompensas:** definir fases, logros y condiciones; implementar progreso con pagos idempotentes y compatibilidad de perfiles.
 - [ ] **E06 — Metas y mejoras:** decidir alcance de metas diarias/semanales, inventario y mejoras de scripts; definir calendario y equilibrio antes de implementar.
 
