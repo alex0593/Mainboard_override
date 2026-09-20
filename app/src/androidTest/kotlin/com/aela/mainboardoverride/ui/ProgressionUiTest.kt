@@ -12,6 +12,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.test.core.app.ApplicationProvider
+import com.aela.mainboardoverride.GameUiState
 import com.aela.mainboardoverride.MainViewModel
 import com.aela.mainboardoverride.R
 import com.aela.mainboardoverride.data.*
@@ -135,6 +136,30 @@ class ProgressionUiTest {
         compose.waitForIdle()
         assertNotEquals(42L, vm.uiState.value.game!!.seed)
         assertEquals("lab", vm.uiState.value.scenarioId)
+    }
+
+    @Test fun reopeningStartsFromCleanMenuWithoutDuplicateRewards() {
+        runBlocking {
+            val paid = repository.finishMatch("b06-match", null, 6, 48, "classic")
+            assertEquals(20, paid.base + paid.bonus)
+        }
+        // Abandon a match mid-game, then simulate process death: a fresh ViewModel
+        // over the same store must reopen a clean menu with no duplicate rewards (B05/B06).
+        val abandoned = MainViewModel(app, repository)
+        val reopened = MainViewModel(app, repository)
+        val holder = mutableStateOf(abandoned)
+        var shown: GameUiState? = null
+        compose.setContent { shown = holder.value.uiState.collectAsState().value }
+        compose.runOnIdle { abandoned.startScenario("classic", 42L) }
+        compose.waitUntil(5000) { shown?.game != null }
+        compose.runOnIdle { holder.value = reopened }
+        compose.waitUntil(5000) { shown?.preferences?.credits == 20 }
+        compose.waitUntil(5000) { runBlocking { repository.preferences.first().lastSeed } == 42L }
+        compose.runOnIdle {
+            assertNull(shown?.game)
+            assertNull(shown?.reward)
+        }
+        assertEquals(20, runBlocking { repository.preferences.first().credits })
     }
 
     @Test fun restartingChallengeKeepsTheExactSamePuzzle() {

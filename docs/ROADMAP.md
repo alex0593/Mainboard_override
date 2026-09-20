@@ -133,7 +133,7 @@ Ubicación: `ProgressionScreens.kt`, `MainViewModel.kt`,
 - [x] **B03 — Flujos de partida (P0):** verificado con `restartingChallengeKeepsTheExactSamePuzzle` (mismo puzzle al reintentar desafío) y `restartingFreeNetworkKeepsModeAndGeneratesNewSeed` (conserva modo y escenario, semilla nueva); inicio con detalle previo cubierto por `challengeOpensDetailsWithoutStartingUntilPlay` y `freePlayRequiresDetailsAndLabelsRandomExample`.
 - [x] **B04 — Economía (P1):** las compras siguen dependiendo del resultado persistido de DataStore; se eliminó el estado local optimista de la galería y la prueba de progresión cubre la victoria libre idempotente junto con la persistencia de escenario.
 - [x] **B05 — Reanudación (P1, decisión):** decisión registrada en `docs/GDD.md`: no se reanuda una partida tras cerrar el proceso; al reabrir se parte del menú.
-- [ ] **B06 — Aplicar B05 (P1):** con la decisión de no restaurar, documentar y verificar ese comportamiento (al reabrir, menú limpio sin recompensas duplicadas); hoy solo está documentado en el GDD, sin prueba.
+- [x] **B06 — Aplicar B05 (P1):** verificado con `reopeningStartsFromCleanMenuWithoutDuplicateRewards` en `ProgressionUiTest`: tras cobrar una victoria y abandonar una partida a medias, un `MainViewModel` nuevo sobre el mismo store abre menú limpio (`game` y `reward` nulos) sin duplicar créditos. `ProgressionUiTest` 9/9 en CLK-LX3 por USB (2026-09-20).
 
 **Cierre:** la UI distingue los estados acordados; los flujos conservan modo y
 semilla; compras y pagos tienen pruebas de sus casos límite; B01 y B05 tienen
