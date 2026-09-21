@@ -177,7 +177,7 @@ no son compromisos de implementar todas las ideas del banco.
 - [x] **E01 — Scripts y amenazas:** cerrado 2026-09-21 (alcance: lock) — celda visible que exige valor exacto al contactar (`LOCK_TRIPPED` si falla, consume al acertar o cubrir, KILL lo elimina por 3RAM/15ruido); 1 por mapa libre con valor coordinado con la ruta de referencia, desafíos sin locks; `LockRulesTest` 5/5, ayuda y resultado EN/ES, `REVISION=2`, GDD actualizado.
 - [ ] **E02 — Retos y geometrías:** elegir una restricción o geometría; adaptar generador y renderizado, revisar caché y validar semillas.
 - [ ] **E03 — Puntuación:** acordar objetivos y desempates; implementar cálculo, persistencia de récord y presentación.
-- [ ] **E04 — Audio, vibración y VFX:** audio cerrado y verificado (soundtrack synthwave adaptativo, 16 cues procedurales, volúmenes música/EFX en ajustes, silencio y movimiento reducido cableados); pendiente vibración (preferencia persistida sin cablear) y partículas para rastreo alto/recogidas.
+- [ ] **E04 — Audio, vibración y VFX:** audio cerrado y verificado (soundtrack synthwave adaptativo, 16 cues procedurales, volúmenes música/EFX en ajustes, silencio y movimiento reducido cableados); vibración cableada 2026-09-21 (`HapticsHost` espeja las cues táctiles con el ajuste persistido, `HapticsTest` 3/3); pendiente partículas para rastreo alto/recogidas.
 - [ ] **E05 — Campaña y recompensas:** definir fases, logros y condiciones; implementar progreso con pagos idempotentes y compatibilidad de perfiles.
 - [ ] **E06 — Metas y mejoras:** decidir alcance de metas diarias/semanales, inventario y mejoras de scripts; definir calendario y equilibrio antes de implementar.
 

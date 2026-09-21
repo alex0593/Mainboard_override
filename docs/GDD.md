@@ -90,7 +90,7 @@ BRIDGE requiere al menos una ficha junto al firewall en el eje seleccionado. Si 
 
 ## Dirección audiovisual
 
-Neobrutalismo de sistema operativo: PCB oscuro, verde terminal, cian, amarillo de advertencia, rojo de alerta, paneles duros y tipografía monoespaciada. La versión final ligera añadirá flujo luminoso, glitch al superar 80 % de rastreo, hápticos, teclado mecánico, estática y ambiente synthwave.
+Neobrutalismo de sistema operativo: PCB oscuro, verde terminal, cian, amarillo de advertencia, rojo de alerta, paneles duros y tipografía monoespaciada. La versión final ligera añade flujo luminoso, glitch al superar 80 % de rastreo, teclado mecánico, estática y ambiente synthwave. La vibración ya responde a colocaciones, scripts, trampas y resultados según el ajuste persistido; las cues informativas (PING, turno, arranque, compra) no vibran.
 
 ## Verificación técnica
 

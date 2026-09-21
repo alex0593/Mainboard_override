@@ -13,6 +13,7 @@ import com.aela.mainboardoverride.MainViewModel
 import com.aela.mainboardoverride.GameUiState
 import com.aela.mainboardoverride.R
 import com.aela.mainboardoverride.audio.AmbientSoundtrackHost
+import com.aela.mainboardoverride.audio.HapticsHost
 import com.aela.mainboardoverride.audio.SoundEffectsHost
 import com.aela.mainboardoverride.audio.SoundtrackScene
 import com.aela.mainboardoverride.domain.GameResult
@@ -42,6 +43,10 @@ fun MainboardApp(
     SoundEffectsHost(
         enabled = state.preferences.audioEnabled,
         volume = state.preferences.sfxVolume,
+        cues = actions.soundCues,
+    )
+    HapticsHost(
+        enabled = state.preferences.vibrationEnabled,
         cues = actions.soundCues,
     )
     AmbientSoundtrackHost(
