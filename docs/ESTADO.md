@@ -75,8 +75,8 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 
 - **C01:** cerrado 2026-09-21 — `MainboardApp.kt` (~110 líneas, solo NavHost);
   `GameScreen`, `Board`, `MenuScreen`, `SettingsScreen` y widgets en archivos propios.
-- **C02:** sin evidencia de revisión TalkBack, fuentes grandes, pantallas
-  pequeñas ni contraste.
+- **C02:** cerrado 2026-09-21 — roles expuestos, target mínimo 48dp, contraste AA
+  verificado, test a fuente 1.3x; suite 27/27. TalkBack manual pendiente.
 - **D02:** sin métricas ni umbrales de equilibrio definidos.
 - **E01–E06:** ampliaciones pendientes de selección de alcance.
 - **Vibración:** preferencia persistida sin cablear; partículas para rastreo
