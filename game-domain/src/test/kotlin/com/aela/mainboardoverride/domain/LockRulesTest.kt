@@ -25,7 +25,7 @@ class LockRulesTest {
         )
         return GameState(
             seed = 1L, board = board,
-            dominoHand = listOf(Domino("wrong", 4, 0), Domino("right", 0, 0), Domino("cover", 3, 0)),
+            dominoHand = listOf(Domino("wrong", 4, 0), Domino("right", 0, 0), Domino("cover", 3, 0), Domino("badcover", 4, 1)),
             dominoBag = emptyList(),
             scriptHand = listOf(ScriptCard("kill", ScriptType.KILL_PROCESS)),
             scriptDeck = emptyList(),
@@ -48,6 +48,12 @@ class LockRulesTest {
         val transition = GameEngine.reduce(lockFixture(), GameAction.PlaceDomino("cover", Position(2, 0), Orientation.VERTICAL))
         assertEquals(null, transition.state.result)
         assertTrue(transition.state.board.locks.isEmpty())
+    }
+
+    @Test fun `covering a lock with the wrong value trips defeat`() {
+        val transition = GameEngine.reduce(lockFixture(), GameAction.PlaceDomino("badcover", Position(2, 1), Orientation.HORIZONTAL))
+        assertEquals(GameResult.LOCK_TRIPPED, transition.state.result)
+        assertTrue(transition.events.any { it == GameEvent.Finished(GameResult.LOCK_TRIPPED) })
     }
 
     @Test fun `kill removes a lock without touching tiles`() {

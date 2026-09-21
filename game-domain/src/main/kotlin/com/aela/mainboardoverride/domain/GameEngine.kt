@@ -105,22 +105,21 @@ object GameEngine {
         if (state.board.isOccupied(first) || state.board.isOccupied(second)) {
             return rejected(state, RejectReason.CELL_OCCUPIED)
         }
-        if (!canPlace(state.board, tile, action.origin, action.orientation)) {
-            val touchesNetwork = setOf(first, second).any { p -> neighbors(state.board, p).any { state.board.valueAt(it) != null } }
-            return rejected(state, if (touchesNetwork) RejectReason.CONTACT_MISMATCH else RejectReason.NOT_CONNECTED)
+        // Locks punish the wrong value on contact or cover; the demanded value
+        // satisfies and consumes. Checked before legality so a wrong lock
+        // contact always defeats instead of merely rejecting.
+        val lockContacts = buildMap<Position, Int> {
+            for (half in listOf(first, second)) {
+                state.board.locks[half]?.let { put(half, placed.valueAt(half) ?: -1) }
+            }
+            (neighbors(state.board, first) + neighbors(state.board, second))
+                .filter { it in state.board.locks && it != first && it != second }
+                .toSet().forEach { lock ->
+                    val half = if (lock in neighbors(state.board, first)) first else second
+                    put(lock, placed.valueAt(half) ?: -1)
+                }
         }
-
-        val triggered = setOf(first, second).intersect(state.board.honeypots) - state.board.triggeredHoneypots
-        val collected = setOf(first, second).intersect(state.board.buffs.keys) - state.board.collectedBuffs
-        val collectedEffects = collected.mapNotNull { state.board.buffs[it] }
-        // A lock trips only on a contacting mismatch; the demanded value satisfies
-        // and consumes it, and covering the cell removes it quietly.
-        val contactedLocks = (neighbors(state.board, first) + neighbors(state.board, second))
-            .filter { it in state.board.locks && it != first && it != second }
-        val tripped = contactedLocks.firstOrNull { lock ->
-            val half = if (lock in neighbors(state.board, first)) first else second
-            state.board.locks.getValue(lock) != placed.valueAt(half)
-        }
+        val tripped = lockContacts.keys.firstOrNull { state.board.locks.getValue(it) != lockContacts.getValue(it) }
         if (tripped != null) {
             val finished = state.copy(
                 board = state.board.copy(placed = state.board.placed + placed),
@@ -131,13 +130,20 @@ object GameEngine {
             )
             return Transition(finished, listOf(GameEvent.DominoPlaced, GameEvent.Finished(GameResult.LOCK_TRIPPED)))
         }
-        val consumedLocks = (contactedLocks + setOf(first, second).intersect(state.board.locks.keys)).toSet()
+        if (!canPlace(state.board, tile, action.origin, action.orientation)) {
+            val touchesNetwork = setOf(first, second).any { p -> neighbors(state.board, p).any { state.board.valueAt(it) != null } }
+            return rejected(state, if (touchesNetwork) RejectReason.CONTACT_MISMATCH else RejectReason.NOT_CONNECTED)
+        }
+
+        val triggered = setOf(first, second).intersect(state.board.honeypots) - state.board.triggeredHoneypots
+        val collected = setOf(first, second).intersect(state.board.buffs.keys) - state.board.collectedBuffs
+        val collectedEffects = collected.mapNotNull { state.board.buffs[it] }
         val newBoard = state.board.copy(
             placed = state.board.placed + placed,
             triggeredHoneypots = state.board.triggeredHoneypots + triggered,
             revealedHoneypots = state.board.revealedHoneypots + triggered,
             collectedBuffs = state.board.collectedBuffs + collected,
-            locks = state.board.locks - consumedLocks,
+            locks = state.board.locks - lockContacts.keys,
         )
         val next = state.copy(
             board = newBoard,
