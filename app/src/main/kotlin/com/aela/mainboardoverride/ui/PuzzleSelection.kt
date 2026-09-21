@@ -225,6 +225,7 @@ internal fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart
             challenge.rules.bannedScripts.forEach { Text(stringResource(R.string.challenge_rules_banned, scriptDisplayName(it)), color = Warning) }
             Text(stringResource(R.string.expected_reward, Rewards.VICTORY + if (record == null) Rewards.FIRST_CHALLENGE else 0), color = Warning)
             record?.let { Text(stringResource(R.string.puzzle_record, it.turns, it.trace)) }
+            record?.let { Text(stringResource(R.string.score_best, Rewards.victoryScore(it.turns, it.trace)), color = Warning) }
             }
         }
     }

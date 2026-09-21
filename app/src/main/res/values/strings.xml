@@ -36,6 +36,8 @@
     <string name="locked_scenario">Locked</string>
     <string name="saving_reward">Saving reward…</string>
     <string name="reward_breakdown">Victory: +%1$d · First completion: +%2$d credits</string>
+    <string name="score_result">Score: %1$d · Best: %2$d</string>
+    <string name="score_best">Best score: %1$d</string>
     <string name="scenario_unlocked">Scenario unlocked: %1$s</string>
     <string name="next_challenge">Next challenge</string>
     <string name="restart_level">Restart level</string>

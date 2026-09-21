@@ -187,6 +187,15 @@ internal fun MatchResultDialog(state: GameUiState, actions: MainViewModel, onMen
             Text(stringResource(R.string.turn, game.turn), color = Cyan)
             Text(stringResource(R.string.trace, game.trace), color = Cyan)
         }
+        if (victory) {
+            val score = Rewards.victoryScore(game.turn, game.trace)
+            val bestRecord = state.challengeLevel?.let { state.preferences.challengeBest[it] }
+                ?.let { Rewards.victoryScore(it.turns, it.trace) }
+                ?: state.preferences.bestTurns?.let { turns ->
+                    Rewards.victoryScore(turns, state.preferences.bestTrace ?: 0)
+                } ?: score
+            Text(stringResource(R.string.score_result, score, bestRecord), color = Warning)
+        }
         Surface(color = Void.copy(alpha = .6f), shape = RoundedCornerShape(12.dp)) {
             Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(R.string.credit_balance, state.preferences.credits), color = Warning, style = MaterialTheme.typography.titleMedium)

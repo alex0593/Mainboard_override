@@ -36,6 +36,8 @@
     <string name="locked_scenario">Bloqueado</string>
     <string name="saving_reward">Guardando recompensa…</string>
     <string name="reward_breakdown">Victoria: +%1$d · Primera victoria: +%2$d créditos</string>
+    <string name="score_result">Puntos: %1$d · Récord: %2$d</string>
+    <string name="score_best">Récord: %1$d puntos</string>
     <string name="scenario_unlocked">Escenario desbloqueado: %1$s</string>
     <string name="next_challenge">Siguiente desafío</string>
     <string name="restart_level">Reiniciar nivel</string>

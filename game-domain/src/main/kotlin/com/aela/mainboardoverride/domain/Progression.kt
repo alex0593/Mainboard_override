@@ -24,4 +24,10 @@ object Rewards {
     val affordableSkins = setOf("graphite", "signal")
     val purchasableSkins = premiumSkins + affordableSkins
     fun skinPrice(id: String) = if (id in affordableSkins) ENTRY_SKIN_PRICE else SKIN_PRICE
+
+    /**
+     * Victory score: fewer turns and less trace score higher, floored at zero.
+     * Derived from stored records, so no persistence migration is needed.
+     */
+    fun victoryScore(turns: Int, trace: Int): Int = (1000 - turns * 40 - trace).coerceAtLeast(0)
 }
