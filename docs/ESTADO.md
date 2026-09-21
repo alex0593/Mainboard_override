@@ -12,6 +12,7 @@ vive únicamente en [ROADMAP.md](ROADMAP.md).
 - [Arquitectura](ARCHITECTURE.md) — flujo de estado, contratos y mantenimiento.
 - [Roadmap](ROADMAP.md) — único plan operativo: prioridades, dependencias y criterios de cierre.
 - [Banco de ideas](IMPROVEMENTS.md) — opciones de producto sin compromiso de entrega.
+- [Futuro](FUTURO.md) — alcances diferidos durante los incrementos E.
 - [Guía visual de cartas](CARTAS.md) — especificación de cartas de script e iconos de recogidas.
 - [Fondos de escenarios](../assets/scenarios/README.md) — prompts, originales y exportaciones.
 - [Validación visual de escenarios](validation/scenarios/README.md) — capturas y resultados instrumentados.
