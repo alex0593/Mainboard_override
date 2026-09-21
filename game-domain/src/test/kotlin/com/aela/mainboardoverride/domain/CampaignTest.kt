@@ -32,4 +32,10 @@ class CampaignTest {
             earnedAchievements(challenges = 0, scenarios = 0, trace = 41, firstVictory = false).isEmpty(),
         )
     }
+
+    @Test fun `daily goal pays once per calendar day`() {
+        assertTrue(dailyGoalEarns(lastClaim = null, today = "2026-09-21"))
+        assertTrue(dailyGoalEarns(lastClaim = "2026-09-20", today = "2026-09-21"))
+        assertTrue(!dailyGoalEarns(lastClaim = "2026-09-21", today = "2026-09-21"))
+    }
 }

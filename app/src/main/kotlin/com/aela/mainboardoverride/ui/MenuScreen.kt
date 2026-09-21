@@ -67,6 +67,11 @@ internal fun MenuScreen(
                 )
                 Text(stringResource(R.string.tagline), color = Muted, letterSpacing = 3.sp)
                 Text(stringResource(R.string.credit_balance, state.preferences.credits), color = Warning)
+                Text(
+                    if (com.aela.mainboardoverride.domain.todayString() == state.preferences.dailyGoalDate) stringResource(R.string.daily_done)
+                    else stringResource(R.string.daily_pending, com.aela.mainboardoverride.domain.Rewards.DAILY_GOAL),
+                    color = Muted,
+                )
                 Spacer(Modifier.height(22.dp))
                 if (state.preferences.bestTurns != null) {
                     Text(

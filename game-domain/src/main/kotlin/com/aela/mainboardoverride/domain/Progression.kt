@@ -37,6 +37,7 @@ fun earnedAchievements(challenges: Int, scenarios: Int, trace: Int, firstVictory
 object Rewards {
     const val VICTORY = 20
     const val FIRST_CHALLENGE = 40
+    const val DAILY_GOAL = 10
     const val SKIN_PRICE = 200
     const val ENTRY_SKIN_PRICE = 80
     val premiumSkins = setOf("copper", "aurora")
@@ -50,3 +51,9 @@ object Rewards {
      */
     fun victoryScore(turns: Int, trace: Int): Int = (1000 - turns * 40 - trace).coerceAtLeast(0)
 }
+
+/** Device-local calendar day; the daily goal resets on date change. */
+fun todayString(): String = java.time.LocalDate.now().toString()
+
+/** A victory earns the daily bonus only when no claim is recorded for [today]. */
+fun dailyGoalEarns(lastClaim: String?, today: String): Boolean = lastClaim != today

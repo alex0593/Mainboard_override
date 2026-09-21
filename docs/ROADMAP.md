@@ -179,7 +179,7 @@ no son compromisos de implementar todas las ideas del banco.
 - [x] **E03 — Puntuación:** cerrado 2026-09-21 (alcance: fórmula + presentación) — `Rewards.victoryScore` (1000 − turnos×40 − rastreo, mín 0; desempate por turnos/rastreo ya existente); derivada de récords sin migrar DataStore; visible en el diálogo de resultado y en el detalle de desafío; textos EN/ES; `ScoreTest` 3/3, dominio 41/41.
 - [x] **E04 — Audio, vibración y VFX:** cerrado 2026-09-21 — audio verificado; vibración cableada (`HapticsHost`, `HapticsTest` 3/3); partículas de recogida (destello cian con disciplina de sesión) y flash único al cruzar rastreo 80, ambos finitos y con movimiento reducido. Glitch visual sostenido y estática quedan como ambiente futuro.
 - [x] **E05 — Campaña y recompensas:** cerrado 2026-09-21 (alcance: fases + 4 logros) — fases Red local/Enrutamiento/Sobreescritura como etiquetas; logros evaluados en la transacción de `finishMatch` con conjunto aditivo idempotente; avisos en el resultado y lista en desafíos; textos EN/ES; `CampaignTest` 2/2, dominio 43/43.
-- [ ] **E06 — Metas y mejoras:** decidir alcance de metas diarias/semanales, inventario y mejoras de scripts; definir calendario y equilibrio antes de implementar.
+- [x] **E06 — Metas y mejoras:** cerrado 2026-09-21 (alcance: meta diaria) — victoria del día +10 créditos, una vez por día natural, idempotente dentro de `finishMatch`; aviso en el resultado y estado en el menú; textos EN/ES; dominio 44/44. Semanales, inventario y mejoras de scripts quedan como futuro (ver FUTURO).
 
 **Cierre por incremento:** diseño acordado, implementación, validación relevante,
 textos EN/ES y documentación actualizada. Las opciones sin seleccionar siguen

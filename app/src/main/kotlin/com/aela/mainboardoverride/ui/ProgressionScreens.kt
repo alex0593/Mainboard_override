@@ -201,6 +201,9 @@ internal fun MatchResultDialog(state: GameUiState, actions: MainViewModel, onMen
                 Text(stringResource(R.string.credit_balance, state.preferences.credits), color = Warning, style = MaterialTheme.typography.titleMedium)
                 if (victory && state.reward == null) Text(stringResource(R.string.saving_reward))
                 else if (victory) Text(stringResource(R.string.reward_breakdown, state.reward?.base ?: 0, state.reward?.bonus ?: 0))
+                if (victory && (state.reward?.dailyBonus ?: 0) > 0) {
+                    Text(stringResource(R.string.daily_bonus, state.reward?.dailyBonus ?: 0), color = Terminal)
+                }
             }
         }
         state.reward?.unlockedScenario?.let {

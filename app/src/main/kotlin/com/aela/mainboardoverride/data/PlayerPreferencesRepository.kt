@@ -38,10 +38,11 @@ data class PlayerPreferences(
     val musicVolume: Float = .8f,
     val sfxVolume: Float = 1f,
     val achievements: Set<String> = emptySet(),
+    val dailyGoalDate: String? = null,
 )
 
 data class ChallengeRecord(val turns: Int, val trace: Int)
-data class MatchReward(val base: Int = 0, val bonus: Int = 0, val unlockedScenario: String? = null, val newAchievements: List<String> = emptyList())
+data class MatchReward(val base: Int = 0, val bonus: Int = 0, val unlockedScenario: String? = null, val newAchievements: List<String> = emptyList(), val dailyBonus: Int = 0)
 
 /** Persistence boundary for profile data that survives process death. */
 interface PlayerPreferencesRepository {
@@ -95,6 +96,7 @@ class DataStorePlayerPreferencesRepository(
             musicVolume = (values[MUSIC_VOLUME] ?: .8f).coerceIn(0f, 1f),
             sfxVolume = (values[SFX_VOLUME] ?: 1f).coerceIn(0f, 1f),
             achievements = values[ACHIEVEMENTS] ?: emptySet(),
+            dailyGoalDate = values[DAILY_GOAL_DATE],
             challengeBest = values[CHALLENGE_BEST].orEmpty().split(",").mapNotNull { item ->
                 val fields = item.split(":")
                 if (fields.size == 3) fields[0].toIntOrNull()?.let { level ->
@@ -176,7 +178,12 @@ class DataStorePlayerPreferencesRepository(
             )
             val stored = values[ACHIEVEMENTS] ?: emptySet()
             values[ACHIEVEMENTS] = stored + earned
-            reward = reward.copy(newAchievements = (earned - stored).sorted())
+            val daily = if (com.aela.mainboardoverride.domain.dailyGoalEarns(values[DAILY_GOAL_DATE], com.aela.mainboardoverride.domain.todayString())) {
+                values[DAILY_GOAL_DATE] = com.aela.mainboardoverride.domain.todayString()
+                com.aela.mainboardoverride.domain.Rewards.DAILY_GOAL
+            } else 0
+            values[CREDITS] = (values[CREDITS] ?: 0) + daily
+            reward = reward.copy(newAchievements = (earned - stored).sorted(), dailyBonus = daily)
             values[PAID_MATCHES] = paid + id
         }
         return reward
@@ -207,6 +214,7 @@ class DataStorePlayerPreferencesRepository(
         val TUTORIAL_COMPLETED = booleanPreferencesKey("tutorial_completed")
         val COMPLETED_SCENARIOS = stringSetPreferencesKey("completed_scenarios")
         val ACHIEVEMENTS = stringSetPreferencesKey("achievements")
+        val DAILY_GOAL_DATE = stringPreferencesKey("daily_goal_date")
         val CREDITS = intPreferencesKey("credits")
         val OWNED_SKINS = stringSetPreferencesKey("owned_skins")
         val PAID_MATCHES = stringSetPreferencesKey("paid_matches")

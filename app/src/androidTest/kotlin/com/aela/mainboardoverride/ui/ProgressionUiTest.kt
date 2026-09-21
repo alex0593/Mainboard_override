@@ -43,12 +43,16 @@ class ProgressionUiTest {
             val reward = repository.finishMatch("challenge-$level", level, 9, 72)
             assertEquals(60, reward.base + reward.bonus)
             assertEquals(ScenarioCatalog.all.firstOrNull { it.required == level }?.id, reward.unlockedScenario)
-            if (level == 1) assertTrue(reward.newAchievements.contains("first_victory"))
+            if (level == 1) {
+                assertTrue(reward.newAchievements.contains("first_victory"))
+                assertEquals(Rewards.DAILY_GOAL, reward.dailyBonus)
+            }
             if (level == 5) assertTrue(reward.newAchievements.contains("five_challenges"))
+            if (level > 1) assertEquals(0, reward.dailyBonus)
             if (level > 5) assertTrue(reward.newAchievements.isEmpty())
             assertEquals(MatchReward(), repository.finishMatch("challenge-$level", level, 9, 72))
         }
-        assertEquals(1800, repository.preferences.first().credits)
+        assertEquals(1800 + Rewards.DAILY_GOAL, repository.preferences.first().credits)
         assertEquals(30, repository.preferences.first().challengeBest.size)
         val replay = repository.finishMatch("replay", 1, 5, 40)
         assertEquals(20, replay.base)
@@ -56,13 +60,13 @@ class ProgressionUiTest {
         assertNull(replay.unlockedScenario)
         val purchases = coroutineScope { List(4) { async { repository.buySkin("copper") } }.awaitAll() }
         assertEquals(1, purchases.count { it })
-        assertEquals(1620, repository.preferences.first().credits)
+        assertEquals(1620 + Rewards.DAILY_GOAL, repository.preferences.first().credits)
         repository.setBoardSkin("copper")
         assertEquals("copper", repository.preferences.first().boardSkin)
         assertFalse(repository.buySkin("unknown"))
         val reread = DataStorePlayerPreferencesRepository(app, store).preferences.first()
         assertEquals(setOf("copper"), reread.ownedSkins)
-        assertEquals(1620, reread.credits)
+        assertEquals(1620 + Rewards.DAILY_GOAL, reread.credits)
         val payouts = coroutineScope { List(4) { async { repository.finishMatch("free-match", null, 6, 48, "classic") } }.awaitAll() }
         assertEquals(20, payouts.sumOf { it.base + it.bonus })
         assertEquals(1640, repository.preferences.first().credits)
