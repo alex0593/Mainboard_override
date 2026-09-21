@@ -109,6 +109,10 @@ internal fun Board(
     var knownEntities by remember { mutableStateOf<Map<String, List<Position>>?>(null) }
     var bursts by remember { mutableStateOf(emptyList<DestructionBurst>()) }
     var burstIds by remember { mutableStateOf(0) }
+    var knownBuffs by remember { mutableStateOf<Set<Position>?>(null) }
+    var pickups by remember { mutableStateOf(emptyList<DestructionBurst>()) }
+    var pickupIds by remember { mutableStateOf(0) }
+    var buffSession by remember { mutableStateOf(sessionKey) }
     LaunchedEffect(sessionKey, aliveEntities) {
         val freshSession = session != sessionKey
         session = sessionKey
@@ -121,6 +125,21 @@ internal fun Board(
         bursts = bursts + created
         delay(BurstDurationMillis)
         bursts = bursts - created.toSet()
+    }
+    // Collected buffs only grow, so newcomers against the previous snapshot are
+    // exactly the pickup signal. Same session discipline as destruction bursts.
+    LaunchedEffect(sessionKey, board.collectedBuffs) {
+        val freshSession = buffSession != sessionKey
+        buffSession = sessionKey
+        val previous = knownBuffs
+        knownBuffs = board.collectedBuffs
+        if (freshSession || previous == null || previewOnly) return@LaunchedEffect
+        val gained = board.collectedBuffs - previous
+        if (gained.isEmpty()) return@LaunchedEffect
+        val created = gained.map { position -> DestructionBurst(++pickupIds, listOf(position)) }
+        pickups = pickups + created
+        delay(BurstDurationMillis)
+        pickups = pickups - created.toSet()
     }
     BoxWithConstraints(
         modifier.background(androidx.compose.ui.graphics.SolidColor(Void), RoundedCornerShape(10.dp))
@@ -251,6 +270,7 @@ internal fun Board(
                 BoardCell(board, position, cell, position in legalOrigins, position == target, onCell)
             }
             // Bursts cover the destroyed footprint, which is two cells for a removed domino.
+            // Pickups reuse the same effect in cyan over the single collected cell.
             for (burst in bursts) {
                 val minX = burst.positions.minOf { it.x }
                 val minY = burst.positions.minOf { it.y }
@@ -262,6 +282,16 @@ internal fun Board(
                             width = cell * (burst.positions.maxOf { it.x } - minX + 1),
                             height = cell * (burst.positions.maxOf { it.y } - minY + 1),
                         ),
+                )
+            }
+            for (pickup in pickups) {
+                val position = pickup.positions.first()
+                DestructionBurst(
+                    burstId = pickup.id,
+                    accent = Cyan,
+                    spark = Terminal,
+                    tag = "pickup-burst",
+                    modifier = Modifier.offset(x = cell * position.x, y = cell * position.y).size(cell),
                 )
             }
             }
@@ -385,28 +415,34 @@ private const val BurstDurationMillis = 460L
  * expand and sparks fly out. With [LocalReducedMotion] only the flash remains, so nothing moves.
  */
 @Composable
-private fun DestructionBurst(burstId: Int, modifier: Modifier = Modifier) {
+private fun DestructionBurst(
+    burstId: Int,
+    accent: Color = Danger,
+    spark: Color = Warning,
+    tag: String = "kill-burst",
+    modifier: Modifier = Modifier,
+) {
     val reducedMotion = LocalReducedMotion.current
     val progress = remember(burstId) { Animatable(0f) }
     LaunchedEffect(burstId) { progress.animateTo(1f, tween(BurstDurationMillis.toInt(), easing = LinearEasing)) }
-    Canvas(modifier.testTag("kill-burst")) {
+    Canvas(modifier.testTag(tag)) {
         val elapsed = progress.value
         val center = Offset(size.width / 2f, size.height / 2f)
         val reach = size.minDimension
-        drawRect(Danger.copy(alpha = .45f * (1f - elapsed)))
+        drawRect(accent.copy(alpha = .45f * (1f - elapsed)))
         if (reducedMotion) return@Canvas
         val glitch = (.34f - elapsed).coerceAtLeast(0f) / .34f
         if (glitch > 0f) repeat(3) { index ->
             val y = size.height * (index + 1f) / 4f
             val side = if (index % 2 == 0) 1f else -1f
-            drawLine(Danger.copy(alpha = .85f * glitch),
+            drawLine(accent.copy(alpha = .85f * glitch),
                 Offset(center.x + side * reach * .38f, y), Offset(center.x + side * reach * .12f, y),
                 strokeWidth = 1.5.dp.toPx())
         }
         repeat(2) { ring ->
             val expansion = ((elapsed - ring * .18f) / .82f).coerceIn(0f, 1f)
             if (expansion > 0f) drawCircle(
-                (if (ring == 0) Danger else Warning).copy(alpha = .9f * (1f - expansion)),
+                (if (ring == 0) accent else spark).copy(alpha = .9f * (1f - expansion)),
                 radius = reach * (.22f + .78f * expansion),
                 center = center,
                 style = Stroke(width = (2.dp.toPx() * (1f - expansion)).coerceAtLeast(.5f)),
@@ -416,7 +452,7 @@ private fun DestructionBurst(burstId: Int, modifier: Modifier = Modifier) {
             val angle = index * (PI.toFloat() / 4f)
             val outward = Offset(cos(angle), sin(angle))
             val start = reach * (.2f + .5f * elapsed)
-            drawLine(Warning.copy(alpha = .9f * (1f - elapsed)),
+            drawLine(spark.copy(alpha = .9f * (1f - elapsed)),
                 center + outward * start, center + outward * (start + reach * .26f),
                 strokeWidth = 1.5.dp.toPx())
         }

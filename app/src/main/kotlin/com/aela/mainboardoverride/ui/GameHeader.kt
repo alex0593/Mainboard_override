@@ -67,9 +67,12 @@ private fun TraceIndicator(trace: Int) {
     var increase by remember { mutableIntStateOf(0) }
     val rise = remember { Animatable(0f) }
     val fade = remember { Animatable(0f) }
+    val critical = remember { Animatable(0f) }
+    val reducedMotion = LocalReducedMotion.current
     val traceColor = if (trace >= 80) Danger else Warning
 
     LaunchedEffect(trace) {
+        val wasCritical = previousTrace >= 80
         val delta = trace - previousTrace
         previousTrace = trace
         if (delta > 0) {
@@ -81,9 +84,21 @@ private fun TraceIndicator(trace: Int) {
             }
             rise.animateTo(-24f, tween(900, easing = FastOutSlowInEasing))
         }
+        // One-shot red flash the first time trace crosses into critical range.
+        if (!wasCritical && trace >= 80 && !reducedMotion) {
+            critical.snapTo(1f)
+            launch { critical.animateTo(0f, tween(900, easing = FastOutSlowInEasing)) }
+        }
     }
 
     Box(contentAlignment = Alignment.CenterStart) {
+        if (critical.value > 0f) {
+            Box(
+                Modifier.matchParentSize()
+                    .background(Danger.copy(alpha = .45f * critical.value), RoundedCornerShape(4.dp))
+                    .testTag("trace-critical"),
+            )
+        }
         Text(
             stringResource(R.string.trace, trace),
             color = traceColor,
