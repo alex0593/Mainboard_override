@@ -27,9 +27,9 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
   semántica del motor; se corrigieron las causas y la suite quedó verde.
 - `feat: verify B06 clean-menu reopen without duplicate rewards` — reabrir tras
   cerrar el proceso parte del menú limpio, sin duplicar créditos.
-- Estado verificado: `:game-domain:test` 28/28, `:app:testDebugUnitTest` 3/3,
-  `:app:lintDebug` verde, `PuzzleTutorialUiTest` 6/6 en CLK-LX3 por USB,
-  `:app:installDebug` verificado en dispositivo.
+- Estado verificado (2026-09-21): `:game-domain:test` 28/28, `:app:testDebugUnitTest` 3/3,
+  `:app:lintDebug` verde, suite instrumental completa 26/26 en CLK-LX3 por USB,
+  `:app:installDebug` verificado en dispositivo. Bloque A del roadmap cerrado.
 - Cambio local sin commitear (pendiente de revisar): ajuste de `lineHeight` y
   alturas mínimas en `GameHeader.kt` y `MainboardApp.kt` para fuentes ampliadas.
 
@@ -73,7 +73,6 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 
 ## Deuda activa
 
-- **A10 parcial:** falta la suite instrumental completa con resultados registrados.
 - **C01:** `MainboardApp.kt` (~1300 líneas) aún concentra `Board`, `GameScreen`
   y pantallas del menú; extracciones parciales ya hechas (`GameHeader`,
   `HardwareHand`, `GameControlButton`, `GameDialog`, `BoardThreatImage`, `DominoImage`).

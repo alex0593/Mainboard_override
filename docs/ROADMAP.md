@@ -7,8 +7,8 @@ Este documento recoge, estructura y prioriza las ideas de mejora para el juego, 
 **Revisión:** 2026-09-21. Único plan operativo del proyecto: orden,
 dependencias, tareas y criterios de cierre. El estado comprobable y las
 decisiones viven en [ESTADO.md](ESTADO.md). Ayer (2026-09-20) se cerraron
-A01–A09 con causas raíz registradas y B06 con reapertura limpia verificada;
-dominio 28/28 verde, app 3/3, lint verde y `PuzzleTutorialUiTest` 6/6 por USB.
+A01–A09 con causas raíz registradas y B06 con reapertura limpia verificada.
+Hoy (2026-09-21) se cerró A10 con la suite instrumental completa 26/26 en verde.
 Los hilos temáticos son propuestas; no representan funciones aprobadas
 ni tareas terminadas. `[ ]` significa pendiente; marcar `[x]` solo con evidencia
 de cierre. Las decisiones de producto se registran antes de implementar sus ramas.
@@ -119,7 +119,7 @@ un fallo por sí solo no cierra la tarea.
 - [x] **A07 — Scripts y RAM:** resuelto `ping then ram pickup allows kill in the same turn`. Causa: colocación en (1, 2) desconectada, así que el buff de RAM nunca se recogía; fijada en (0, 2). La comprobación intermedia pasó de igualdad exacta a `trap in targets` porque la ficha recién colocada también es objetivo válido de KILL según GDD (cubierto por `kill removes a complete placed domino`).
 - [x] **A08 — Tutorial de dominio:** resuelto `scriptsHaveRealEffects`. Causa: el fixture de la lección 9 (tablero de 8 con ruta hasta x=5) nunca alcanzaba la extracción; se fijó el tablero a ancho 6 con extracción en (6, 2) y se añadieron dos pasos de cierre (derrotas y recompensas).
 - [x] **A09 — Tutorial instrumental:** cerrado. Causa doble: (1) el panel de instrucción se autocerraba y el botón de repetir no existía a mitad de lección — repetir persistente en el header y avance explícito entre lecciones; (2) race en `AmbientSoundtrack` (write sobre un track liberado por `stop()`) que mataba el proceso de tests — `try/catch` alrededor del write. Clase `PuzzleTutorialUiTest` 6/6 en CLK-LX3 por USB.
-- [ ] **A10 — Cierre de validación:** parcial — dominio 28/28 verde (A01–A07 cerrados 2026-09-20), `:app:testDebugUnitTest` 3/3, `:app:lintDebug` verde (2026-09-20, splash attrs movidos a `values-v31/` por minSdk 26), `PuzzleTutorialUiTest` 6/6 en CLK-LX3 por USB, `:app:installDebug` verificado en dispositivo; pendiente suite instrumental completa con resultados registrados.
+- [x] **A10 — Cierre de validación:** cerrado 2026-09-21 — dominio 28/28 verde, `:app:testDebugUnitTest` 3/3, `:app:lintDebug` verde, suite instrumental completa 26/26 en CLK-LX3 por USB, `:app:installDebug` verificado en dispositivo. En el camino se detectó y corrigió un `fillMaxHeight` en la banda del header que colapsaba el panel (revertido; solo quedaron `lineHeight` explícitos) y se ajustó `GameHeaderUiTest` a medir la banda contra la fila del header, ya que la columna salir/reintentar la estira por encima del texto.
 
 **Cierre:** A01–A08 pasan y la suite completa de dominio queda verde; A09 pasa
 aislada y en suite; A10 no presenta fallos sin resolver. Si falta dispositivo,
