@@ -10,7 +10,7 @@ Al finalizar se muestra el desglose y se puede revisar el tablero sin controles 
 
 Durante la partida los scripts se muestran como cartas compactas en una banda superior, junto a RAM, turno y rastreo. El botón EJECUTAR TURNO conserva una posición estable en el panel de controles y se remarca cuando se intenta colocar una segunda ficha antes de resolver el turno. SPOOF presenta un selector vertical desplazable de valores 0–6 para el puerto elegido.
 
-Los escenarios libres incluyen dos recogidas de tablero: un disipador que resta 8 al rastreo y una reserva que suma 1 RAM. Cada casilla se consume una sola vez y no puede superar los límites de los recursos. Las cartas y los iconos tienen la guía visual en [CARTS spesificationst.md](../CARTS%20spesificationst.md).
+Los escenarios libres incluyen dos recogidas de tablero: un disipador que resta 8 al rastreo y una reserva que suma 1 RAM. Cada casilla se consume una sola vez y no puede superar los límites de los recursos. Las cartas y los iconos tienen la guía visual en [CARTAS.md](CARTAS.md).
 
 ## Concepto
 

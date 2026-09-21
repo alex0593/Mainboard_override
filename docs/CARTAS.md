@@ -1,4 +1,4 @@
-# CARTS specifications
+# Cartas e iconos — Mainboard Override
 
 This document defines the visual brief for the four script cards and the two free play board buffs in Mainboard Override. It is written for bitmap generation tools. The app draws all labels, values, RAM costs and noise values in Compose, so generated art must not contain readable text, numbers, logos or UI frames.
 

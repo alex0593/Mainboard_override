@@ -4,12 +4,14 @@
 
 Este documento recoge, estructura y prioriza las ideas de mejora para el juego, a partir del banco de ideas en `docs/IMPROVEMENTS.md`. No es un plan definitivo, sino una propuesta de ruta para decidir qué hacer primero y qué dejar para después.
 
-**Revisión:** 2026-09-20. El desglose operativo de la sección 4 define el orden
-de trabajo. Los hilos temáticos son propuestas; no representan funciones aprobadas
+**Revisión:** 2026-09-21. Único plan operativo del proyecto: orden,
+dependencias, tareas y criterios de cierre. El estado comprobable y las
+decisiones viven en [ESTADO.md](ESTADO.md). Ayer (2026-09-20) se cerraron
+A01–A09 con causas raíz registradas y B06 con reapertura limpia verificada;
+dominio 28/28 verde, app 3/3, lint verde y `PuzzleTutorialUiTest` 6/6 por USB.
+Los hilos temáticos son propuestas; no representan funciones aprobadas
 ni tareas terminadas. `[ ]` significa pendiente; marcar `[x]` solo con evidencia
 de cierre. Las decisiones de producto se registran antes de implementar sus ramas.
-A01–A09 (reglas y tutorial) cerrados y verificados; audio procedural completo y verificado
-en dispositivo.
 
 ## 2. Estado actual como punto de partida
 
@@ -189,7 +191,7 @@ pendientes de definición.
 - Conservar los cambios locales existentes y revisar cada diferencia antes de editar.
 - Registrar en cada tarea cerrada la evidencia (prueba, informe o captura) y fecha.
 - Si cambia una regla, actualizar GDD y sus pruebas en el mismo incremento.
-- Actualizar el resumen de `CATALOGO.md` al cerrar un bloque; mantener aquí el desglose.
+- Actualizar el resumen de `ESTADO.md` al cerrar un bloque; mantener aquí el desglose.
 - Ejecutar `./gradlew :game-domain:test` para dominio y
   `./gradlew :app:testDebugUnitTest :app:assembleDebug :app:lintDebug` para app;
   usar `./gradlew :app:connectedDebugAndroidTest` con dispositivo autorizado.
