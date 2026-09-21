@@ -79,8 +79,8 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
   verificado, test a fuente 1.3x; suite 27/27. TalkBack manual pendiente.
 - **D02:** cerrado 2026-09-21 — umbrales en `BalanceTest`, dominio 30/30;
   niveles al límite exacto identificados (2, 10, 20-30).
-- **E01 (lock):** cerrado 2026-09-21 — dominio 35/35, app local verde;
-  instrumentada pendiente (sin dispositivo conectado).
+- **E01 (lock):** cerrado 2026-09-21 — dominio 35/35, instrumentada 27/27 en
+  CLK-LX3 por USB, lint verde.
 - **Vibración:** preferencia persistida sin cablear; partículas para rastreo
   alto/recogidas pendientes.
 
