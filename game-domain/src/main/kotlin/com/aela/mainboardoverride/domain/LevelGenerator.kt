@@ -139,7 +139,10 @@ object LevelGenerator {
             .mapIndexed { index, (a, b) -> Domino("hardware-${route.size + index}", a, b) }
         val flipped = route.map { if (random.nextBoolean()) it.domino.rotated() else it.domino }
         val bag = (listOf(flipped.first()) + decoys.take(2)).shuffled(random) + flipped.drop(1) + decoys.drop(2)
-        val scripts = (0..2).flatMap { cycle -> ScriptType.entries.map { ScriptCard("$cycle-${it.name}", it) } }.shuffled(random)
+        val banned = challengeLevel?.let { ChallengeCatalog.level(it)?.rules?.bannedScripts } ?: emptySet()
+        val scripts = (0..2).flatMap { cycle ->
+            ScriptType.entries.filter { it !in banned }.map { ScriptCard("$cycle-${it.name}", it) }
+        }.shuffled(random)
         val state = GameState(
             seed = seed,
             board = board,

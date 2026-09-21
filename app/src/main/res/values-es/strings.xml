@@ -188,5 +188,6 @@
     <string name="challenge_level">Puzzle %1$d</string>
     <string name="challenge_rules_turns">Regla: máximo %1$d turnos</string>
     <string name="challenge_rules_trace">Regla: máximo %1$d de rastreo</string>
+    <string name="challenge_rules_banned">Regla: sin %1$s en este desafío</string>
     <string name="challenge_rules_both">Regla: máximo %1$d turnos y %2$d de rastreo</string>
 </resources>

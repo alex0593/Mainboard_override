@@ -222,9 +222,14 @@ internal fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart
             Text(stringResource(R.string.puzzle_difficulty, challenge.difficulty))
             challenge.rules.maxTurns?.let { Text(stringResource(R.string.challenge_rules_turns, it)) }
             challenge.rules.maxTrace?.let { Text(stringResource(R.string.challenge_rules_trace, it)) }
+            challenge.rules.bannedScripts.forEach { Text(stringResource(R.string.challenge_rules_banned, scriptDisplayName(it)), color = Warning) }
             Text(stringResource(R.string.expected_reward, Rewards.VICTORY + if (record == null) Rewards.FIRST_CHALLENGE else 0), color = Warning)
             record?.let { Text(stringResource(R.string.puzzle_record, it.turns, it.trace)) }
             }
         }
     }
 }
+
+/** Player-facing script name, matching the in-hand card labels. */
+private fun scriptDisplayName(type: ScriptType): String =
+    if (type == ScriptType.KILL_PROCESS) "KILL" else type.name

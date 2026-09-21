@@ -190,5 +190,6 @@
     <string name="challenge_level">Puzzle %1$d</string>
     <string name="challenge_rules_turns">Rule: max %1$d turns</string>
     <string name="challenge_rules_trace">Rule: max %1$d trace</string>
+    <string name="challenge_rules_banned">Rule: no %1$s this challenge</string>
     <string name="challenge_rules_both">Rule: max %1$d turns and %2$d trace</string>
 </resources>
