@@ -40,6 +40,7 @@ import kotlin.math.sin
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
@@ -322,7 +323,7 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
             .padding(2.dp)
             .background(if (isPlaced) Color.Transparent else placedColor.copy(alpha = if (value != null || firewall || trap || buff != null) .22f else placedColor.alpha))
             .then(if (target) Modifier.border(3.dp, Warning) else if (legal) Modifier.border(1.dp, Terminal) else Modifier)
-            .clickable { onCell(position) }
+            .clickable(role = Role.Button) { onCell(position) }
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {

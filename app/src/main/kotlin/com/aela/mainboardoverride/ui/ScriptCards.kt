@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +43,7 @@ internal fun ScriptCardView(card: ScriptCard, selected: Boolean, enabled: Boolea
         modifier.then((if (compact) Modifier.width(88.dp) else Modifier.fillMaxWidth())
             .heightIn(min = 48.dp).clip(RoundedCornerShape(8.dp)).testTag("script-${card.id}")
             .semantics { this.selected = selected }.alpha(if (enabled) 1f else .4f)
-            .pressable(enabled = enabled, label = "script card", onClick = onClick)
+            .pressable(enabled = enabled, role = Role.Button, label = "script card", onClick = onClick)
             .border(1.dp, if (highlighted) Warning else if (selected) Cyan else Muted, RoundedCornerShape(8.dp))),
     ) {
         Image(
@@ -81,7 +82,7 @@ internal fun DominoView(tile: Domino, selected: Boolean, skin: String = "kenney"
     val label = stringResource(R.string.domino_description, tile.first, tile.second)
     Row(
         modifier.widthIn(min = 42.dp).heightIn(min = 64.dp).semantics { contentDescription = label; this.selected = selected }.background(if (selected) Terminal.copy(alpha = .2f) else Void)
-            .border(1.dp, if (highlighted) Warning else if (selected) Terminal else Muted).pressable(label = "hand tile", onClick = onClick).padding(3.dp),
+            .border(1.dp, if (highlighted) Warning else if (selected) Terminal else Muted).pressable(role = Role.Button, label = "hand tile", onClick = onClick).padding(3.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {

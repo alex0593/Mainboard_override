@@ -113,7 +113,7 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                                 val helpInteraction = remember { MutableInteractionSource() }
                                 TextButton(
                                     onClick = { helpOpen = true },
-                                    modifier = Modifier.size(46.dp).testTag("general-help")
+                                    modifier = Modifier.size(48.dp).testTag("general-help")
                                         .pressFeedback(helpInteraction, label = "help"),
                                     interactionSource = helpInteraction,
                                 ) { Text("?", color = Cyan) }
