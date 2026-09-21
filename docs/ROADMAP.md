@@ -174,7 +174,7 @@ criterios explícitos y nuevas lecciones completables en ambos idiomas.
 Depende de D. Seleccionar un incremento antes de desarrollarlo; estas opciones
 no son compromisos de implementar todas las ideas del banco.
 
-- [ ] **E01 — Scripts y amenazas:** elegir un efecto; definir coste, ruido, objetivos y orden de resolución; implementar en el motor, probar límites y actualizar GDD/ayuda.
+- [x] **E01 — Scripts y amenazas:** cerrado 2026-09-21 (alcance: lock) — celda visible que exige valor exacto al contactar (`LOCK_TRIPPED` si falla, consume al acertar o cubrir, KILL lo elimina por 3RAM/15ruido); 1 por mapa libre con valor coordinado con la ruta de referencia, desafíos sin locks; `LockRulesTest` 5/5, ayuda y resultado EN/ES, `REVISION=2`, GDD actualizado.
 - [ ] **E02 — Retos y geometrías:** elegir una restricción o geometría; adaptar generador y renderizado, revisar caché y validar semillas.
 - [ ] **E03 — Puntuación:** acordar objetivos y desempates; implementar cálculo, persistencia de récord y presentación.
 - [ ] **E04 — Audio, vibración y VFX:** audio cerrado y verificado (soundtrack synthwave adaptativo, 16 cues procedurales, volúmenes música/EFX en ajustes, silencio y movimiento reducido cableados); pendiente vibración (preferencia persistida sin cablear) y partículas para rastreo alto/recogidas.

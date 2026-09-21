@@ -109,16 +109,31 @@ object LevelGenerator {
         }
         val available = (0 until height).flatMap { y -> (0 until width).map { x -> Position(x, y) } }
             .filter { it !in positions }.shuffled(random)
-        val firewallCount = scenario?.firewalls ?: random.nextInt(4 + (challengeLevel ?: 1) / 3, 8 + (challengeLevel ?: 1) / 2).coerceAtMost(available.size)
+        // Locks reinforce the reference corridor in free play: a cell beside the
+        // witness path demands its neighbor's value, so the reference replay
+        // satisfies it while deviations risk defeat. A side stream keeps the main
+        // shuffle untouched; challenges stay lock-free.
+        val pathValues = buildMap<Position, Int> {
+            route.forEach { tile -> tile.positions.toList().forEach { put(it, tile.valueAt(it)!!) } }
+        }
+        val lockCell = if (challengeLevel == null) {
+            available.filter { cell -> path.count { adjacent(it, cell) } == 1 }
+                .randomOrNull(kotlin.random.Random(seed xor 0x9E3779B9L))?.let { cell ->
+                    cell to pathValues.getValue(path.first { adjacent(it, cell) })
+                }
+        } else null
+        val open = if (lockCell == null) available else available - lockCell.first
+        val firewallCount = scenario?.firewalls ?: random.nextInt(4 + (challengeLevel ?: 1) / 3, 8 + (challengeLevel ?: 1) / 2).coerceAtMost(open.size)
         val board = base.copy(
-            firewalls = available.take(firewallCount).toSet(),
-            honeypots = available.drop(firewallCount).take(scenario?.traps ?: random.nextInt(2, 4 + (challengeLevel ?: 0) / 3)).toSet(),
+            firewalls = open.take(firewallCount).toSet(),
+            honeypots = open.drop(firewallCount).take(scenario?.traps ?: random.nextInt(2, 4 + (challengeLevel ?: 0) / 3)).toSet(),
             daemon = Daemon(base.extraction),
             buffs = if (scenario != null) {
-                available.drop(firewallCount + scenario.traps).take(2).mapIndexed { index, position ->
+                open.drop(firewallCount + scenario.traps).take(2).mapIndexed { index, position ->
                     position to if (index == 0) BoardBuff.TRACE_COOLER else BoardBuff.RAM_RESERVE
                 }.toMap()
             } else emptyMap(),
+            locks = if (lockCell == null) emptyMap() else mapOf(lockCell),
         )
         val decoys = (0..6).flatMap { a -> (a..6).map { b -> a to b } }.shuffled(random).take(12)
             .mapIndexed { index, (a, b) -> Domino("hardware-${route.size + index}", a, b) }

@@ -10,7 +10,7 @@ Al finalizar se muestra el desglose y se puede revisar el tablero sin controles 
 
 Durante la partida los scripts se muestran como cartas compactas en una banda superior, junto a RAM, turno y rastreo. El botón EJECUTAR TURNO conserva una posición estable en el panel de controles y se remarca cuando se intenta colocar una segunda ficha antes de resolver el turno. SPOOF presenta un selector vertical desplazable de valores 0–6 para el puerto elegido.
 
-Los escenarios libres incluyen dos recogidas de tablero: un disipador que resta 8 al rastreo y una reserva que suma 1 RAM. Cada casilla se consume una sola vez y no puede superar los límites de los recursos. Las cartas y los iconos tienen la guía visual en [CARTAS.md](CARTAS.md).
+Los escenarios libres incluyen dos recogidas de tablero: un disipador que resta 8 al rastreo y una reserva que suma 1 RAM. Cada casilla se consume una sola vez y no puede superar los límites de los recursos. Cada mapa libre genera además un lock visible junto a la ruta de referencia: exige ese valor exacto al contactar; acertar lo consume (también cubrirlo), fallar derrota al instante (`LOCK_TRIPPED`) y KILL puede eliminarlo. Los desafíos no generan locks. Las cartas y los iconos tienen la guía visual en [CARTAS.md](CARTAS.md).
 
 ## Concepto
 
@@ -33,16 +33,16 @@ El modo libre tiene 6 filas: Red original 8 columnas, Laboratorio y Centro de da
 |---|---:|---:|---|
 | `PING` | 1 | 0 | Revela un honeypot oculto sin activar al azar y amplía la vista previa en una ficha por uso, sin robarla. |
 | `SPOOF` | 2 | 5 | Reescribe permanentemente un puerto de una ficha en mano. |
-| `KILL_PROCESS` | 3 | 15 | Elimina un firewall, un honeypot visible o una ficha colocada completa al seleccionar cualquiera de sus dos celdas. Puede eliminarlo en el mismo turno de PING si alcanza la RAM. |
+| `KILL_PROCESS` | 3 | 15 | Elimina un firewall, un honeypot visible, un lock o una ficha colocada completa al seleccionar cualquiera de sus dos celdas. Puede eliminarlo en el mismo turno de PING si alcanza la RAM. |
 | `BRIDGE` | 2 | 10 | Copia un puerto de una ficha adyacente a través del firewall; la salida queda libre para colocar una ficha compatible. |
 
-Las derrotas posibles son rastreo al 100 %, daemon en el inicio, kernel panic sin acciones habilitables o bolsa de hardware agotada. BRIDGE y KILL_PROCESS pueden evitar kernel panic si abren una colocación legal. La victoria requiere una ruta continua hasta extracción después de resolver la fase del sistema.
+Las derrotas posibles son rastreo al 100 %, daemon en el inicio, lock contactado con valor erróneo, kernel panic sin acciones habilitables o bolsa de hardware agotada. BRIDGE y KILL_PROCESS pueden evitar kernel panic si abren una colocación legal. La victoria requiere una ruta continua hasta extracción después de resolver la fase del sistema.
 
 La mano de scripts arranca con un único cupo y abre uno más cada dos turnos: los turnos 1-2 sostienen un script, los turnos 3-4 dos, los turnos 5-6 tres, y así sucesivamente. Al ejecutar el turno se roba la primera carta del mazo solo si la mano está por debajo del cupo del turno nuevo y queda existencias, de modo que el tope crece lento pero nunca te quedas sin script por haber gastado el tuyo.
 
 PING conserva descubrimientos anteriores y selecciona entre trampas ocultas sin activar con azar reproducible por semilla y carta. La vista de la siguiente ficha se limpia al terminar el turno. Cada uso amplía la vista previa en una ficha y revela otra trampa disponible. Si no queda información nueva, rechaza el uso sin gastar carta ni RAM. No hay límite de scripts por turno aparte de las cartas disponibles, sus objetivos válidos y la RAM.
 
-BRIDGE requiere al menos una ficha junto al firewall en el eje seleccionado. Si ambos puertos existen, deben coincidir. Rechaza otra pared en la salida, extremos fuera del mapa y puentes duplicados sin gastar recursos. Conserva el firewall, guarda y muestra el número copiado y solo conecta extremos ocupados compatibles. KILL_PROCESS elimina también el puente del firewall destruido. Puede destruir un honeypot visible incluso si PING lo acaba de revelar, siempre que alcance la RAM. Los honeypots ocultos no son objetivos válidos. También puede eliminar una ficha colocada completa apuntando a cualquiera de sus mitades; la ficha deja de formar parte de la red y los recursos ya consumidos no se reembolsan. Destruir una trampa elimina su presencia, revelado y registro de activación, sin reembolsar ruido ni cartas. Mantiene el coste de 3 RAM y 15 de ruido.
+BRIDGE requiere al menos una ficha junto al firewall en el eje seleccionado. Si ambos puertos existen, deben coincidir. Rechaza otra pared en la salida, extremos fuera del mapa y puentes duplicados sin gastar recursos. Conserva el firewall, guarda y muestra el número copiado y solo conecta extremos ocupados compatibles. KILL_PROCESS elimina también el puente del firewall destruido y cualquier lock visible. Puede destruir un honeypot visible incluso si PING lo acaba de revelar, siempre que alcance la RAM. Los honeypots ocultos no son objetivos válidos. También puede eliminar una ficha colocada completa apuntando a cualquiera de sus mitades; la ficha deja de formar parte de la red y los recursos ya consumidos no se reembolsan. Destruir una trampa elimina su presencia, revelado y registro de activación, sin reembolsar ruido ni cartas. Mantiene el coste de 3 RAM y 15 de ruido.
 
 ## Qué se lleva implementado
 

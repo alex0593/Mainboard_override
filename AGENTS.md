@@ -13,7 +13,7 @@
 - UI observes a single `GameUiState` flow from `MainViewModel`. All gameplay actions go through `GameEngine.reduce` in `game-domain`; Compose never mutates game state directly. Rejections use `RejectReason`, not exceptions.
 - `LevelGenerator.generate(seed)` / `generateScenario(seed, scenarioId)` are deterministic and validated by the engine. Keep seeded reproducibility when changing generation.
 - `MainViewModel` has two constructors: the Android `Application` one and an injectable `PlayerPreferencesRepository` one used by tests.
-- Free-mode selection previews use fixed seed 42 (`generateScenario(42, ...)`). `PuzzlePreview` cache keys hash in `REVISION` (currently 1): bump it whenever generator geometry or preview rendering changes, or stale previews survive.
+- Free-mode selection previews use fixed seed 42 (`generateScenario(42, ...)`). `PuzzlePreview` cache keys hash in `REVISION` (currently 2): bump it whenever generator geometry or preview rendering changes, or stale previews survive.
 - No CI pipelines exist in this repo; validation is manual. `local.properties` (ignored) holds `sdk.dir`.
 
 ## Build, Test, and Development Commands

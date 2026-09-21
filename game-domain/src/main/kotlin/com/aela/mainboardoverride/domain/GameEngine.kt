@@ -113,11 +113,31 @@ object GameEngine {
         val triggered = setOf(first, second).intersect(state.board.honeypots) - state.board.triggeredHoneypots
         val collected = setOf(first, second).intersect(state.board.buffs.keys) - state.board.collectedBuffs
         val collectedEffects = collected.mapNotNull { state.board.buffs[it] }
+        // A lock trips only on a contacting mismatch; the demanded value satisfies
+        // and consumes it, and covering the cell removes it quietly.
+        val contactedLocks = (neighbors(state.board, first) + neighbors(state.board, second))
+            .filter { it in state.board.locks && it != first && it != second }
+        val tripped = contactedLocks.firstOrNull { lock ->
+            val half = if (lock in neighbors(state.board, first)) first else second
+            state.board.locks.getValue(lock) != placed.valueAt(half)
+        }
+        if (tripped != null) {
+            val finished = state.copy(
+                board = state.board.copy(placed = state.board.placed + placed),
+                dominoHand = state.dominoHand.filterNot { it.id == handTile.id },
+                tilePlacedThisTurn = true,
+                phase = TurnPhase.FINISHED,
+                result = GameResult.LOCK_TRIPPED,
+            )
+            return Transition(finished, listOf(GameEvent.DominoPlaced, GameEvent.Finished(GameResult.LOCK_TRIPPED)))
+        }
+        val consumedLocks = (contactedLocks + setOf(first, second).intersect(state.board.locks.keys)).toSet()
         val newBoard = state.board.copy(
             placed = state.board.placed + placed,
             triggeredHoneypots = state.board.triggeredHoneypots + triggered,
             revealedHoneypots = state.board.revealedHoneypots + triggered,
             collectedBuffs = state.board.collectedBuffs + collected,
+            locks = state.board.locks - consumedLocks,
         )
         val next = state.copy(
             board = newBoard,
@@ -152,10 +172,11 @@ object GameEngine {
     private fun playKill(state: GameState, action: GameAction.PlayKillProcess): Transition {
         val removesFirewall = action.target in state.board.firewalls
         val removesHoneypot = action.target in state.board.honeypots.intersect(state.board.revealedHoneypots)
+        val removesLock = action.target in state.board.locks
         val removesDomino = state.board.placed.any { placed ->
             action.target == placed.positions.first || action.target == placed.positions.second
         }
-        if (!removesFirewall && !removesHoneypot && !removesDomino) {
+        if (!removesFirewall && !removesHoneypot && !removesLock && !removesDomino) {
             return rejected(state, RejectReason.INVALID_TARGET)
         }
         return playCard(state, action.cardId, ScriptType.KILL_PROCESS) { current ->
@@ -165,6 +186,7 @@ object GameEngine {
                 revealedHoneypots = current.board.revealedHoneypots - action.target,
                 triggeredHoneypots = current.board.triggeredHoneypots - action.target,
                 bridges = current.board.bridges.filterNot { it.center == action.target },
+                locks = current.board.locks - action.target,
                 placed = current.board.placed.filterNot { placed ->
                     action.target == placed.positions.first || action.target == placed.positions.second
                 },
@@ -178,6 +200,7 @@ object GameEngine {
         val candidates = when (type) {
             ScriptType.BRIDGE -> state.board.firewalls
             ScriptType.KILL_PROCESS -> state.board.firewalls + state.board.revealedHoneypots +
+                state.board.locks.keys +
                 state.board.placed.flatMapTo(mutableSetOf()) { listOf(it.positions.first, it.positions.second) }
             else -> return emptySet()
         }
@@ -217,7 +240,7 @@ object GameEngine {
     private fun canOpenPlacement(state: GameState): Boolean {
         for (card in state.scriptHand.filter { it.type in setOf(ScriptType.BRIDGE, ScriptType.KILL_PROCESS) && it.type.ramCost <= state.ram }) {
             val targets = if (card.type == ScriptType.BRIDGE) state.board.firewalls
-            else state.board.firewalls + state.board.revealedHoneypots +
+            else state.board.firewalls + state.board.revealedHoneypots + state.board.locks.keys +
                 state.board.placed.flatMapTo(mutableSetOf()) { listOf(it.positions.first, it.positions.second) }
             for (target in targets) {
                 val actions = if (card.type == ScriptType.BRIDGE)

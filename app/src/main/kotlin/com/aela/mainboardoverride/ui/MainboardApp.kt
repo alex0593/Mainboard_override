@@ -109,4 +109,5 @@ internal fun resultText(result: GameResult): Int = when (result) {
     GameResult.KERNEL_PANIC -> R.string.result_kernel_panic
     GameResult.MEMORY_EXHAUSTED -> R.string.result_memory_exhausted
     GameResult.CHALLENGE_LIMIT -> R.string.result_challenge_limit
+    GameResult.LOCK_TRIPPED -> R.string.result_lock_tripped
 }

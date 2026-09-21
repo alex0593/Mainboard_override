@@ -293,11 +293,13 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
     val buff = board.buffs[position]?.takeUnless { position in board.collectedBuffs }
     val daemon = board.daemon?.position == position
     val bridge = board.bridges.find { it.center == position }
+    val lock = board.locks[position]
     val description = listOfNotNull(
         if (isStart) stringResource(R.string.node_start) else null,
         if (isExit) stringResource(R.string.node_exit) else null,
         if (firewall) stringResource(R.string.node_firewall) else null,
         if (trap) stringResource(R.string.node_trap) else null,
+        lock?.let { stringResource(R.string.node_lock, it) },
         buff?.let { stringResource(if (it == BoardBuff.TRACE_COOLER) R.string.node_trace_cooler else R.string.node_ram_reserve) },
         if (daemon) stringResource(R.string.node_daemon) else null,
         bridge?.let { stringResource(R.string.bridge_label, stringResource(if (it.horizontal) R.string.horizontal else R.string.vertical)) + " ${it.value}" },
@@ -309,6 +311,7 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
     val placedColor = when {
         firewall -> Danger
         trap -> Warning
+        lock != null -> Warning
         buff != null -> Cyan
         isStart || isExit -> Cyan
         value != null -> Terminal
@@ -321,8 +324,8 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
             .size(size)
             .testTag("board-cell-${position.x}-${position.y}")
             .padding(2.dp)
-            .background(if (isPlaced) Color.Transparent else placedColor.copy(alpha = if (value != null || firewall || trap || buff != null) .22f else placedColor.alpha))
-            .then(if (target) Modifier.border(3.dp, Warning) else if (legal) Modifier.border(1.dp, Terminal) else Modifier)
+            .background(if (isPlaced) Color.Transparent else placedColor.copy(alpha = if (value != null || firewall || trap || lock != null || buff != null) .22f else placedColor.alpha))
+            .then(if (target) Modifier.border(3.dp, Warning) else if (lock != null) Modifier.border(2.dp, Warning) else if (legal) Modifier.border(1.dp, Terminal) else Modifier)
             .clickable(role = Role.Button) { onCell(position) }
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
@@ -345,6 +348,7 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
                 daemon -> "D!"
                 isStart -> "S0"
                 isExit -> "X6"
+                lock != null -> "${lock}"
                 buff != null -> if (buff == BoardBuff.TRACE_COOLER) "−8" else "+1R"
                 value != null -> "$value"
                 else -> "·"

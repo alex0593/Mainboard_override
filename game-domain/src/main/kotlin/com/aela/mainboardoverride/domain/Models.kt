@@ -87,6 +87,7 @@ enum class GameResult {
     KERNEL_PANIC,
     MEMORY_EXHAUSTED,
     CHALLENGE_LIMIT,
+    LOCK_TRIPPED,
 }
 
 /**
@@ -110,6 +111,8 @@ data class BoardState(
     val daemon: Daemon? = null,
     val buffs: Map<Position, BoardBuff> = emptyMap(),
     val collectedBuffs: Set<Position> = emptySet(),
+    /** Lock cells demand an exact contacting value; a mismatch trips defeat. */
+    val locks: Map<Position, Int> = emptyMap(),
 ) {
     fun valueAt(position: Position): Int? {
         if (position == start) return 0
