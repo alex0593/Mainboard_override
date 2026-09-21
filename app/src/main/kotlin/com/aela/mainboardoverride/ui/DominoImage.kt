@@ -85,6 +85,12 @@ private val cachedPips = (0..6).map(::pipPositions)
 internal fun dominoPipColor(skin: String): Color = when (skin) {
     "ceramic" -> Color(0xFF084F3B)
     "obsidian" -> Cyan
+    // Cool white matches the titanium's circuit inlays over its dark slate faces.
+    "titanium" -> Color(0xFFE8F1FF)
+    // Muted gold mirrors the jade frame inlays over the deep forest-green faces.
+    "jade" -> Color(0xFFFFD43B)
+    // Pale rose matches the ruby inlays over the very dark burgundy faces.
+    "ruby" -> Color(0xFFFFB3C1)
     "blueprint" -> Color(0xFFB7E8FF)
     "copper" -> Color(0xFFFFD1A1)
     "ice" -> Color(0xFF075985)
@@ -97,6 +103,9 @@ internal fun dominoShellResource(skin: String, previewOnly: Boolean = false): In
     "circuit" -> if (previewOnly) R.drawable.domino_circuit_preview else R.drawable.domino_circuit
     "obsidian" -> if (previewOnly) R.drawable.domino_obsidian_preview else R.drawable.domino_obsidian
     "ceramic" -> if (previewOnly) R.drawable.domino_ceramic_preview else R.drawable.domino_ceramic
+    "titanium" -> if (previewOnly) R.drawable.domino_titanium_preview else R.drawable.domino_titanium
+    "jade" -> if (previewOnly) R.drawable.domino_jade_preview else R.drawable.domino_jade
+    "ruby" -> if (previewOnly) R.drawable.domino_ruby_preview else R.drawable.domino_ruby
     "blueprint" -> if (previewOnly) R.drawable.domino_blueprint_preview else R.drawable.domino_blueprint
     "copper" -> if (previewOnly) R.drawable.domino_copper_preview else R.drawable.domino_copper
     "ice" -> if (previewOnly) R.drawable.domino_ice_preview else R.drawable.domino_ice

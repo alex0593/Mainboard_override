@@ -110,6 +110,33 @@ class ProgressionUiTest {
         assertEquals(50, runBlocking { repository.preferences.first().credits })
     }
 
+    @Test fun galleryBuysAndEquipsNewPremiumPcb() {
+        runBlocking { for (level in 1..4) repository.finishMatch("jade-fund-$level", level, 5, 40) }
+        val vm = MainViewModel(app, repository)
+        compose.setContent {
+            val state by vm.uiState.collectAsState()
+            MainboardTheme { SkinGallery(state, vm) {} }
+        }
+        compose.waitUntil(5000) { vm.uiState.value.preferences.credits == 240 + Rewards.DAILY_GOAL }
+        // The domino tab lists the new material shells with their translated labels.
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(app.getString(R.string.skin_titanium)))
+        compose.onNodeWithText(app.getString(R.string.skin_titanium)).assertIsDisplayed()
+        compose.onNodeWithText(app.getString(R.string.board_skin)).performClick()
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasTestTag("skin-action-jade"))
+        compose.onNodeWithTag("skin-action-jade").assertIsDisplayed().assertIsEnabled().performClick()
+        compose.onNodeWithText(app.getString(R.string.confirm_skin_purchase, 200, 50)).assertIsDisplayed()
+        compose.onNodeWithTag("confirm-purchase").performClick()
+        compose.waitUntil(5000) { runBlocking { "jade" in repository.preferences.first().ownedSkins } }
+        compose.waitUntil(5000) { "jade" in vm.uiState.value.preferences.ownedSkins }
+        compose.waitForIdle()
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasTestTag("skin-action-jade"))
+        compose.onNodeWithTag("skin-action-jade").assertIsDisplayed().assertIsEnabled().performClick()
+        compose.waitUntil(5000) { runBlocking { repository.preferences.first().boardSkin == "jade" } }
+        assertEquals(50, runBlocking { repository.preferences.first().credits })
+        // Ruby and titanium stay listed as premium PCBs behind the same price gate.
+        assertTrue(runBlocking { repository.preferences.first().ownedSkins }.none { it in setOf("ruby", "titanium") })
+    }
+
     @Test fun resultCanBeDismissedToInspectBoardWithoutRewardingAgain() {
         val vm = MainViewModel(app, repository)
         compose.runOnIdle { vm.start(42) }

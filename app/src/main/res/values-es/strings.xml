@@ -49,6 +49,9 @@
     <string name="retry_level">Reintentar</string>
     <string name="skin_obsidian">Circuito obsidiana</string>
     <string name="skin_ceramic">Circuito cerámico</string>
+    <string name="skin_titanium">Circuito titanio</string>
+    <string name="skin_jade">Circuito jade</string>
+    <string name="skin_ruby">Circuito rubí</string>
     <string name="confirm_exit_title">¿Salir de la partida?</string>
     <string name="confirm_restart_title">¿Reiniciar la red?</string>
     <string name="confirm_match_loss">La partida no se guarda. ¿Estás seguro?</string>

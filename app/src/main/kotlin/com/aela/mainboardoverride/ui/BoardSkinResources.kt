@@ -5,6 +5,9 @@ import com.aela.mainboardoverride.R
 internal fun boardSkinResource(skin: String, previewOnly: Boolean = false): Int? = when (skin) {
     "obsidian" -> if (previewOnly) R.drawable.board_obsidian_preview else R.drawable.board_obsidian
     "ceramic" -> if (previewOnly) R.drawable.board_ceramic_preview else R.drawable.board_ceramic
+    "titanium" -> if (previewOnly) R.drawable.board_titanium_preview else R.drawable.board_titanium
+    "jade" -> if (previewOnly) R.drawable.board_jade_preview else R.drawable.board_jade
+    "ruby" -> if (previewOnly) R.drawable.board_ruby_preview else R.drawable.board_ruby
     "pcb" -> if (previewOnly) R.drawable.board_pcb_preview else R.drawable.board_pcb
     "blueprint" -> if (previewOnly) R.drawable.board_blueprint_preview else R.drawable.board_blueprint
     "industrial" -> if (previewOnly) R.drawable.board_industrial_preview else R.drawable.board_industrial

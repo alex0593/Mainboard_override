@@ -4,6 +4,7 @@ import com.aela.mainboardoverride.domain.Orientation
 import androidx.compose.ui.graphics.Color
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class DominoResourcesTest {
@@ -34,5 +35,19 @@ class DominoResourcesTest {
         assertEquals(Color(0xFF075985), dominoPipColor("ice"))
         assertEquals(Color(0xFFFFC107), dominoPipColor("aurora"))
         assertTrue(dominoPipColor("ice") != dominoPipColor("aurora"))
+    }
+
+    @Test fun materialShellsResolveSpritesAndDistinctPipColors() {
+        for (skin in listOf("titanium", "jade", "ruby")) {
+            assertNotEquals(null, dominoShellResource(skin))
+            assertNotEquals(null, dominoShellResource(skin, previewOnly = true))
+        }
+        // Light pips over each shell's very dark faces keep contrast AA-readable.
+        assertEquals(Color(0xFFE8F1FF), dominoPipColor("titanium"))
+        assertEquals(Color(0xFFFFD43B), dominoPipColor("jade"))
+        assertEquals(Color(0xFFFFB3C1), dominoPipColor("ruby"))
+        val pips = listOf("titanium", "jade", "ruby").map(::dominoPipColor)
+        assertEquals(3, pips.toSet().size)
+        assertTrue(pips.none { it == dominoPipColor("ice") || it == dominoPipColor("aurora") })
     }
 }

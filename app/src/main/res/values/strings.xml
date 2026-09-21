@@ -49,6 +49,9 @@
     <string name="retry_level">Retry</string>
     <string name="skin_obsidian">Obsidian circuit</string>
     <string name="skin_ceramic">Ceramic circuit</string>
+    <string name="skin_titanium">Titanium circuit</string>
+    <string name="skin_jade">Jade circuit</string>
+    <string name="skin_ruby">Ruby circuit</string>
     <string name="confirm_exit_title">Leave match?</string>
     <string name="confirm_restart_title">Restart network?</string>
     <string name="confirm_match_loss">This match is not saved. Are you sure?</string>
