@@ -73,9 +73,8 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 
 ## Deuda activa
 
-- **C01:** `MainboardApp.kt` (~1300 líneas) aún concentra `Board`, `GameScreen`
-  y pantallas del menú; extracciones parciales ya hechas (`GameHeader`,
-  `HardwareHand`, `GameControlButton`, `GameDialog`, `BoardThreatImage`, `DominoImage`).
+- **C01:** cerrado 2026-09-21 — `MainboardApp.kt` (~110 líneas, solo NavHost);
+  `GameScreen`, `Board`, `MenuScreen`, `SettingsScreen` y widgets en archivos propios.
 - **C02:** sin evidencia de revisión TalkBack, fuentes grandes, pantallas
   pequeñas ni contraste.
 - **D02:** sin métricas ni umbrales de equilibrio definidos.

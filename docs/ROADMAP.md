@@ -23,9 +23,9 @@ de cierre. Las decisiones de producto se registran antes de implementar sus rama
 - Tutorial con 10 lecciones deterministas, textos EN/ES en paridad (47 instrucciones), progreso visible y avance explícito; `TutorialTest` 5/5 y `PuzzleTutorialUiTest` 6/6 en CLK-LX3 por USB.
 - Audio procedural completo: soundtrack synthwave adaptativo, 16 cues de SFX, volúmenes de música/EFX en ajustes, silencio y movimiento reducido cableados. Vibración solo persistida, sin cablear.
 - Localización por-app con AppCompat (ES/EN aplican en todos los API), icono adaptativo con capa monocroma y splash propio.
-- UI funcional pero concentrada en pocos archivos (`MainboardApp.kt` ~1300 líneas).
+- UI distribuida en archivos por pantalla y componente (`GameScreen`, `Board`,
+  menús, diálogos de scripts); `MainboardApp.kt` conserva solo el NavHost.
 - Textos en español e inglés.
-- UI funcional pero concentrada en pocos archivos.
 
 ## 3. Hilos temáticos de trabajo
 
@@ -146,7 +146,7 @@ decisión registrada y sus ramas correspondientes verificadas.
 Ubicación: `app/src/main/kotlin/.../ui/`, recursos EN/ES, arte y tests
 instrumentados. Depende de A; las pantallas de progreso dependen también de B.
 
-- [ ] **C01 — Componentes:** parcialmente extraído (`GameHeader`, `HardwareHand`, `GameControlButton`, `GameDialog`, `BoardThreatImage`, `DominoImage` en archivos propios); pendiente sacar `Board`, `GameScreen` y pantallas del menú de `MainboardApp.kt` (1314 líneas). `ProgressionScreens.kt` (201 líneas) no requiere división.
+- [x] **C01 — Componentes:** cerrado 2026-09-21 — `MainboardApp.kt` pasó de 1314 a ~110 líneas (solo NavHost, rutas y mapeos de texto); `GameScreen`, `Board`, `MenuScreen`, `SettingsScreen`, `MenuWidgets`, `ScriptCards`, `ScriptDialogs` y `CircuitBackground` en archivos propios con movimientos puros. `ProgressionScreens.kt` (201 líneas) no requiere división.
 - [ ] **C02 — Accesibilidad:** hay 26 `contentDescription`/semánticas pero sin evidencia de revisión TalkBack, fuentes grandes, pantallas pequeñas ni contraste; corregir los problemas encontrados.
 - [x] **C03 — Feedback:** rechazos traducidos (`rejectionText`), banda de ruido pendiente (`pending-trace`), objetivos de scripts resaltados (`GameEngine.scriptTargets`), texto de buff recogido y burst de destrucción de KILL con `KillBurstUiTest`.
 - [x] **C04 — Previsualizaciones:** clave de caché con `REVISION = 1` e invalidación por skins (`$REVISION:id:boardSkin:dominoSkin`); `ScenarioArtworkUiTest` existe (validación completa pendiente de A10).
