@@ -82,7 +82,7 @@ BUTLER_API_KEY=<clave> ./tools/publish-itch.sh [canal]
 
 ## Arte y licencias
 
-Las fichas usan los gráficos de Kenney (`kenney_domino-pack.zip`, CC0).
+Las fichas usan los gráficos de Kenney (`assets/kenney/kenney_domino-pack.zip`, CC0).
 Las skins y los fondos de escenario se generaron con la herramienta integrada
 `imagegen`; prompts y originales están en `assets/`, y solo las exportaciones
 reducidas se empaquetan en `drawable-nodpi`. Licencias en
