@@ -30,12 +30,15 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 - `feat: verify B06 clean-menu reopen without duplicate rewards` — reabrir tras
   cerrar el proceso parte del menú limpio, sin duplicar créditos.
 - Bloques A–E con los incrementos seleccionados cerrados (A01–A10, B01–B06,
-  C01–C06, D01–D04, E01–E06); el detalle con evidencia está en el
-  [Roadmap](ROADMAP.md).
-- Estado verificado (2026-09-21): `:game-domain:test` **44/44**,
-  `:app:testDebugUnitTest` **6/6**, `:app:lintDebug` sin errores, suite
-  instrumental completa **27/27** en CLK-LX3 por USB, `:app:installDebug`
+  C01–C06, D01–D04, E01–E06) y F01 cerrado el 2026-09-21; el detalle con
+  evidencia está en el [Roadmap](ROADMAP.md).
+- Estado verificado (2026-09-21): `:game-domain:test` **46/46**,
+  `:app:testDebugUnitTest` **7/7**, `:app:lintDebug` sin errores, suite
+  instrumental completa **28/28** en CLK‑LX3 por USB, `:app:installDebug`
   verificado en dispositivo.
+- **F01 — Skins Titanio, Jade y Rubí (2026-09-21):** 6 originales versionados,
+  12 exportaciones empaquetadas, selector y galería ampliados, textos EN/ES,
+  `SkinCatalogTest` 2/2 y `ProgressionUiTest` 10/10 (compra y equipo de jade).
 - Organización y icono (2026-09-21): arte de la raíz movido a `assets/reference`
   y `assets/kenney`, `assets/logo/` versionado, y el foreground del icono
   adaptativo pasa a ser la exportación del logo (`logo_foreground.png`).
@@ -46,7 +49,8 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 | Área | Estado actual | Fuente principal |
 | --- | --- | --- |
 | Motor | Estado inmutable, acciones explícitas y `GameEngine.reduce`. | [Arquitectura](ARCHITECTURE.md) |
-| Generación | Semillas reproducibles; niveles libres, escenarios y desafíos catalogados; suite de dominio 44/44 verde. | [Arquitectura](ARCHITECTURE.md) |
+| Generación | Semillas reproducibles; niveles libres, escenarios y desafíos catalogados; suite de dominio 46/46 verde. | [Arquitectura](ARCHITECTURE.md) |
+| Skins | 15 fichas y 14 PCB en galería; Cobre, Aurora, Titanio, Jade y Rubí premium (200), grafito y señal a 80, resto gratis. | [README de skins](../assets/skins/README.md) |
 | Scripts | `PING`, `SPOOF`, `KILL` (`KILL_PROCESS` internamente) y `BRIDGE`. | [GDD](GDD.md) |
 | Progresión | Desafíos desbloquean escenarios por victorias distintas; récords y créditos persisten. | `PlayerPreferencesRepository` |
 | Economía | Compras y recompensas con transacciones DataStore e idempotencia; reapertura limpia sin pagos duplicados. | `PlayerPreferencesRepository` |
@@ -78,6 +82,10 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
   último escenario libre (`preferences.lastScenario`, `classic` por defecto).
 - Las previsualizaciones de selección usan la semilla fija `42` y se etiquetan
   como ejemplo; la caché se invalida con `REVISION` y skins en la clave.
+- **F01:** las PCB Titanio, Jade y Rubí son premium de compra única a 200
+  créditos (`Rewards.premiumSkins`); sus fichas correspondientes son gratuitas,
+  porque la galería solo aplica precio a las PCB. `REVISION` no cambia: la clave
+  de previsualización ya incluye el id de skin y el render es el mismo.
 - **Icono del launcher:** el foreground del icono adaptativo es la exportación
   reducida `drawable-nodpi/logo_foreground.png` del original en `assets/logo/`;
   el fondo `#07110F` y la capa `monochrome` se conservan, y cualquier regeneración

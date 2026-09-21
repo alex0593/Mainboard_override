@@ -8,9 +8,9 @@ Este documento recoge, estructura y prioriza las ideas de mejora para el juego, 
 dependencias, tareas y criterios de cierre. El estado comprobable y las
 decisiones viven en [ESTADO.md](ESTADO.md). Ayer (2026-09-20) se cerraron
 A01–A09 con causas raíz registradas y B06 con reapertura limpia verificada.
-Hoy (2026-09-21) se cerró A10 con la suite instrumental completa en verde y
-también cerraron C01–C06, D02–D04 y E01–E06; la suite instrumental quedó en
-27/27 con los tests añadidos en C02 y E04.
+Hoy (2026-09-21) se cerró A10 con la suite instrumental completa en verde,
+también cerraron C01–C06, D02–D04 y E01–E06, y se abrió el bloque F con F01
+(skins Titanio/Jade/Rubí); la suite instrumental quedó en 28/28.
 Los hilos temáticos son propuestas; no representan funciones aprobadas
 ni tareas terminadas. `[ ]` significa pendiente; marcar `[x]` solo con evidencia
 de cierre. Las decisiones de producto se registran antes de implementar sus ramas.
@@ -21,7 +21,7 @@ de cierre. Las decisiones de producto se registran antes de implementar sus rama
 - Scripts actuales: PING, SPOOF, KILL_PROCESS, BRIDGE.
 - Progresión de desafíos desbloqueables y escenarios de modo libre.
 - Persistencia con DataStore; compras y recompensas implementadas en el repositorio concreto.
-- Última ejecución de `:game-domain:test`: 44 pruebas, 0 fallos (2026-09-21).
+- Última ejecución de `:game-domain:test`: 46 pruebas, 0 fallos (2026-09-21).
 - Tutorial con 10 lecciones deterministas, textos EN/ES en paridad (47 instrucciones), progreso visible y avance explícito; `TutorialTest` 5/5 y `PuzzleTutorialUiTest` 6/6 en CLK-LX3 por USB.
 - Audio procedural completo: soundtrack synthwave adaptativo, 16 cues de SFX, volúmenes de música/EFX en ajustes, silencio, vibración cableada (`HapticsHost`) y movimiento reducido (E04).
 - Localización por-app con AppCompat (ES/EN aplican en todos los API), icono adaptativo con foreground exportado del logo (`logo_foreground.png`), capa monocroma y splash propio.
@@ -82,15 +82,15 @@ de cierre. Las decisiones de producto se registran antes de implementar sus rama
 - Partículas leves para rastreo alto o recogida de buffs. (Hecho en E04: destello cian al recoger y flash rojo único al cruzar 80, ambos finitos y con movimiento reducido.)
 
 ### 3.8 Calidad técnica y tests
-- Aumentar tests de dominio antes de añadir reglas. (Hecho: 44 pruebas con barridos de 1000 semillas + 7×100 por escenario.)
-- Añadir pruebas instrumentadas más amplias. (Hecho: 8 clases y 27 pruebas instrumentadas; A10 cerrado sin fallos pendientes.)
+- Aumentar tests de dominio antes de añadir reglas. (Hecho: 46 pruebas con barridos de 1000 semillas + 7×100 por escenario.)
+- Añadir pruebas instrumentadas más amplias. (Hecho: 8 clases y 28 pruebas instrumentadas; A10 cerrado sin fallos pendientes.)
 - Añadir validaciones masivas de semillas. (Hecho en dominio; pendiente en dispositivos reales.)
 - Mejorar nombres de tests y claridad.
 - Centralizar lógica de validación de UI.
 - Prever invalidación de caché de previsualizaciones al cambiar geometría o renderizado. (Hecho: clave con `REVISION`.)
 
 ### 3.9 Contenido y skins
-- Añadir skins temáticas coherentes con la estética. (Hecho: Cobre, Aurora, grafito, señal + icono adaptativo y splash propio.)
+- Añadir skins temáticas coherentes con la estética. (Hecho: Cobre, Aurora, grafito, señal, obsidiana, cerámica, Titanio, Jade y Rubí + icono adaptativo y splash propio.)
 - Separar mejor skins de fichas y de placa. (Hecho: galería separa fichas y PCB.)
 - Ampliar textos de ayuda, ejemplos y notas de diseño en GDD. (Hecho ayuda contextual y tutorial reescrito; GDD sincronizado el 2026-09-21 con audio, vibración, VFX, puntuación, logros y meta diaria.)
 - Añadir glosario de sistema para novatos.
@@ -186,6 +186,16 @@ no son compromisos de implementar todas las ideas del banco.
 **Cierre por incremento:** diseño acordado, implementación, validación relevante,
 textos EN/ES y documentación actualizada. Las opciones sin seleccionar siguen
 pendientes de definición.
+
+### F — Contenido seleccionado (P2, alcance por incremento)
+
+Depende de E. Cada incremento registra su decisión antes de implementar su rama.
+
+- [x] **F01 — Skins Titanio, Jade y Rubí:** cerrado 2026-09-21 (alcance: 3 PCB premium + 3 fichas) — 6 originales en `assets/skins/originals/` con prompts versionados; 12 exportaciones (`PrepareSkinAsset`: PCB 1024×512 y preview 384×192, fichas 256×512 y preview 96×192); mapeo en `BoardSkinResources`/`dominoShellResource`, colores de punto por material (titanio `#E8F1FF`, jade `#FFD43B`, rubí `#FFB3C1`), galería y textos EN/ES; `premiumSkins` con precio 200 y fichas gratuitas; `REVISION` sin cambios. Evidencia: `SkinCatalogTest` 2/2, dominio 46/46, app 7/7, `ProgressionUiTest` 10/10, lint sin errores, suite instrumental 28/28 en CLK‑LX3 por USB.
+- [ ] **F02 — Script STEALTH/VPN:** spec pendiente de acuerdo (idea: descartar el ruido pendiente del turno; alcance, coste y casos límite por definir antes de codificar).
+
+**Cierre por incremento F:** igual que E — spec acordada, implementación, tests,
+textos EN/ES y documentación en el mismo incremento.
 
 ### Seguimiento y entrega
 

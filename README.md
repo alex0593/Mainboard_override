@@ -13,11 +13,12 @@ Vertical slice jugable: motor Kotlin puro, app Jetpack Compose, generación
 determinista por semillas, persistencia local de ajustes y récords, y pruebas
 unitarias del bucle principal.
 
-Estado verificado (2026-09-21): bloque A del roadmap cerrado (A01–A10),
-suite de dominio **44/44** y `:app:testDebugUnitTest` **6/6** en verde, lint sin
-errores, suite instrumental **27/27** en CLK-LX3 por USB. La reapertura limpia
-sin recompensas duplicadas (B06) y las diez lecciones del tutorial están
-verificadas en dispositivo. No hay cambios locales pendientes de revisar.
+Estado verificado (2026-09-21): bloque A del roadmap cerrado (A01–A10) e
+incremento F01 (skins Titanio/Jade/Rubí), suite de dominio **46/46** y
+`:app:testDebugUnitTest` **7/7** en verde, lint sin errores, suite instrumental
+**28/28** en CLK‑LX3 por USB. La reapertura limpia sin recompensas duplicadas
+(B06) y las diez lecciones del tutorial están verificadas en dispositivo.
+No hay cambios locales pendientes de revisar.
 
 ## Cómo se juega
 
@@ -28,8 +29,10 @@ verificadas en dispositivo. No hay cambios locales pendientes de revisar.
   reproducible por semilla y solución comprobada por el motor.
 - **Economía:** cada victoria otorga 20 créditos y la primera victoria de cada
   desafío añade 40. Repetir desafíos concede solo los 20 de victoria; perder y
-  abandonar no dan créditos. Las PCB Cobre y Aurora cuestan 200 cada una, son
-  de compra única y se equipan desde la galería. No hay créditos retroactivos.
+  abandonar no dan créditos. Las PCB Cobre, Aurora, Titanio, Jade y Rubí cuestan
+  200 cada una y las de grafito y señal 80; todas son de compra única y se
+  equipan desde la galería (las fichas son siempre gratuitas). No hay créditos
+  retroactivos.
 - **Tutorial:** diez lecciones jugables sobre conexiones, rotación, turnos,
   peligros y los cuatro scripts. Guarda la última lección para continuar o
   reiniciar, sin alterar créditos, récords ni partidas.
