@@ -206,5 +206,23 @@ internal fun MatchResultDialog(state: GameUiState, actions: MainViewModel, onMen
         state.reward?.unlockedScenario?.let {
             Text(stringResource(R.string.scenario_unlocked, stringResource(scenarioLabel(it))), color = Cyan)
         }
+        state.reward?.newAchievements?.takeIf { it.isNotEmpty() }?.let { fresh ->
+            fresh.forEach { Text(stringResource(R.string.achievement_new, stringResource(achievementNameRes(it))), color = Terminal) }
+        }
     }
+}
+
+/** String resources for an achievement id; unknown ids fall back to first victory. */
+internal fun achievementNameRes(id: String): Int = when (id) {
+    Achievement.FIVE_CHALLENGES.id -> R.string.ach_five_challenges
+    Achievement.EXPLORER.id -> R.string.ach_explorer
+    Achievement.CLEAN_RUN.id -> R.string.ach_clean_run
+    else -> R.string.ach_first_victory
+}
+
+internal fun achievementDescRes(id: String): Int = when (id) {
+    Achievement.FIVE_CHALLENGES.id -> R.string.ach_five_challenges_desc
+    Achievement.EXPLORER.id -> R.string.ach_explorer_desc
+    Achievement.CLEAN_RUN.id -> R.string.ach_clean_run_desc
+    else -> R.string.ach_first_victory_desc
 }

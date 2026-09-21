@@ -15,6 +15,25 @@ object ScenarioCatalog {
     fun get(id: String) = all.firstOrNull { it.id == id } ?: all.first()
 }
 
+/** Campaign phases over the 30 challenge levels; labels only, rules untouched. */
+fun challengePhase(number: Int): Int = ((number - 1) / 10).coerceIn(0, 2)
+
+/** Additive achievement ids; grants never pay twice because storage is a set. */
+enum class Achievement(val id: String) {
+    FIRST_VICTORY("first_victory"),
+    FIVE_CHALLENGES("five_challenges"),
+    EXPLORER("explorer"),
+    CLEAN_RUN("clean_run"),
+}
+
+/** Pure evaluation shared by the repository and tests. */
+fun earnedAchievements(challenges: Int, scenarios: Int, trace: Int, firstVictory: Boolean): Set<String> = buildSet {
+    if (firstVictory) add(Achievement.FIRST_VICTORY.id)
+    if (challenges >= 5) add(Achievement.FIVE_CHALLENGES.id)
+    if (scenarios >= 1) add(Achievement.EXPLORER.id)
+    if (trace <= 40) add(Achievement.CLEAN_RUN.id)
+}
+
 object Rewards {
     const val VICTORY = 20
     const val FIRST_CHALLENGE = 40

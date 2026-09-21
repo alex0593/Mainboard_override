@@ -19,6 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aela.mainboardoverride.GameUiState
@@ -191,14 +192,37 @@ internal fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart
         Column(Modifier.fillMaxSize().padding(10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             ProgressionHeader(stringResource(R.string.challenge), onBack,
                 counter = "${state.preferences.challengeBest.size}/${ChallengeCatalog.COUNT}")
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(stringResource(R.string.achievements_title), color = Muted, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                Achievement.entries.forEach { achievement ->
+                    val unlocked = achievement.id in state.preferences.achievements
+                    Text(
+                        (if (unlocked) "✓ " else "· ") + stringResource(achievementNameRes(achievement.id)),
+                        color = if (unlocked) Terminal else Muted, fontSize = 11.sp, lineHeight = 14.sp,
+                        fontFamily = FontFamily.Monospace,
+                        modifier = Modifier.testTag("achievement-${achievement.id}"),
+                    )
+                }
+            }
             LazyVerticalGrid(GridCells.Adaptive(220.dp), horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.weight(1f)) {
-                items(ChallengeCatalog.levels, key = { it.number }) { challenge ->
-                    ChallengeCard(challenge,
-                        challenge.number <= state.preferences.challengeUnlocked,
-                        challenge.number in state.preferences.challengeBest,
-                        state.preferences.challengeBest[challenge.number],
-                        Modifier.testTag("challenge-${challenge.number}")) { selected = challenge.number }
+                for (phase in 0..2) {
+                    item(span = { GridItemSpan(maxLineSpan) }, key = "phase-$phase", contentType = "phase") {
+                        Text(
+                            stringResource(R.string.phase_title, phase + 1, stringResource(phaseNameRes(phase))),
+                            color = Cyan, fontFamily = FontFamily.Monospace, modifier = Modifier.testTag("phase-$phase"),
+                        )
+                    }
+                    items(
+                        ChallengeCatalog.levels.filter { challengePhase(it.number) == phase },
+                        key = { it.number },
+                    ) { challenge ->
+                        ChallengeCard(challenge,
+                            challenge.number <= state.preferences.challengeUnlocked,
+                            challenge.number in state.preferences.challengeBest,
+                            state.preferences.challengeBest[challenge.number],
+                            Modifier.testTag("challenge-${challenge.number}")) { selected = challenge.number }
+                    }
                 }
             }
         }
@@ -234,3 +258,9 @@ internal fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart
 /** Player-facing script name, matching the in-hand card labels. */
 private fun scriptDisplayName(type: ScriptType): String =
     if (type == ScriptType.KILL_PROCESS) "KILL" else type.name
+
+private fun phaseNameRes(phase: Int): Int = when (phase) {
+    1 -> R.string.phase_routing
+    2 -> R.string.phase_overwrite
+    else -> R.string.phase_local
+}

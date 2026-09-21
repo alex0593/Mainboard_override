@@ -43,6 +43,9 @@ class ProgressionUiTest {
             val reward = repository.finishMatch("challenge-$level", level, 9, 72)
             assertEquals(60, reward.base + reward.bonus)
             assertEquals(ScenarioCatalog.all.firstOrNull { it.required == level }?.id, reward.unlockedScenario)
+            if (level == 1) assertTrue(reward.newAchievements.contains("first_victory"))
+            if (level == 5) assertTrue(reward.newAchievements.contains("five_challenges"))
+            if (level > 5) assertTrue(reward.newAchievements.isEmpty())
             assertEquals(MatchReward(), repository.finishMatch("challenge-$level", level, 9, 72))
         }
         assertEquals(1800, repository.preferences.first().credits)
