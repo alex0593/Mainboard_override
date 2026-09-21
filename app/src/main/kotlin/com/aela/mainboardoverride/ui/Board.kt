@@ -441,8 +441,6 @@ private fun BoardBuffSprite(buff: BoardBuff) {
             else R.drawable.board_ram_reserve_v1), contentDescription = null, modifier = Modifier.fillMaxSize().padding(1.dp))
         Text(if (buff == BoardBuff.TRACE_COOLER) "−8" else "+1R", color = Cyan,
             fontSize = 9.sp, fontWeight = FontWeight.Black, maxLines = 1,
-            modifier = Modifier.align(Alignment.TopEnd)
-                .background(Void.copy(alpha = .65f), RoundedCornerShape(2.dp))
-                .padding(horizontal = 3.dp, vertical = 1.dp))
+            modifier = Modifier.align(Alignment.TopEnd).padding(horizontal = 3.dp, vertical = 1.dp))
     }
 }
