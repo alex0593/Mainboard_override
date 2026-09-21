@@ -42,11 +42,14 @@ class GameHeaderUiTest {
         val ping = vm.uiState.value.game!!.scriptHand.first { it.type == ScriptType.PING }
         val header = compose.onNodeWithTag("game-header").fetchSemanticsNode().boundsInRoot
         compose.onNodeWithTag("game-header").assertExists()
-        // Only the pending noise line fits between the header and the PCB.
+        // Only the pending noise line fits between the header and the PCB. The header row
+        // is taller than the header text because the exit/retry column stretches it, so the
+        // band is measured against the row bottom, not the text bottom.
+        val row = compose.onNodeWithTag("header-row").fetchSemanticsNode().boundsInRoot
         val strip = compose.onNodeWithTag("pending-trace-band").fetchSemanticsNode().boundsInRoot
         val density = app.resources.displayMetrics.density
-        assertTrue("Header and PCB stay close: header=$header, strip=$strip",
-            strip.top >= header.bottom && strip.bottom - header.bottom <= 16f * density)
+        assertTrue("Header and PCB stay close: header=$header, row=$row, strip=$strip",
+            strip.top >= row.bottom && strip.bottom - row.bottom <= 16f * density)
 
         compose.mainClock.autoAdvance = false
         compose.onNodeWithTag("script-${ping.id}").performClick()

@@ -293,7 +293,7 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
         scenarioBackgroundResource(state.scenarioId)
     } else R.drawable.menu_background_v2) {
         Column(Modifier.fillMaxSize().padding(8.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().testTag("header-row"), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.weight(1f).heightIn(min = 64.dp)) {
                     // PING takes over the whole band while its preview lasts; the header comes back
                     // on its own once the countdown reaches zero.
