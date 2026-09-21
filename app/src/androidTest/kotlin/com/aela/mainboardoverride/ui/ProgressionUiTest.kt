@@ -69,7 +69,7 @@ class ProgressionUiTest {
         assertEquals(1620 + Rewards.DAILY_GOAL, reread.credits)
         val payouts = coroutineScope { List(4) { async { repository.finishMatch("free-match", null, 6, 48, "classic") } }.awaitAll() }
         assertEquals(20, payouts.sumOf { it.base + it.bonus })
-        assertEquals(1640, repository.preferences.first().credits)
+        assertEquals(1640 + Rewards.DAILY_GOAL, repository.preferences.first().credits)
         assertEquals(6, repository.preferences.first().bestTurns)
         assertEquals(setOf("classic"), repository.preferences.first().completedScenarios)
     }
@@ -94,11 +94,11 @@ class ProgressionUiTest {
             val state by vm.uiState.collectAsState()
             MainboardTheme { SkinGallery(state, vm) {} }
         }
-        compose.waitUntil(5000) { vm.uiState.value.preferences.credits == 240 }
+        compose.waitUntil(5000) { vm.uiState.value.preferences.credits == 240 + Rewards.DAILY_GOAL }
         compose.onNodeWithText(app.getString(R.string.board_skin)).performClick()
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasTestTag("skin-action-copper"))
         compose.onNodeWithTag("skin-action-copper").assertIsDisplayed().assertIsEnabled().performClick()
-        compose.onNodeWithText(app.getString(R.string.confirm_skin_purchase, 200, 40)).assertIsDisplayed()
+        compose.onNodeWithText(app.getString(R.string.confirm_skin_purchase, 200, 50)).assertIsDisplayed()
         compose.onNodeWithTag("confirm-purchase").performClick()
         compose.waitUntil(5000) { runBlocking { "copper" in repository.preferences.first().ownedSkins } }
         // Wait for the collected UI state to reflect the repository update before equipping.
@@ -107,7 +107,7 @@ class ProgressionUiTest {
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasTestTag("skin-action-copper"))
         compose.onNodeWithTag("skin-action-copper").assertIsDisplayed().assertIsEnabled().performClick()
         compose.waitUntil(5000) { runBlocking { repository.preferences.first().boardSkin == "copper" } }
-        assertEquals(40, runBlocking { repository.preferences.first().credits })
+        assertEquals(50, runBlocking { repository.preferences.first().credits })
     }
 
     @Test fun resultCanBeDismissedToInspectBoardWithoutRewardingAgain() {
@@ -160,13 +160,13 @@ class ProgressionUiTest {
         compose.runOnIdle { abandoned.startScenario("classic", 42L) }
         compose.waitUntil(5000) { shown?.game != null }
         compose.runOnIdle { holder.value = reopened }
-        compose.waitUntil(5000) { shown?.preferences?.credits == 20 }
+        compose.waitUntil(5000) { shown?.preferences?.credits == 20 + Rewards.DAILY_GOAL }
         compose.waitUntil(5000) { runBlocking { repository.preferences.first().lastSeed } == 42L }
         compose.runOnIdle {
             assertNull(shown?.game)
             assertNull(shown?.reward)
         }
-        assertEquals(20, runBlocking { repository.preferences.first().credits })
+        assertEquals(20 + Rewards.DAILY_GOAL, runBlocking { repository.preferences.first().credits })
     }
 
     @Test fun restartingChallengeKeepsTheExactSamePuzzle() {
