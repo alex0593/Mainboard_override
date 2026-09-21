@@ -236,6 +236,16 @@ internal fun Board(
                         }
                     }
                 }
+                board.locks.forEach { (position, demanded) ->
+                    Box(Modifier.offset(cell * position.x, cell * position.y).size(cell).padding(2.dp)) {
+                        BoardLockImage(Modifier.fillMaxSize().padding(1.dp))
+                        Row(
+                            Modifier.align(Alignment.TopEnd).background(Void.copy(alpha = .9f), RoundedCornerShape(2.dp))
+                        ) {
+                            Text("$demanded", color = Warning, fontSize = 11.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace)
+                        }
+                    }
+                }
             } else for (y in 0 until board.height) for (x in 0 until board.width) {
                 val position = Position(x, y)
                 BoardCell(board, position, cell, position in legalOrigins, position == target, onCell)
@@ -340,6 +350,11 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
         } else if (firewall || (trap && !daemon && !isStart && !isExit)) {
             BoardThreatImage(firewall, Modifier.fillMaxSize().padding(1.dp))
             if (bridge != null) BoardBridgeSprite(bridge.horizontal, bridge.value)
+        } else if (lock != null && !daemon && !isStart && !isExit) {
+            BoardLockImage(Modifier.fillMaxSize().padding(1.dp))
+            Row(Modifier.align(Alignment.TopEnd).background(Void.copy(alpha = .9f), RoundedCornerShape(2.dp))) {
+                Text("$lock", color = Warning, fontSize = 11.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace)
+            }
         } else if (buff != null && !daemon && !isStart && !isExit) {
             BoardBuffSprite(buff)
         } else Text(
@@ -348,7 +363,6 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
                 daemon -> "D!"
                 isStart -> "S0"
                 isExit -> "X6"
-                lock != null -> "${lock}"
                 buff != null -> if (buff == BoardBuff.TRACE_COOLER) "−8" else "+1R"
                 value != null -> "$value"
                 else -> "·"

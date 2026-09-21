@@ -12,8 +12,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalResources
 import com.aela.mainboardoverride.R
 
-// Both nodpi assets are fixed across densities and locales; share their decoded pixels across cells.
-private val threatImages = LruCache<Int, Bitmap>(2)
+// All nodpi assets are fixed across densities and locales; share their decoded pixels across cells.
+private val threatImages = LruCache<Int, Bitmap>(3)
 
 /** Cell semantics describe the threat; the artwork is decorative. */
 @Composable
@@ -21,6 +21,14 @@ internal fun BoardThreatImage(firewall: Boolean, modifier: Modifier = Modifier) 
     val resources = LocalResources.current
     val resource = if (firewall) R.drawable.board_firewall else R.drawable.board_honeypot
     val image = remember(resources, resource) { threatBitmap(resources, resource).asImageBitmap() }
+    Image(image, contentDescription = null, modifier = modifier, contentScale = ContentScale.Fit)
+}
+
+/** Lock sprite; the demanded value is drawn by the caller, never baked into the art. */
+@Composable
+internal fun BoardLockImage(modifier: Modifier = Modifier) {
+    val resources = LocalResources.current
+    val image = remember(resources) { threatBitmap(resources, R.drawable.board_lock).asImageBitmap() }
     Image(image, contentDescription = null, modifier = modifier, contentScale = ContentScale.Fit)
 }
 
