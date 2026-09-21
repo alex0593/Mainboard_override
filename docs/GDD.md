@@ -4,13 +4,13 @@
 
 La campaña contiene 30 desafíos secuenciales. Completar 5, 10, 15, 20, 25 y 30 desafíos distintos desbloquea respectivamente Laboratorio, Centro de datos, Red industrial, Archivo profundo, Núcleo blindado y Red fantasma en modo libre. La red original está disponible desde el inicio. Los escenarios modifican dimensiones, longitud de ruta y densidad de obstáculos; cada generación comprueba una solución con el motor.
 
-Cada victoria concede 20 créditos y la primera victoria de un desafío añade 40. Derrotas y abandonos no otorgan créditos. Cobre y Aurora son PCB cosméticas de compra única, por 200 créditos cada una. Los escenarios solo se desbloquean jugando desafíos. No hay créditos retroactivos; los récords existentes sí cuentan para los desbloqueos.
+Cada victoria concede 20 créditos y la primera victoria de un desafío añade 40. Derrotas y abandonos no otorgan créditos. Los desafíos 7, 17 y 27 vetan SPOOF: ese script nunca se reparte en ellos (se avisa en el detalle previo). Cobre y Aurora son PCB cosméticas de compra única, por 200 créditos cada una. Los escenarios solo se desbloquean jugando desafíos. No hay créditos retroactivos; los récords existentes sí cuentan para los desbloqueos.
 
 Al finalizar se muestra el desglose y se puede revisar el tablero sin controles de juego, regresar al resumen, reintentar o continuar al siguiente desafío. La galería separa fichas y PCB con vistas previas y estados de equipamiento/compra. El menú anima pulsos de circuitos y respeta movimiento reducido.
 
 Durante la partida los scripts se muestran como cartas compactas en una banda superior, junto a RAM, turno y rastreo. El botón EJECUTAR TURNO conserva una posición estable en el panel de controles y se remarca cuando se intenta colocar una segunda ficha antes de resolver el turno. SPOOF presenta un selector vertical desplazable de valores 0–6 para el puerto elegido.
 
-Los escenarios libres incluyen dos recogidas de tablero: un disipador que resta 8 al rastreo y una reserva que suma 1 RAM. Cada casilla se consume una sola vez y no puede superar los límites de los recursos. Cada mapa libre genera además un lock visible junto a la ruta de referencia: exige ese valor exacto al contactar; acertar lo consume (también cubrirlo), fallar derrota al instante (`LOCK_TRIPPED`) y KILL puede eliminarlo. Los desafíos no generan locks. Las cartas y los iconos tienen la guía visual en [CARTAS.md](CARTAS.md).
+Los escenarios libres incluyen dos recogidas de tablero: un disipador que resta 8 al rastreo y una reserva que suma 1 RAM. Cada casilla se consume una sola vez y no puede superar los límites de los recursos. Cada mapa libre genera además un lock visible junto a la ruta de referencia: exige ese valor exacto al contactar; acertar lo consume, cubrir su celda con el valor exacto también lo consume, cualquier otro contacto o cobertura derrota al instante (`LOCK_TRIPPED`) y KILL puede eliminarlo. Los desafíos no generan locks. Las cartas y los iconos tienen la guía visual en [CARTAS.md](CARTAS.md).
 
 ## Concepto
 
