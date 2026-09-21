@@ -28,3 +28,5 @@ captures/
 .DS_Store
 *.hprof
 *.log
+# Butler binary for itch.io publishes (fetched by tools/publish-itch.sh).
+tools/.butler/

@@ -7,7 +7,7 @@ y bilingüe (ES/EN).
 
 ## Estado
 
-Versión actual: **0.1.0-alpha.19**.
+Versión actual: **0.1.0-alpha.20**.
 
 Vertical slice jugable: motor Kotlin puro, app Jetpack Compose, generación
 determinista por semillas, persistencia local de ajustes y récords, y pruebas
@@ -56,6 +56,18 @@ export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64  # si el java por defecto es
 El APK se genera en `app/build/outputs/apk/debug/app-debug.apk`. Las pruebas
 de interfaz (`./gradlew :app:connectedDebugAndroidTest`) requieren un
 dispositivo o emulador autorizado; por USB en vez de adb WiFi.
+
+## Publicar en itch.io
+
+`tools/publish-itch.sh` compila el APK y lo sube con
+[butler](https://itch.io/docs/butler) al canal `android` de
+[aela-0593/mainboard-override](https://aela-0593.itch.io/mainboard-override),
+usando `versionName` como `--userversion`. Necesita `BUTLER_API_KEY` en el
+entorno (clave con permiso de subida desde tu página de API keys de itch.io):
+
+```bash
+BUTLER_API_KEY=<clave> ./tools/publish-itch.sh [canal]
+```
 
 ## Documentación
 

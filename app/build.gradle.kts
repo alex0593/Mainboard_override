@@ -11,8 +11,8 @@ android {
         applicationId = "com.aela.mainboardoverride"
         minSdk = 26
         targetSdk = 36
-        versionCode = 9
-        versionName = "0.1.0-alpha.19"
+        versionCode = 10
+        versionName = "0.1.0-alpha.20"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
