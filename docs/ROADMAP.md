@@ -8,7 +8,9 @@ Este documento recoge, estructura y prioriza las ideas de mejora para el juego, 
 dependencias, tareas y criterios de cierre. El estado comprobable y las
 decisiones viven en [ESTADO.md](ESTADO.md). Ayer (2026-09-20) se cerraron
 A01–A09 con causas raíz registradas y B06 con reapertura limpia verificada.
-Hoy (2026-09-21) se cerró A10 con la suite instrumental completa 26/26 en verde.
+Hoy (2026-09-21) se cerró A10 con la suite instrumental completa en verde y
+también cerraron C01–C06, D02–D04 y E01–E06; la suite instrumental quedó en
+27/27 con los tests añadidos en C02 y E04.
 Los hilos temáticos son propuestas; no representan funciones aprobadas
 ni tareas terminadas. `[ ]` significa pendiente; marcar `[x]` solo con evidencia
 de cierre. Las decisiones de producto se registran antes de implementar sus ramas.
@@ -19,10 +21,10 @@ de cierre. Las decisiones de producto se registran antes de implementar sus rama
 - Scripts actuales: PING, SPOOF, KILL_PROCESS, BRIDGE.
 - Progresión de desafíos desbloqueables y escenarios de modo libre.
 - Persistencia con DataStore; compras y recompensas implementadas en el repositorio concreto.
-- Última ejecución de `:game-domain:test`: 28 pruebas, 0 fallos (2026-09-20).
+- Última ejecución de `:game-domain:test`: 44 pruebas, 0 fallos (2026-09-21).
 - Tutorial con 10 lecciones deterministas, textos EN/ES en paridad (47 instrucciones), progreso visible y avance explícito; `TutorialTest` 5/5 y `PuzzleTutorialUiTest` 6/6 en CLK-LX3 por USB.
-- Audio procedural completo: soundtrack synthwave adaptativo, 16 cues de SFX, volúmenes de música/EFX en ajustes, silencio y movimiento reducido cableados. Vibración solo persistida, sin cablear.
-- Localización por-app con AppCompat (ES/EN aplican en todos los API), icono adaptativo con capa monocroma y splash propio.
+- Audio procedural completo: soundtrack synthwave adaptativo, 16 cues de SFX, volúmenes de música/EFX en ajustes, silencio, vibración cableada (`HapticsHost`) y movimiento reducido (E04).
+- Localización por-app con AppCompat (ES/EN aplican en todos los API), icono adaptativo con foreground exportado del logo (`logo_foreground.png`), capa monocroma y splash propio.
 - UI distribuida en archivos por pantalla y componente (`GameScreen`, `Board`,
   menús, diálogos de scripts); `MainboardApp.kt` conserva solo el NavHost.
 - Textos en español e inglés.
@@ -74,14 +76,14 @@ de cierre. Las decisiones de producto se registran antes de implementar sus rama
 - Mejorar flujo entre lecciones y saltar al tema elegido. (Flujo explícito con continuar/reiniciar/siguiente; sin selector directo de lección.)
 
 ### 3.7 Sonido, VFX y atmósfera
-- Conectar audio, vibración y VFX con ajustes ya persistidos. (Hecho audio: motor, cues, volúmenes, silencio y movimiento reducido; pendiente vibración y VFX extra.)
+- Conectar audio, vibración y VFX con ajustes ya persistidos. (Hecho en E04: audio, vibración cableada, partículas de recogida y flash al 80 %; glitch sostenido y estática quedan en FUTURO.)
 - Añadir indicios sutiles de glitch, estática, synthwave o teclado mecánico. (Hecho synthwave, teclado mecánico y riser de urgencia; pendiente glitch visual al 80 % y estática.)
 - Feedback sonoro por evento: colocación, script, trampa, daemon, victoria/derrota. (Hecho: 16 cues procedurales; daemon sin cue propia.)
-- Partículas leves para rastreo alto o recogida de buffs.
+- Partículas leves para rastreo alto o recogida de buffs. (Hecho en E04: destello cian al recoger y flash rojo único al cruzar 80, ambos finitos y con movimiento reducido.)
 
 ### 3.8 Calidad técnica y tests
-- Aumentar tests de dominio antes de añadir reglas. (Hecho: 28 pruebas con barridos de 1000 semillas + 7×100 por escenario.)
-- Añadir pruebas instrumentadas más amplias. (Parcial: 7 clases Compose; suite completa pendiente de A10.)
+- Aumentar tests de dominio antes de añadir reglas. (Hecho: 44 pruebas con barridos de 1000 semillas + 7×100 por escenario.)
+- Añadir pruebas instrumentadas más amplias. (Hecho: 8 clases y 27 pruebas instrumentadas; A10 cerrado sin fallos pendientes.)
 - Añadir validaciones masivas de semillas. (Hecho en dominio; pendiente en dispositivos reales.)
 - Mejorar nombres de tests y claridad.
 - Centralizar lógica de validación de UI.
@@ -90,7 +92,7 @@ de cierre. Las decisiones de producto se registran antes de implementar sus rama
 ### 3.9 Contenido y skins
 - Añadir skins temáticas coherentes con la estética. (Hecho: Cobre, Aurora, grafito, señal + icono adaptativo y splash propio.)
 - Separar mejor skins de fichas y de placa. (Hecho: galería separa fichas y PCB.)
-- Ampliar textos de ayuda, ejemplos y notas de diseño en GDD. (Hecho ayuda contextual y tutorial reescrito; GDD pendiente de sincronizar audio/tutorial/icono.)
+- Ampliar textos de ayuda, ejemplos y notas de diseño en GDD. (Hecho ayuda contextual y tutorial reescrito; GDD sincronizado el 2026-09-21 con audio, vibración, VFX, puntuación, logros y meta diaria.)
 - Añadir glosario de sistema para novatos.
 
 ## 4. Plan operativo y tareas
@@ -149,8 +151,8 @@ instrumentados. Depende de A; las pantallas de progreso dependen también de B.
 - [x] **C01 — Componentes:** cerrado 2026-09-21 — `MainboardApp.kt` pasó de 1314 a ~110 líneas (solo NavHost, rutas y mapeos de texto); `GameScreen`, `Board`, `MenuScreen`, `SettingsScreen`, `MenuWidgets`, `ScriptCards`, `ScriptDialogs` y `CircuitBackground` en archivos propios con movimientos puros. `ProgressionScreens.kt` (201 líneas) no requiere división.
 - [x] **C02 — Accesibilidad:** cerrado 2026-09-21 — `Role.Button` en cartas de script, fichas de mano y celdas del tablero; objetivo «?» 46→48dp; contraste verificado por cálculo (todos los pares ≥4.8:1, AA 4.5); `AccessibilityUiTest` con partida a fuente 1.3x (sin solapes, targets ≥48dp, roles expuestos). Suite instrumental 27/27 en CLK-LX3 por USB. Revisión manual con TalkBack pendiente de dispositivo con lector en mano.
 - [x] **C03 — Feedback:** rechazos traducidos (`rejectionText`), banda de ruido pendiente (`pending-trace`), objetivos de scripts resaltados (`GameEngine.scriptTargets`), texto de buff recogido y burst de destrucción de KILL con `KillBurstUiTest`.
-- [x] **C04 — Previsualizaciones:** clave de caché con `REVISION = 1` e invalidación por skins (`$REVISION:id:boardSkin:dominoSkin`); `ScenarioArtworkUiTest` existe (validación completa pendiente de A10).
-- [x] **C05 — Cerrar arte existente:** 32 recursos `menu_background|board_|menu_card`, fondo por escenario recordado con fallback `classic`, licencias (`kenney-domino-pack`, sprites y fondos generados) y originales en `assets/`; `ScenarioArtworkUiTest` existe (validación completa pendiente de A10).
+- [x] **C04 — Previsualizaciones:** clave de caché con `REVISION = 2` e invalidación por skins (`$REVISION:id:boardSkin:dominoSkin`); `ScenarioArtworkUiTest` y la comprobación en A10.
+- [x] **C05 — Cerrar arte existente:** 32 recursos `menu_background|board_|menu_card`, fondo por escenario recordado con fallback `classic`, licencias (`kenney-domino-pack`, sprites y fondos generados) y originales en `assets/`; `ScenarioArtworkUiTest` y la comprobación en A10.
 - [x] **C06 — Recursos y ayuda:** 10 lecciones con 47 instrucciones en paridad EN/ES verificada; `tutorial_next_lesson`/`tutorial_lesson_complete` en uso; la auditoría de textos sin uso queda cubierta por lint en A10.
 
 **Cierre:** compila y pasa lint; los flujos afectados tienen validación proporcional

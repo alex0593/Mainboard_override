@@ -13,11 +13,11 @@ Vertical slice jugable: motor Kotlin puro, app Jetpack Compose, generación
 determinista por semillas, persistencia local de ajustes y récords, y pruebas
 unitarias del bucle principal.
 
-Ayer (2026-09-20) se cerraron las causas raíz de los fallos de dominio
-(A01–A07, suite 28/28 verde) y la reapertura limpia sin recompensas duplicadas
-(B06). Tutorial con 10 lecciones verificado en dispositivo (`PuzzleTutorialUiTest`
-6/6 por USB). Hay un ajuste local de alturas de texto pendiente de revisar
-(`GameHeader.kt`, `MainboardApp.kt`).
+Estado verificado (2026-09-21): bloque A del roadmap cerrado (A01–A10),
+suite de dominio **44/44** y `:app:testDebugUnitTest` **6/6** en verde, lint sin
+errores, suite instrumental **27/27** en CLK-LX3 por USB. La reapertura limpia
+sin recompensas duplicadas (B06) y las diez lecciones del tutorial están
+verificadas en dispositivo. No hay cambios locales pendientes de revisar.
 
 ## Cómo se juega
 
@@ -86,4 +86,6 @@ Las fichas usan los gráficos de Kenney (`assets/kenney/kenney_domino-pack.zip`,
 Las skins y los fondos de escenario se generaron con la herramienta integrada
 `imagegen`; prompts y originales están en `assets/`, y solo las exportaciones
 reducidas se empaquetan en `drawable-nodpi`. Licencias en
-`app/src/main/assets/licenses/`.
+`app/src/main/assets/licenses/`. El icono del launcher usa la exportación
+reducida (`logo_foreground.png`) del original en `assets/logo/`, con procedencia
+documentada en `assets/logo/procedencia.md`.

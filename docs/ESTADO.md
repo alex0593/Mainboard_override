@@ -15,37 +15,44 @@ vive únicamente en [ROADMAP.md](ROADMAP.md).
 - [Futuro](FUTURO.md) — alcances diferidos durante los incrementos E.
 - [Guía visual de cartas](CARTAS.md) — especificación de cartas de script e iconos de recogidas.
 - [Fondos de escenarios](../assets/scenarios/README.md) — prompts, originales y exportaciones.
+- [Logo e icono](../assets/logo/procedencia.md) — original del logo, exportación del icono del launcher y su procedencia.
 - [Validación visual de escenarios](validation/scenarios/README.md) — capturas y resultados instrumentados.
 - [Validación de pantalla completa](validation/immersive/README.md) — evidencia de modo inmersivo.
 
 Los contratos técnicos viven en el código; los cambios de reglas deben
 reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus detalles.
 
-## Dónde quedamos ayer (2026-09-20)
+## Dónde quedamos (última revisión 2026-09-21)
 
 - `fix: close A01-A07 root causes, domain suite 28/28 green` — los siete fallos
   de dominio eran fixtures desconectados y un conteo fijo de dominós, no
   semántica del motor; se corrigieron las causas y la suite quedó verde.
 - `feat: verify B06 clean-menu reopen without duplicate rewards` — reabrir tras
   cerrar el proceso parte del menú limpio, sin duplicar créditos.
-- Estado verificado (2026-09-21): `:game-domain:test` 28/28, `:app:testDebugUnitTest` 3/3,
-  `:app:lintDebug` verde, suite instrumental completa 26/26 en CLK-LX3 por USB,
-  `:app:installDebug` verificado en dispositivo. Bloque A del roadmap cerrado.
-- Cambio local sin commitear (pendiente de revisar): ajuste de `lineHeight` y
-  alturas mínimas en `GameHeader.kt` y `MainboardApp.kt` para fuentes ampliadas.
+- Bloques A–E con los incrementos seleccionados cerrados (A01–A10, B01–B06,
+  C01–C06, D01–D04, E01–E06); el detalle con evidencia está en el
+  [Roadmap](ROADMAP.md).
+- Estado verificado (2026-09-21): `:game-domain:test` **44/44**,
+  `:app:testDebugUnitTest` **6/6**, `:app:lintDebug` sin errores, suite
+  instrumental completa **27/27** en CLK-LX3 por USB, `:app:installDebug`
+  verificado en dispositivo.
+- Organización y icono (2026-09-21): arte de la raíz movido a `assets/reference`
+  y `assets/kenney`, `assets/logo/` versionado, y el foreground del icono
+  adaptativo pasa a ser la exportación del logo (`logo_foreground.png`).
+- No hay cambios locales sin commitear.
 
 ## Estado comprobado
 
 | Área | Estado actual | Fuente principal |
 | --- | --- | --- |
 | Motor | Estado inmutable, acciones explícitas y `GameEngine.reduce`. | [Arquitectura](ARCHITECTURE.md) |
-| Generación | Semillas reproducibles; niveles libres, escenarios y desafíos catalogados; suite de dominio 28/28 verde. | [Arquitectura](ARCHITECTURE.md) |
+| Generación | Semillas reproducibles; niveles libres, escenarios y desafíos catalogados; suite de dominio 44/44 verde. | [Arquitectura](ARCHITECTURE.md) |
 | Scripts | `PING`, `SPOOF`, `KILL` (`KILL_PROCESS` internamente) y `BRIDGE`. | [GDD](GDD.md) |
 | Progresión | Desafíos desbloquean escenarios por victorias distintas; récords y créditos persisten. | `PlayerPreferencesRepository` |
 | Economía | Compras y recompensas con transacciones DataStore e idempotencia; reapertura limpia sin pagos duplicados. | `PlayerPreferencesRepository` |
 | Escenarios | Siete fondos generados, empaquetados y usados en tarjetas, partidas y menú. | [README de escenarios](../assets/scenarios/README.md) |
 | Tutorial | 10 lecciones deterministas, flujo separado y progreso persistido; `TutorialTest` 5/5 y `PuzzleTutorialUiTest` 6/6. | [Arquitectura](ARCHITECTURE.md) |
-| Audio | Soundtrack synthwave adaptativo, 16 cues procedurales, volúmenes música/EFX, silencio y movimiento reducido cableados. Vibración solo persistida, sin cablear. | [Roadmap](ROADMAP.md) |
+| Audio | Soundtrack synthwave adaptativo, 16 cues procedurales, volúmenes música/EFX, silencio, vibración cableada y movimiento reducido (E04). | [Roadmap](ROADMAP.md) |
 | Localización | Recursos españoles e ingleses para la UI y el tutorial (47 instrucciones en paridad). | `app/src/main/res/values*` |
 | Accesibilidad | Descripciones semánticas y objetivos táctiles mínimos en controles principales; sin revisión TalkBack registrada. | [Arquitectura](ARCHITECTURE.md) |
 
@@ -71,19 +78,19 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
   último escenario libre (`preferences.lastScenario`, `classic` por defecto).
 - Las previsualizaciones de selección usan la semilla fija `42` y se etiquetan
   como ejemplo; la caché se invalida con `REVISION` y skins en la clave.
+- **Icono del launcher:** el foreground del icono adaptativo es la exportación
+  reducida `drawable-nodpi/logo_foreground.png` del original en `assets/logo/`;
+  el fondo `#07110F` y la capa `monochrome` se conservan, y cualquier regeneración
+  parte del original documentado en `assets/logo/procedencia.md`.
 
 ## Deuda activa
 
-- **C01:** cerrado 2026-09-21 — `MainboardApp.kt` (~110 líneas, solo NavHost);
-  `GameScreen`, `Board`, `MenuScreen`, `SettingsScreen` y widgets en archivos propios.
-- **C02:** cerrado 2026-09-21 — roles expuestos, target mínimo 48dp, contraste AA
-  verificado, test a fuente 1.3x; suite 27/27. TalkBack manual pendiente.
-- **D02:** cerrado 2026-09-21 — umbrales en `BalanceTest`, dominio 30/30;
-  niveles al límite exacto identificados (2, 10, 20-30).
-- **E01 (lock):** cerrado 2026-09-21 — dominio 35/35, instrumentada 27/27 en
-  CLK-LX3 por USB, lint verde.
-- **Vibración:** preferencia persistida sin cablear; partículas para rastreo
-  alto/recogidas pendientes.
+- **TalkBack:** revisión manual con lector en mano pendiente; la evidencia
+  actual es automatizada (roles, targets ≥48dp, fuente 1.3x, contraste AA).
+- **Pantallas pequeñas e horizontal invertido** sin verificación física;
+  validación masiva de semillas pendiente en dispositivos reales (GDD).
+- **Atmósfera (E04):** glitch visual sostenido al 80 % de rastreo y estática
+  ambiental diferidos a `FUTURO.md`.
 
 ## Cómo verificar el estado
 

@@ -56,12 +56,13 @@ BRIDGE requiere al menos una ficha junto al firewall en el eje seleccionado. Si 
 - [x] Persistencia de ajustes, última semilla y mejor resultado.
 - [x] Pruebas unitarias de reglas esenciales y una partida completa.
 - [x] Wrapper Gradle reproducible y APK de depuración compilado con Android API 37.
+- [x] Icono adaptativo con foreground exportado del logo (`logo_foreground.png`), fondo `#07110F`, capa monocroma y splash propio.
 
 ## Qué se tiene que cambiar o completar
 
 ### Para cerrar el vertical slice
 
-- [ ] Conectar audio original, vibración y VFX a los ajustes ya persistidos.
+- [x] Conectar audio original, vibración y VFX a los ajustes ya persistidos. (Hecho: 16 cues, volúmenes, silencio y movimiento reducido; vibración cableada en `HapticsHost`; partículas de recogida y flash al 80 % de rastreo en E04. Glitch sostenido y estática quedan como atmósfera futura.)
 - [ ] Añadir arrastre real; la interacción accesible por selección y pulsación ya está implementada.
 - [x] Elegir visualmente orientación de `BRIDGE` y ambas mitades de `SPOOF`, con previsualización y cancelación.
 - [x] Ayuda contextual con «?» durante la partida.
@@ -73,7 +74,7 @@ BRIDGE requiere al menos una ficha junto al firewall en el eje seleccionado. Si 
 
 ### Después del vertical slice
 
-- [ ] Campaña: red local, enrutamiento/DNS y sobreescritura de hardware.
+- [ ] Campaña con contenido propio: las fases Red local, Enrutamiento y Sobreescritura ya existen como etiquetas (E05); falta contenido diferenciado por fase.
 - [ ] Fragmentos de datos, inventario, deckbuilding y mejoras de scripts.
 - [ ] Scripts Stealth/VPN y mayor variedad de amenazas y objetivos.
 - [ ] Room para campaña e inventario y guardado de partida activa.
@@ -94,10 +95,10 @@ Neobrutalismo de sistema operativo: PCB oscuro, verde terminal, cian, amarillo d
 
 ## Verificación técnica
 
-- `:game-domain:test`: correcto; pruebas del motor, los 30 desafíos y 700 combinaciones de escenario/semilla.
+- `:game-domain:test`: correcto (44 pruebas, 0 fallos); pruebas del motor, los 30 desafíos, barrido de 1000 semillas libres y 700 combinaciones de escenario/semilla.
 - `:app:assembleDebug`: correcto; APK generado en `app/build/outputs/apk/debug/`.
-- `:app:connectedDebugAndroidTest`: pruebas correctas en CLK-LX3 con Android 14, incluidas progresión, compras, revisión del tablero, ayuda y movimiento reducido.
-- `:app:lintDebug`: correcto; 0 errores y 18 advertencias (versiones, orientación, candidatos a plurales y recursos sin uso). Sin baselines ni supresiones nuevas.
+- `:app:connectedDebugAndroidTest`: correcto en CLK-LX3 con Android 14 (27 pruebas en 8 clases), incluidas progresión, compras, revisión del tablero, ayuda, tutorial, accesibilidad, recogidas y movimiento reducido.
+- `:app:lintDebug`: correcto; 0 errores, 61 advertencias y 2 notas (versiones y dependencias, orientación, candidatos a plurales, recursos sin uso, tipografía y APIs disuadidas). Sin baselines ni supresiones nuevas.
 - Evidencia y límites de la validación: los informes de Gradle en `app/build/reports/`.
 
 

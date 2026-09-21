@@ -4,7 +4,7 @@
 
 - `game-domain/src/main/kotlin/`: Android-independent models, rules, progression, tutorials, and deterministic level generation. Zero Android dependencies; runnable on the JVM alone. Domain tests live in `game-domain/src/test/kotlin/`.
 - `app/src/main/kotlin/`: Android entry point, `MainViewModel`, Compose UI in `ui/`, DataStore persistence in `data/`, and procedural audio in `audio/`. Local tests are in `app/src/test/`; instrumented UI tests are in `app/src/androidTest/`.
-- `app/src/main/res/`: packaged artwork and English/Spanish resources; `app/src/main/assets/licenses/` contains asset licenses. Artwork originals and prompts live in `assets/`; only reduced-resolution exports are packaged. Skins are exported with `tools/PrepareSkinAsset.java`.
+- `app/src/main/res/`: packaged artwork and English/Spanish resources; `app/src/main/assets/licenses/` contains asset licenses. Artwork originals and prompts live in `assets/`; only reduced-resolution exports are packaged. Skins and the launcher logo are exported with `tools/PrepareSkinAsset.java`.
 - Docs (`docs/`, `README.md`) are written in **Spanish**; code comments and KDoc are English. Keep user-facing strings in both `values/` and `values-es/`.
 
 ## Architecture Notes (not obvious from filenames)
@@ -38,7 +38,7 @@ Keep rules in `game-domain`; route gameplay actions through `GameEngine.reduce` 
 
 Domain tests use `kotlin.test` on JUnit Platform; app tests use JUnit 4 and Compose testing. Name classes `*Test`; use descriptive backtick names for domain cases and camelCase UI test methods. Cover rule changes in engine tests and update the GDD. Isolate test DataStore files from real profiles (`ProgressionUiTest` uses a cache-only store). No numeric coverage threshold is configured.
 
-The domain suite currently has 7 failing tests (28 total) — these are the documented open items A01–A07 in `docs/ROADMAP.md` section 4, not regressions (A08 tutorial was closed: lesson-9 fixture fix, verified green). Before "fixing" a failing domain test, read that section and the engine contract; the task expects a root-cause fix, not updating expectations. Details live in `game-domain/build/reports/tests/test/index.html`. The instrumented tutorial suite (`PuzzleTutorialUiTest`) is green; run connected tests over USB, not WiFi adb (WiFi runs take ~11 min with random `No compose hierarchies` communication flakes vs ~1 min on USB).
+The domain suite is green: 44 tests, 0 failures (verified 2026-09-21), and the roadmap items A01–A10 in `docs/ROADMAP.md` section 4 are closed with recorded root causes. If a domain test fails, read that section and the engine contract first; the project expects a root-cause fix, not updated expectations. Reports live in `game-domain/build/reports/tests/test/index.html`. The instrumented suites are green (27 tests across 8 classes); run connected tests over USB, not WiFi adb (WiFi runs take ~11 min with random `No compose hierarchies` communication flakes vs ~1 min on USB).
 
 ## Commit & Pull Request Guidelines
 
