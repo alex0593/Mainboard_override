@@ -77,7 +77,8 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
   `GameScreen`, `Board`, `MenuScreen`, `SettingsScreen` y widgets en archivos propios.
 - **C02:** cerrado 2026-09-21 — roles expuestos, target mínimo 48dp, contraste AA
   verificado, test a fuente 1.3x; suite 27/27. TalkBack manual pendiente.
-- **D02:** sin métricas ni umbrales de equilibrio definidos.
+- **D02:** cerrado 2026-09-21 — umbrales en `BalanceTest`, dominio 30/30;
+  niveles al límite exacto identificados (2, 10, 20-30).
 - **E01–E06:** ampliaciones pendientes de selección de alcance.
 - **Vibración:** preferencia persistida sin cablear; partículas para rastreo
   alto/recogidas pendientes.
