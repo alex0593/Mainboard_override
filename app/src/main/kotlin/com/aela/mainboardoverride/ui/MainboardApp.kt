@@ -901,8 +901,8 @@ internal fun ScriptCardView(card: ScriptCard, selected: Boolean, enabled: Boolea
                 )
             }
             Column {
-                Text(if (card.type == ScriptType.KILL_PROCESS) "KILL" else card.type.name, color = Cyan, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                Text("${card.type.ramCost}R · +${card.type.traceNoise}", color = Terminal, fontSize = 10.sp)
+                Text(if (card.type == ScriptType.KILL_PROCESS) "KILL" else card.type.name, color = Cyan, fontSize = 10.sp, lineHeight = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text("${card.type.ramCost}R · +${card.type.traceNoise}", color = Terminal, fontSize = 10.sp, lineHeight = 12.sp)
             }
         }
     }

@@ -45,8 +45,8 @@ internal fun GameHeader(
         Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 18.dp, vertical = 9.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(stringResource(R.string.turn, game.turn), color = Cyan, fontSize = 11.sp)
-                Text(stringResource(R.string.ram, game.ram, MAX_RAM), color = Terminal, fontSize = 11.sp)
+                Text(stringResource(R.string.turn, game.turn), color = Cyan, fontSize = 11.sp, lineHeight = 13.sp)
+                Text(stringResource(R.string.ram, game.ram, MAX_RAM), color = Terminal, fontSize = 11.sp, lineHeight = 13.sp)
                 TraceIndicator(game.trace)
             }
             Box(
@@ -88,12 +88,14 @@ private fun TraceIndicator(trace: Int) {
             stringResource(R.string.trace, trace),
             color = traceColor,
             fontSize = 11.sp,
+            lineHeight = 13.sp,
         )
         if (fade.value > 0f) {
             Text(
                 stringResource(R.string.trace_delta, increase),
                 color = traceColor,
                 fontSize = 10.sp,
+                lineHeight = 12.sp,
                 fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
