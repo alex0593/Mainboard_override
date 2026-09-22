@@ -35,6 +35,7 @@ El modo libre tiene 6 filas: Red original 8 columnas, Laboratorio y Centro de da
 | `SPOOF` | 2 | 5 | Reescribe permanentemente un puerto de una ficha en mano. |
 | `KILL_PROCESS` | 3 | 15 | Elimina un firewall, un honeypot visible, un lock o una ficha colocada completa al seleccionar cualquiera de sus dos celdas. Puede eliminarlo en el mismo turno de PING si alcanza la RAM. |
 | `BRIDGE` | 2 | 10 | Copia un puerto de una ficha adyacente a través del firewall; la salida queda libre para colocar una ficha compatible. |
+| `STEALTH` | 1 | 0 | Descarta todo el ruido pendiente del turno antes de que se sume al rastreo; sin ruido pendiente se rechaza sin gastar carta ni RAM. |
 
 Las derrotas posibles son rastreo al 100 %, daemon en el inicio, lock contactado con valor erróneo, kernel panic sin acciones habilitables o bolsa de hardware agotada. BRIDGE y KILL_PROCESS pueden evitar kernel panic si abren una colocación legal. La victoria requiere una ruta continua hasta extracción después de resolver la fase del sistema.
 
@@ -44,13 +45,15 @@ PING conserva descubrimientos anteriores y selecciona entre trampas ocultas sin 
 
 BRIDGE requiere al menos una ficha junto al firewall en el eje seleccionado. Si ambos puertos existen, deben coincidir. Rechaza otra pared en la salida, extremos fuera del mapa y puentes duplicados sin gastar recursos. Conserva el firewall, guarda y muestra el número copiado y solo conecta extremos ocupados compatibles. KILL_PROCESS elimina también el puente del firewall destruido y cualquier lock visible. Puede destruir un honeypot visible incluso si PING lo acaba de revelar, siempre que alcance la RAM. Los honeypots ocultos no son objetivos válidos. También puede eliminar una ficha colocada completa apuntando a cualquiera de sus mitades; la ficha deja de formar parte de la red y los recursos ya consumidos no se reembolsan. Destruir una trampa elimina su presencia, revelado y registro de activación, sin reembolsar ruido ni cartas. Mantiene el coste de 3 RAM y 15 de ruido.
 
+STEALTH se juega sin objetivo, como PING: descarta el ruido pendiente completo del turno, de modo que al ejecutar el turno el rastreo solo suma su base de 8. Cuesta 1 RAM y no añade ruido propio. Su jugada natural es combinarse en el mismo turno con SPOOF (+5), BRIDGE (+10) o una trampa de honeypot (+20) dentro del tope de 3 RAM; KILL ya gasta las 3 RAM, así que su ruido de 15 no admite combinación. Si no hay ruido pendiente se rechaza con mensaje propio sin consumir carta ni RAM. No abre colocaciones, así que no puede evitar kernel panic.
+
 ## Qué se lleva implementado
 
 - [x] Proyecto Android modular con Kotlin y Jetpack Compose.
 - [x] Motor puro con estado inmutable y acciones/rechazos explícitos.
 - [x] Colocación, cuatro rotaciones, ramificación y búsqueda de conectividad.
 - [x] Semillas reproducibles con ruta garantizada.
-- [x] Cuatro scripts, RAM renovable, ruido, rastreo y amenazas.
+- [x] Cinco scripts (PING, SPOOF, KILL, BRIDGE, STEALTH), RAM renovable, ruido, rastreo y amenazas.
 - [x] Menú, ayuda, ajustes, tablero, mano y resultado en horizontal.
 - [x] Textos en español e inglés.
 - [x] Persistencia de ajustes, última semilla y mejor resultado.
@@ -76,7 +79,7 @@ BRIDGE requiere al menos una ficha junto al firewall en el eje seleccionado. Si 
 
 - [ ] Campaña con contenido propio: las fases Red local, Enrutamiento y Sobreescritura ya existen como etiquetas (E05); falta contenido diferenciado por fase.
 - [ ] Fragmentos de datos, inventario, deckbuilding y mejoras de scripts.
-- [ ] Scripts Stealth/VPN y mayor variedad de amenazas y objetivos.
+- [x] Script STEALTH (F02): descarta el ruido pendiente del turno por 1 RAM. Quedan VPN y mayor variedad de amenazas y objetivos.
 - [ ] Room para campaña e inventario y guardado de partida activa.
 - [ ] Temas Kali-Strike, Ubun-Core, Deb-Server, Arch-Elite y Retro-DOS.
 
@@ -95,7 +98,7 @@ Neobrutalismo de sistema operativo: PCB oscuro, verde terminal, cian, amarillo d
 
 ## Verificación técnica
 
-- `:game-domain:test`: correcto (46 pruebas, 0 fallos); pruebas del motor, los 30 desafíos, barrido de 1000 semillas libres y 700 combinaciones de escenario/semilla.
+- `:game-domain:test`: correcto (51 pruebas, 0 fallos); pruebas del motor, los 30 desafíos, barrido de 1000 semillas libres y 700 combinaciones de escenario/semilla.
 - `:app:assembleDebug`: correcto; APK generado en `app/build/outputs/apk/debug/`.
 - `:app:connectedDebugAndroidTest`: correcto en CLK-LX3 con Android 14 (28 pruebas en 8 clases), incluidas progresión, compras (incluidas las skins premium nuevas), revisión del tablero, ayuda, tutorial, accesibilidad, recogidas y movimiento reducido.
 - `:app:lintDebug`: correcto; 0 errores, 61 advertencias y 2 notas (versiones y dependencias, orientación, candidatos a plurales, recursos sin uso, tipografía y APIs disuadidas). Sin baselines ni supresiones nuevas.

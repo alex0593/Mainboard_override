@@ -1,6 +1,6 @@
 # Cartas e iconos — Mainboard Override
 
-This document defines the visual brief for the four script cards and the two free play board buffs in Mainboard Override. It is written for bitmap generation tools. The app draws all labels, values, RAM costs and noise values in Compose, so generated art must not contain readable text, numbers, logos or UI frames.
+This document defines the visual brief for the five script cards and the two free play board buffs in Mainboard Override. It is written for bitmap generation tools. The app draws all labels, values, RAM costs and noise values in Compose, so generated art must not contain readable text, numbers, logos or UI frames.
 
 ## Shared card format
 
@@ -29,6 +29,10 @@ Prompt: `A cyber terminal script card illustration for KILL PROCESS, a red daemo
 
 Prompt: `A cyber terminal script card illustration for BRIDGE, two matching glowing circuit nodes joined by a bright bridge over a blocked firewall gap, horizontal and vertical trace hints, cyan connection arc with amber endpoints, dark PCB traces, crisp tactical game UI concept art, landscape 3:2, no text, no letters, no numbers, no logo, clear center silhouette, safe empty top and bottom margins.`
 
+### STEALTH
+
+Prompt: `A cyber terminal script card illustration for STEALTH, a signal mask erasing a burst of red noise particles into a clean quiet trace line, dispersing scrambled static rings fading over dark PCB traces, terminal lime and cyan neon accents with muted danger red, crisp tactical game UI concept art, landscape 3:2, no text, no letters, no numbers, no logo, clear center silhouette, safe empty top and bottom margins.`
+
 ## Board buff icons
 
 ### TRACE_COOLER
@@ -41,4 +45,4 @@ Prompt: `A small cyber PCB pickup icon for a RAM reserve, a glowing memory chip 
 
 ## Export and review
 
-Export one PNG per prompt using the exact names `card_ping.png`, `card_spoof.png`, `card_kill_process.png`, `card_bridge.png`, `buff_trace_cooler.png`, and `buff_ram_reserve.png`. Before importing, verify that the illustration remains legible at 128 × 85 px, that all safe margins are empty, and that no accidental text was generated.
+Export one PNG per prompt using the names `card_ping.png`, `card_spoof.png`, `card_kill_process.png`, `card_bridge.png`, `card_stealth.png`, `buff_trace_cooler.png`, and `buff_ram_reserve.png`. The packaged runtime names are `script_card_*.png` at 1254 × 1254 (square canvas, illustration centered, transparent background); the STEALTH original lives at `assets/cards/card_stealth.png` and matches its shipped export. Before importing, verify that the illustration remains legible at 128 × 85 px, that all safe margins are empty, and that no accidental text was generated.

@@ -32,13 +32,19 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 - Bloques A–E con los incrementos seleccionados cerrados (A01–A10, B01–B06,
   C01–C06, D01–D04, E01–E06) y F01 cerrado el 2026-09-21; el detalle con
   evidencia está en el [Roadmap](ROADMAP.md).
-- Estado verificado (2026-09-21): `:game-domain:test` **46/46**,
+- Estado verificado (2026-09-21): `:game-domain:test` **51/51**,
   `:app:testDebugUnitTest` **7/7**, `:app:lintDebug` sin errores, suite
   instrumental completa **28/28** en CLK‑LX3 por USB, `:app:installDebug`
   verificado en dispositivo.
 - **F01 — Skins Titanio, Jade y Rubí (2026-09-21):** 6 originales versionados,
   12 exportaciones empaquetadas, selector y galería ampliados, textos EN/ES,
   `SkinCatalogTest` 2/2 y `ProgressionUiTest` 10/10 (compra y equipo de jade).
+- **F02 — Script STEALTH (2026-09-21):** `STEALTH(1, 0)` descarta el ruido
+  pendiente del turno; rechazo nuevo `NO_PENDING_NOISE`; mazo ampliado a 15
+  cartas vía `ScriptType.entries`; textos EN/ES de rechazo y ayuda; cue
+  sintetizado y vibración; ilustración de la carta versionada en
+  `assets/cards/card_stealth.png` y exportada a `script_card_stealth.png`;
+  `ScriptRulesTest` +5 → dominio 51/51.
 - Organización y icono (2026-09-21): arte de la raíz movido a `assets/reference`
   y `assets/kenney`, `assets/logo/` versionado, y el foreground del icono
   adaptativo pasa a ser la exportación del logo (`logo_foreground.png`).
@@ -49,9 +55,9 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 | Área | Estado actual | Fuente principal |
 | --- | --- | --- |
 | Motor | Estado inmutable, acciones explícitas y `GameEngine.reduce`. | [Arquitectura](ARCHITECTURE.md) |
-| Generación | Semillas reproducibles; niveles libres, escenarios y desafíos catalogados; suite de dominio 46/46 verde. | [Arquitectura](ARCHITECTURE.md) |
+| Generación | Semillas reproducibles; niveles libres, escenarios y desafíos catalogados; suite de dominio 51/51 verde. | [Arquitectura](ARCHITECTURE.md) |
 | Skins | 15 fichas y 14 PCB en galería; Cobre, Aurora, Titanio, Jade y Rubí premium (200), grafito y señal a 80, resto gratis. | [README de skins](../assets/skins/README.md) |
-| Scripts | `PING`, `SPOOF`, `KILL` (`KILL_PROCESS` internamente) y `BRIDGE`. | [GDD](GDD.md) |
+| Scripts | `PING`, `SPOOF`, `KILL` (`KILL_PROCESS` internamente), `BRIDGE` y `STEALTH` (F02, descarta el ruido pendiente). | [GDD](GDD.md) |
 | Progresión | Desafíos desbloquean escenarios por victorias distintas; récords y créditos persisten. | `PlayerPreferencesRepository` |
 | Economía | Compras y recompensas con transacciones DataStore e idempotencia; reapertura limpia sin pagos duplicados. | `PlayerPreferencesRepository` |
 | Escenarios | Siete fondos generados, empaquetados y usados en tarjetas, partidas y menú. | [README de escenarios](../assets/scenarios/README.md) |
@@ -86,6 +92,11 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
   créditos (`Rewards.premiumSkins`); sus fichas correspondientes son gratuitas,
   porque la galería solo aplica precio a las PCB. `REVISION` no cambia: la clave
   de previsualización ya incluye el id de skin y el render es el mismo.
+- **F02:** STEALTH cuesta 1 RAM y añade 0 de ruido; descarta `pendingNoise`
+  completo y se rechaza (`NO_PENDING_NOISE`) sin gastar nada si no hay ruido
+  pendiente. Cuesta 1 RAM para que quepa el combo SPOOF/BRIDGE + STEALTH dentro
+  del tope de 3, mientras KILL (3 RAM) conserva su ruido sin combinación. Sin
+  lección de tutorial y sin efecto sobre kernel panic.
 - **Icono del launcher:** el foreground del icono adaptativo es la exportación
   reducida `drawable-nodpi/logo_foreground.png` del original en `assets/logo/`;
   el fondo `#07110F` y la capa `monochrome` se conservan, y cualquier regeneración

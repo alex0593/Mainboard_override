@@ -14,11 +14,11 @@ determinista por semillas, persistencia local de ajustes y récords, y pruebas
 unitarias del bucle principal.
 
 Estado verificado (2026-09-21): bloque A del roadmap cerrado (A01–A10) e
-incremento F01 (skins Titanio/Jade/Rubí), suite de dominio **46/46** y
-`:app:testDebugUnitTest` **7/7** en verde, lint sin errores, suite instrumental
-**28/28** en CLK‑LX3 por USB. La reapertura limpia sin recompensas duplicadas
-(B06) y las diez lecciones del tutorial están verificadas en dispositivo.
-No hay cambios locales pendientes de revisar.
+incrementos F01/F02 (skins Titanio/Jade/Rubí y script STEALTH), suite de
+dominio **51/51** y `:app:testDebugUnitTest` **7/7** en verde, lint sin
+errores, suite instrumental **28/28** en CLK‑LX3 por USB. La reapertura limpia
+sin recompensas duplicadas (B06) y las diez lecciones del tutorial están
+verificadas en dispositivo. No hay cambios locales pendientes de revisar.
 
 ## Cómo se juega
 
@@ -34,12 +34,13 @@ No hay cambios locales pendientes de revisar.
   equipan desde la galería (las fichas son siempre gratuitas). No hay créditos
   retroactivos.
 - **Tutorial:** diez lecciones jugables sobre conexiones, rotación, turnos,
-  peligros y los cuatro scripts. Guarda la última lección para continuar o
-  reiniciar, sin alterar créditos, récords ni partidas.
+  peligros y los cuatro scripts (PING, SPOOF, KILL y BRIDGE). Guarda la última
+  lección para continuar o reiniciar, sin alterar créditos, récords ni partidas.
 - **Scripts:** PING (revela honeypots y amplía la vista de la próxima ficha),
   SPOOF (reescribe un puerto de una ficha en mano), KILL (elimina firewall,
-  honeypot visible o ficha completa) y BRIDGE (copia un puerto a través de un
-  firewall). Los botones «?» explican indicadores, scripts y controles.
+  honeypot visible o ficha completa), BRIDGE (copia un puerto a través de un
+  firewall) y STEALTH (descarta el ruido pendiente del turno por 1 RAM). Los
+  botones «?» explican indicadores, scripts y controles.
 - **Detalles:** las tarjetas de desafíos y escenarios abren un detalle con
   previsualización (ejemplo con semilla fija en modo libre) antes de jugar.
   Al finalizar hay resumen con revisión del tablero, reintento y avance al
