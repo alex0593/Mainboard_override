@@ -184,6 +184,7 @@ internal fun ScenarioScreen(state: GameUiState, actions: MainViewModel, onStart:
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart: () -> Unit, onBack: () -> Unit) {
     var selected by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -192,16 +193,30 @@ internal fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart
         Column(Modifier.fillMaxSize().padding(10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             ProgressionHeader(stringResource(R.string.challenge), onBack,
                 counter = "${state.preferences.challengeBest.size}/${ChallengeCatalog.COUNT}")
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(stringResource(R.string.achievements_title), color = Muted, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
-                Achievement.entries.forEach { achievement ->
-                    val unlocked = achievement.id in state.preferences.achievements
-                    Text(
-                        (if (unlocked) "✓ " else "· ") + stringResource(achievementNameRes(achievement.id)),
-                        color = if (unlocked) Terminal else Muted, fontSize = 11.sp, lineHeight = 14.sp,
-                        fontFamily = FontFamily.Monospace,
-                        modifier = Modifier.testTag("achievement-${achievement.id}"),
-                    )
+            // The list sits on a panel so it reads as a block instead of floating on the circuit traces.
+            Surface(
+                color = Void.copy(alpha = .78f),
+                shape = RoundedCornerShape(10.dp),
+                border = BorderStroke(1.dp, Cyan.copy(alpha = .3f)),
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Text(stringResource(R.string.achievements_title), color = Cyan, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Achievement.entries.forEach { achievement ->
+                            val unlocked = achievement.id in state.preferences.achievements
+                            Text(
+                                (if (unlocked) "✓ " else "○ ") + stringResource(achievementNameRes(achievement.id)),
+                                color = if (unlocked) Terminal else MaterialTheme.colorScheme.onSurface.copy(alpha = .78f),
+                                fontSize = 11.sp, lineHeight = 14.sp,
+                                fontFamily = FontFamily.Monospace,
+                                modifier = Modifier.testTag("achievement-${achievement.id}"),
+                            )
+                        }
+                    }
                 }
             }
             LazyVerticalGrid(GridCells.Adaptive(220.dp), horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -242,14 +257,17 @@ internal fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart
             },
         ) {
             ProvideTextStyle(MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp, lineHeight = 17.sp)) {
-            Text(stringResource(R.string.puzzle_objective))
-            Text(stringResource(R.string.puzzle_difficulty, challenge.difficulty))
-            challenge.rules.maxTurns?.let { Text(stringResource(R.string.challenge_rules_turns, it)) }
-            challenge.rules.maxTrace?.let { Text(stringResource(R.string.challenge_rules_trace, it)) }
-            challenge.rules.bannedScripts.forEach { Text(stringResource(R.string.challenge_rules_banned, scriptDisplayName(it)), color = Warning) }
-            Text(stringResource(R.string.expected_reward, Rewards.VICTORY + if (record == null) Rewards.FIRST_CHALLENGE else 0), color = Warning)
-            record?.let { Text(stringResource(R.string.puzzle_record, it.turns, it.trace)) }
-            record?.let { Text(stringResource(R.string.score_best, Rewards.victoryScore(it.turns, it.trace)), color = Warning) }
+                // Briefing first and accented, then the facts, then the payout.
+                Text(stringResource(R.string.puzzle_objective), color = Cyan, fontSize = 14.sp, lineHeight = 19.sp)
+                Spacer(Modifier.height(4.dp))
+                Text(stringResource(R.string.puzzle_difficulty, challenge.difficulty))
+                challenge.rules.maxTurns?.let { Text(stringResource(R.string.challenge_rules_turns, it)) }
+                challenge.rules.maxTrace?.let { Text(stringResource(R.string.challenge_rules_trace, it)) }
+                challenge.rules.bannedScripts.forEach { Text(stringResource(R.string.challenge_rules_banned, scriptDisplayName(it)), color = Warning) }
+                Spacer(Modifier.height(4.dp))
+                Text(stringResource(R.string.expected_reward, Rewards.VICTORY + if (record == null) Rewards.FIRST_CHALLENGE else 0), color = Warning)
+                record?.let { Text(stringResource(R.string.puzzle_record, it.turns, it.trace)) }
+                record?.let { Text(stringResource(R.string.score_best, Rewards.victoryScore(it.turns, it.trace)), color = Warning) }
             }
         }
     }
