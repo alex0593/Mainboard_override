@@ -52,6 +52,9 @@
     <string name="skin_titanium">Circuito titanio</string>
     <string name="skin_jade">Circuito jade</string>
     <string name="skin_ruby">Circuito rubí</string>
+    <string name="skin_sapphire">Circuito zafiro</string>
+    <string name="skin_amber">Circuito ámbar</string>
+    <string name="skin_amethyst">Circuito amatista</string>
     <string name="confirm_exit_title">¿Salir de la partida?</string>
     <string name="confirm_restart_title">¿Reiniciar la red?</string>
     <string name="confirm_match_loss">La partida no se guarda. ¿Estás seguro?</string>

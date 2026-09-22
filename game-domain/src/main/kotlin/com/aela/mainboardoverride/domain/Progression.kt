@@ -40,7 +40,7 @@ object Rewards {
     const val DAILY_GOAL = 10
     const val SKIN_PRICE = 200
     const val ENTRY_SKIN_PRICE = 80
-    val premiumSkins = setOf("copper", "aurora", "titanium", "jade", "ruby")
+    val premiumSkins = setOf("copper", "aurora", "titanium", "jade", "ruby", "sapphire", "amber", "amethyst")
     val affordableSkins = setOf("graphite", "signal")
     val purchasableSkins = premiumSkins + affordableSkins
     fun skinPrice(id: String) = if (id in affordableSkins) ENTRY_SKIN_PRICE else SKIN_PRICE

@@ -31,6 +31,24 @@ class DominoResourcesTest {
         }
     }
 
+    @Test fun crystalPackShellsResolveSpritesAndDistinctPipColors() {
+        val pack = listOf("sapphire", "amber", "amethyst")
+        for (skin in pack) {
+            assertNotEquals(null, dominoShellResource(skin))
+            assertNotEquals(null, dominoShellResource(skin, previewOnly = true))
+            assertNotEquals(null, boardSkinResource(skin))
+            assertNotEquals(null, boardSkinResource(skin, previewOnly = true))
+        }
+        // Light pips over each shell's very dark faces keep contrast AA-readable.
+        assertEquals(Color(0xFFBFE7FF), dominoPipColor("sapphire"))
+        assertEquals(Color(0xFFFFAB3D), dominoPipColor("amber"))
+        assertEquals(Color(0xFFD9B3FF), dominoPipColor("amethyst"))
+        val pips = pack.map(::dominoPipColor)
+        assertEquals(3, pips.toSet().size)
+        val materials = listOf("titanium", "jade", "ruby", "ice", "aurora").map(::dominoPipColor)
+        assertTrue(pips.none { it in materials })
+    }
+
     @Test fun lightThemedSkinsUseDistinctReadablePipColors() {
         assertEquals(Color(0xFF075985), dominoPipColor("ice"))
         assertEquals(Color(0xFFFFC107), dominoPipColor("aurora"))

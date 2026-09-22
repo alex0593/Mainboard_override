@@ -15,6 +15,16 @@ class SkinCatalogTest {
         }
     }
 
+    @Test fun `sapphire amber and amethyst pcbs cost the premium price`() {
+        for (skin in listOf("sapphire", "amber", "amethyst")) {
+            assertTrue(skin in Rewards.premiumSkins)
+            assertTrue(skin in Rewards.purchasableSkins)
+            assertEquals(Rewards.SKIN_PRICE, Rewards.skinPrice(skin))
+        }
+        // Shells ship free: only PCB ids ever enter the purchasable set.
+        assertFalse("sapphire" in Rewards.affordableSkins)
+    }
+
     @Test fun `entry pcbs stay cheap and unknown ids are not purchasable`() {
         for (skin in Rewards.affordableSkins) {
             assertEquals(Rewards.ENTRY_SKIN_PRICE, Rewards.skinPrice(skin))

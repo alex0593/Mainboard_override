@@ -91,6 +91,12 @@ internal fun dominoPipColor(skin: String): Color = when (skin) {
     "jade" -> Color(0xFFFFD43B)
     // Pale rose matches the ruby inlays over the very dark burgundy faces.
     "ruby" -> Color(0xFFFFB3C1)
+    // Ice blue echoes the sapphire's circuit accents over its dark navy faces.
+    "sapphire" -> Color(0xFFBFE7FF)
+    // Warm golden light over the amber resin frame's dark graphite faces.
+    "amber" -> Color(0xFFFFAB3D)
+    // Soft lilac mirrors the amethyst crystal accents over the dark plum faces.
+    "amethyst" -> Color(0xFFD9B3FF)
     "blueprint" -> Color(0xFFB7E8FF)
     "copper" -> Color(0xFFFFD1A1)
     "ice" -> Color(0xFF075985)
@@ -106,6 +112,9 @@ internal fun dominoShellResource(skin: String, previewOnly: Boolean = false): In
     "titanium" -> if (previewOnly) R.drawable.domino_titanium_preview else R.drawable.domino_titanium
     "jade" -> if (previewOnly) R.drawable.domino_jade_preview else R.drawable.domino_jade
     "ruby" -> if (previewOnly) R.drawable.domino_ruby_preview else R.drawable.domino_ruby
+    "sapphire" -> if (previewOnly) R.drawable.domino_sapphire_preview else R.drawable.domino_sapphire
+    "amber" -> if (previewOnly) R.drawable.domino_amber_preview else R.drawable.domino_amber
+    "amethyst" -> if (previewOnly) R.drawable.domino_amethyst_preview else R.drawable.domino_amethyst
     "blueprint" -> if (previewOnly) R.drawable.domino_blueprint_preview else R.drawable.domino_blueprint
     "copper" -> if (previewOnly) R.drawable.domino_copper_preview else R.drawable.domino_copper
     "ice" -> if (previewOnly) R.drawable.domino_ice_preview else R.drawable.domino_ice

@@ -34,6 +34,7 @@ internal val dominoSkins = listOf(
     SkinOption("copper", R.string.skin_copper), SkinOption("ice", R.string.skin_ice), SkinOption("aurora", R.string.skin_aurora),
     SkinOption("obsidian", R.string.skin_obsidian), SkinOption("ceramic", R.string.skin_ceramic),
     SkinOption("titanium", R.string.skin_titanium), SkinOption("jade", R.string.skin_jade), SkinOption("ruby", R.string.skin_ruby),
+    SkinOption("sapphire", R.string.skin_sapphire), SkinOption("amber", R.string.skin_amber), SkinOption("amethyst", R.string.skin_amethyst),
 )
 internal val boardSkins = listOf(
     SkinOption("pcb", R.string.skin_pcb), SkinOption("blueprint", R.string.skin_blueprint),
@@ -42,6 +43,7 @@ internal val boardSkins = listOf(
     SkinOption("copper", R.string.skin_copper), SkinOption("aurora", R.string.skin_aurora),
     SkinOption("obsidian", R.string.skin_obsidian), SkinOption("ceramic", R.string.skin_ceramic),
     SkinOption("titanium", R.string.skin_titanium), SkinOption("jade", R.string.skin_jade), SkinOption("ruby", R.string.skin_ruby),
+    SkinOption("sapphire", R.string.skin_sapphire), SkinOption("amber", R.string.skin_amber), SkinOption("amethyst", R.string.skin_amethyst),
 )
 
 internal fun scenarioLabel(id: String) = when (id) {

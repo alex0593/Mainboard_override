@@ -8,6 +8,9 @@ internal fun boardSkinResource(skin: String, previewOnly: Boolean = false): Int?
     "titanium" -> if (previewOnly) R.drawable.board_titanium_preview else R.drawable.board_titanium
     "jade" -> if (previewOnly) R.drawable.board_jade_preview else R.drawable.board_jade
     "ruby" -> if (previewOnly) R.drawable.board_ruby_preview else R.drawable.board_ruby
+    "sapphire" -> if (previewOnly) R.drawable.board_sapphire_preview else R.drawable.board_sapphire
+    "amber" -> if (previewOnly) R.drawable.board_amber_preview else R.drawable.board_amber
+    "amethyst" -> if (previewOnly) R.drawable.board_amethyst_preview else R.drawable.board_amethyst
     "pcb" -> if (previewOnly) R.drawable.board_pcb_preview else R.drawable.board_pcb
     "blueprint" -> if (previewOnly) R.drawable.board_blueprint_preview else R.drawable.board_blueprint
     "industrial" -> if (previewOnly) R.drawable.board_industrial_preview else R.drawable.board_industrial

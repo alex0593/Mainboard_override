@@ -121,6 +121,11 @@ class ProgressionUiTest {
         // The domino tab lists the new material shells with their translated labels.
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(app.getString(R.string.skin_titanium)))
         compose.onNodeWithText(app.getString(R.string.skin_titanium)).assertIsDisplayed()
+        // The crystal pack shells are listed with their translated labels.
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(app.getString(R.string.skin_sapphire)))
+        compose.onNodeWithText(app.getString(R.string.skin_sapphire)).assertIsDisplayed()
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(app.getString(R.string.skin_amethyst)))
+        compose.onNodeWithText(app.getString(R.string.skin_amethyst)).assertIsDisplayed()
         compose.onNodeWithText(app.getString(R.string.board_skin)).performClick()
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasTestTag("skin-action-jade"))
         compose.onNodeWithTag("skin-action-jade").assertIsDisplayed().assertIsEnabled().performClick()
@@ -133,8 +138,10 @@ class ProgressionUiTest {
         compose.onNodeWithTag("skin-action-jade").assertIsDisplayed().assertIsEnabled().performClick()
         compose.waitUntil(5000) { runBlocking { repository.preferences.first().boardSkin == "jade" } }
         assertEquals(50, runBlocking { repository.preferences.first().credits })
-        // Ruby and titanium stay listed as premium PCBs behind the same price gate.
-        assertTrue(runBlocking { repository.preferences.first().ownedSkins }.none { it in setOf("ruby", "titanium") })
+        // Ruby, titanium and the crystal pack stay listed as premium PCBs behind the same price gate.
+        assertTrue(runBlocking { repository.preferences.first().ownedSkins }.none {
+            it in setOf("ruby", "titanium", "sapphire", "amber", "amethyst")
+        })
     }
 
     @Test fun resultCanBeDismissedToInspectBoardWithoutRewardingAgain() {
