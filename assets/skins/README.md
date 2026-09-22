@@ -10,6 +10,7 @@ Generated with the integrated `imagegen` tool, one call per asset. The selected 
 | Graphite, signal (PCB) | `regen-originals/graphite.png`, `regen-originals/signal.png` | Entry PCBs, 80 credits. |
 | Copper, aurora (PCB) | `regen-originals/copper.png`, `regen-originals/aurora.png` | Premium PCBs, 200 credits. |
 | **Titanium, jade, ruby (F01)** | `originals/board_{titanium,jade,ruby}.png`, `originals/domino_{titanium,jade,ruby}.png` | Premium PCBs, 200 credits; domino shells free. Prompts in `titanium-jade-ruby-prompts.md`. |
+| **Sapphire, amber, amethyst (F03)** | `originals/board_{sapphire,amber,amethyst}.png`, `originals/domino_{sapphire,amber,amethyst}.png` | Premium PCBs, 200 credits; domino shells free. Prompts in `sapphire-amber-amethyst-prompts.md`. |
 
 Exports: domino shells 256 × 512 (512 KiB decoded ARGB), domino previews 96 × 192 (72 KiB); boards 1024 × 512 (2 MiB), board previews 384 × 192 (288 KiB). Transparency is preserved. Real pip values are drawn by the game, never generated as part of the shell. The circuit skin uses a 256 × 512 sibling export instead of decoding its 887 × 1774 original (about 6 MiB).
 

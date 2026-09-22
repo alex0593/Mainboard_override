@@ -4,7 +4,7 @@
 y conserva las decisiones que afectan al trabajo siguiente. El plan de trabajo
 vive únicamente en [ROADMAP.md](ROADMAP.md).
 
-**Revisión:** 2026-09-21.
+**Revisión:** 2026-09-22.
 
 ## Fuentes de verdad
 
@@ -30,12 +30,12 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 - `feat: verify B06 clean-menu reopen without duplicate rewards` — reabrir tras
   cerrar el proceso parte del menú limpio, sin duplicar créditos.
 - Bloques A–E con los incrementos seleccionados cerrados (A01–A10, B01–B06,
-  C01–C06, D01–D04, E01–E06) y F01 cerrado el 2026-09-21; el detalle con
-  evidencia está en el [Roadmap](ROADMAP.md).
-- Estado verificado (2026-09-21): `:game-domain:test` **51/51**,
-  `:app:testDebugUnitTest` **7/7**, `:app:lintDebug` sin errores, suite
-  instrumental completa **28/28** en CLK‑LX3 por USB, `:app:installDebug`
-  verificado en dispositivo.
+  C01–C06, D01–D04, E01–E06) y F01–F03 cerrados (F01/F02 el 2026-09-21, F03
+  el 2026-09-22); el detalle con evidencia está en el [Roadmap](ROADMAP.md).
+- Estado verificado (2026-09-22): `:game-domain:test` **52/52**,
+  `:app:testDebugUnitTest` **8/8**, `:app:lintDebug` sin errores, suite
+  instrumental completa **28/28** en CLK‑LX3 por USB, `:app:assembleDebug`
+  correcto.
 - **F01 — Skins Titanio, Jade y Rubí (2026-09-21):** 6 originales versionados,
   12 exportaciones empaquetadas, selector y galería ampliados, textos EN/ES,
   `SkinCatalogTest` 2/2 y `ProgressionUiTest` 10/10 (compra y equipo de jade).
@@ -45,6 +45,10 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
   sintetizado y vibración; ilustración de la carta versionada en
   `assets/cards/card_stealth.png` y exportada a `script_card_stealth.png`;
   `ScriptRulesTest` +5 → dominio 51/51.
+- **F03 — Skins Zafiro, Ámbar y Amatista (2026-09-22):** 6 originales
+  versionados con prompts, 12 exportaciones empaquetadas, mapeo y colores de
+  punto por material, galería y textos EN/ES; `SkinCatalogTest` 3/3 y
+  `DominoResourcesTest` 4/4.
 - Organización y icono (2026-09-21): arte de la raíz movido a `assets/reference`
   y `assets/kenney`, `assets/logo/` versionado, y el foreground del icono
   adaptativo pasa a ser la exportación del logo (`logo_foreground.png`).
@@ -55,8 +59,8 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 | Área | Estado actual | Fuente principal |
 | --- | --- | --- |
 | Motor | Estado inmutable, acciones explícitas y `GameEngine.reduce`. | [Arquitectura](ARCHITECTURE.md) |
-| Generación | Semillas reproducibles; niveles libres, escenarios y desafíos catalogados; suite de dominio 51/51 verde. | [Arquitectura](ARCHITECTURE.md) |
-| Skins | 15 fichas y 14 PCB en galería; Cobre, Aurora, Titanio, Jade y Rubí premium (200), grafito y señal a 80, resto gratis. | [README de skins](../assets/skins/README.md) |
+| Generación | Semillas reproducibles; niveles libres, escenarios y desafíos catalogados; suite de dominio 52/52 verde. | [Arquitectura](ARCHITECTURE.md) |
+| Skins | 18 fichas y 17 PCB en galería; Cobre, Aurora, Titanio, Jade, Rubí, Zafiro, Ámbar y Amatista premium (200), grafito y señal a 80, resto gratis. | [README de skins](../assets/skins/README.md) |
 | Scripts | `PING`, `SPOOF`, `KILL` (`KILL_PROCESS` internamente), `BRIDGE` y `STEALTH` (F02, descarta el ruido pendiente). | [GDD](GDD.md) |
 | Progresión | Desafíos desbloquean escenarios por victorias distintas; récords y créditos persisten. | `PlayerPreferencesRepository` |
 | Economía | Compras y recompensas con transacciones DataStore e idempotencia; reapertura limpia sin pagos duplicados. | `PlayerPreferencesRepository` |
@@ -97,6 +101,11 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
   pendiente. Cuesta 1 RAM para que quepa el combo SPOOF/BRIDGE + STEALTH dentro
   del tope de 3, mientras KILL (3 RAM) conserva su ruido sin combinación. Sin
   lección de tutorial y sin efecto sobre kernel panic.
+- **F03:** las PCB Zafiro, Ámbar y Amatista siguen el molde de F01: premium
+  de compra única a 200 créditos (`Rewards.premiumSkins`, ids `sapphire`,
+  `amber`, `amethyst`); sus tres fichas correspondientes son gratuitas.
+  `REVISION` no cambia: la clave de previsualización ya incluye el id de skin
+  y el render es el mismo.
 - **Icono del launcher:** el foreground del icono adaptativo es la exportación
   reducida `drawable-nodpi/logo_foreground.png` del original en `assets/logo/`;
   el fondo `#07110F` y la capa `monochrome` se conservan, y cualquier regeneración

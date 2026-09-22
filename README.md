@@ -13,9 +13,10 @@ Vertical slice jugable: motor Kotlin puro, app Jetpack Compose, generación
 determinista por semillas, persistencia local de ajustes y récords, y pruebas
 unitarias del bucle principal.
 
-Estado verificado (2026-09-21): bloque A del roadmap cerrado (A01–A10) e
-incrementos F01/F02 (skins Titanio/Jade/Rubí y script STEALTH), suite de
-dominio **51/51** y `:app:testDebugUnitTest` **7/7** en verde, lint sin
+Estado verificado (2026-09-22): bloque A del roadmap cerrado (A01–A10) e
+incrementos F01/F02/F03 (skins Titanio/Jade/Rubí, Zafiro/Ámbar/Amatista y
+script STEALTH), suite de
+dominio **52/52** y `:app:testDebugUnitTest` **8/8** en verde, lint sin
 errores, suite instrumental **28/28** en CLK‑LX3 por USB. La reapertura limpia
 sin recompensas duplicadas (B06) y las diez lecciones del tutorial están
 verificadas en dispositivo. No hay cambios locales pendientes de revisar.
@@ -29,7 +30,8 @@ verificadas en dispositivo. No hay cambios locales pendientes de revisar.
   reproducible por semilla y solución comprobada por el motor.
 - **Economía:** cada victoria otorga 20 créditos y la primera victoria de cada
   desafío añade 40. Repetir desafíos concede solo los 20 de victoria; perder y
-  abandonar no dan créditos. Las PCB Cobre, Aurora, Titanio, Jade y Rubí cuestan
+  abandonar no dan créditos. Las PCB Cobre, Aurora, Titanio, Jade, Rubí,
+  Zafiro, Ámbar y Amatista cuestan
   200 cada una y las de grafito y señal 80; todas son de compra única y se
   equipan desde la galería (las fichas son siempre gratuitas). No hay créditos
   retroactivos.

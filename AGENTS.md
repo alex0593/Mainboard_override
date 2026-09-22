@@ -38,7 +38,7 @@ Keep rules in `game-domain`; route gameplay actions through `GameEngine.reduce` 
 
 Domain tests use `kotlin.test` on JUnit Platform; app tests use JUnit 4 and Compose testing. Name classes `*Test`; use descriptive backtick names for domain cases and camelCase UI test methods. Cover rule changes in engine tests and update the GDD. Isolate test DataStore files from real profiles (`ProgressionUiTest` uses a cache-only store). No numeric coverage threshold is configured.
 
-The domain suite is green: 51 tests, 0 failures (verified 2026-09-21), and the roadmap items A01–A10 in `docs/ROADMAP.md` section 4 are closed with recorded root causes. If a domain test fails, read that section and the engine contract first; the project expects a root-cause fix, not updated expectations. Reports live in `game-domain/build/reports/tests/test/index.html`. The instrumented suites are green (28 tests across 8 classes); run connected tests over USB, not WiFi adb (WiFi runs take ~11 min with random `No compose hierarchies` communication flakes vs ~1 min on USB).
+The domain suite is green: 52 tests, 0 failures (verified 2026-09-22), and the roadmap items A01–A10 in `docs/ROADMAP.md` section 4 are closed with recorded root causes. If a domain test fails, read that section and the engine contract first; the project expects a root-cause fix, not updated expectations. Reports live in `game-domain/build/reports/tests/test/index.html`. The instrumented suites are green (28 tests across 8 classes); run connected tests over USB, not WiFi adb (WiFi runs take ~11 min with random `No compose hierarchies` communication flakes vs ~1 min on USB).
 
 ## Commit & Pull Request Guidelines
 

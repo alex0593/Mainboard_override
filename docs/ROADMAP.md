@@ -4,14 +4,14 @@
 
 Este documento recoge, estructura y prioriza las ideas de mejora para el juego, a partir del banco de ideas en `docs/IMPROVEMENTS.md`. No es un plan definitivo, sino una propuesta de ruta para decidir qué hacer primero y qué dejar para después.
 
-**Revisión:** 2026-09-21. Único plan operativo del proyecto: orden,
+**Revisión:** 2026-09-22. Único plan operativo del proyecto: orden,
 dependencias, tareas y criterios de cierre. El estado comprobable y las
 decisiones viven en [ESTADO.md](ESTADO.md). Ayer (2026-09-20) se cerraron
 A01–A09 con causas raíz registradas y B06 con reapertura limpia verificada.
-Hoy (2026-09-21) se cerró A10 con la suite instrumental completa en verde,
+El 2026-09-21 se cerró A10 con la suite instrumental completa en verde,
 también cerraron C01–C06, D02–D04 y E01–E06, y se abrió el bloque F con F01
 (skins Titanio/Jade/Rubí) y F02 (script STEALTH); la suite instrumental quedó
-en 28/28.
+en 28/28. Hoy (2026-09-22) se cerró F03 (skins Zafiro/Ámbar/Amatista).
 Los hilos temáticos son propuestas; no representan funciones aprobadas
 ni tareas terminadas. `[ ]` significa pendiente; marcar `[x]` solo con evidencia
 de cierre. Las decisiones de producto se registran antes de implementar sus ramas.
@@ -22,7 +22,7 @@ de cierre. Las decisiones de producto se registran antes de implementar sus rama
 - Scripts actuales: PING, SPOOF, KILL_PROCESS, BRIDGE.
 - Progresión de desafíos desbloqueables y escenarios de modo libre.
 - Persistencia con DataStore; compras y recompensas implementadas en el repositorio concreto.
-- Última ejecución de `:game-domain:test`: 51 pruebas, 0 fallos (2026-09-21).
+- Última ejecución de `:game-domain:test`: 52 pruebas, 0 fallos (2026-09-22).
 - Tutorial con 10 lecciones deterministas, textos EN/ES en paridad (47 instrucciones), progreso visible y avance explícito; `TutorialTest` 5/5 y `PuzzleTutorialUiTest` 6/6 en CLK-LX3 por USB.
 - Audio procedural completo: soundtrack synthwave adaptativo, 16 cues de SFX, volúmenes de música/EFX en ajustes, silencio, vibración cableada (`HapticsHost`) y movimiento reducido (E04).
 - Localización por-app con AppCompat (ES/EN aplican en todos los API), icono adaptativo con foreground exportado del logo (`logo_foreground.png`), capa monocroma y splash propio.
@@ -194,6 +194,8 @@ Depende de E. Cada incremento registra su decisión antes de implementar su rama
 
 - [x] **F01 — Skins Titanio, Jade y Rubí:** cerrado 2026-09-21 (alcance: 3 PCB premium + 3 fichas) — 6 originales en `assets/skins/originals/` con prompts versionados; 12 exportaciones (`PrepareSkinAsset`: PCB 1024×512 y preview 384×192, fichas 256×512 y preview 96×192); mapeo en `BoardSkinResources`/`dominoShellResource`, colores de punto por material (titanio `#E8F1FF`, jade `#FFD43B`, rubí `#FFB3C1`), galería y textos EN/ES; `premiumSkins` con precio 200 y fichas gratuitas; `REVISION` sin cambios. Evidencia: `SkinCatalogTest` 2/2, dominio 46/46, app 7/7, `ProgressionUiTest` 10/10, lint sin errores, suite instrumental 28/28 en CLK‑LX3 por USB.
 - [x] **F02 — Script STEALTH:** cerrado 2026-09-21 (alcance: descartar ruido pendiente; sin tutorial) — `STEALTH(1, 0)` descarta `pendingNoise` completo antes de que `EndTurn` lo sume al rastreo; rechazo nuevo `NO_PENDING_NOISE` sin gastar carta ni RAM cuando no hay ruido; combos SPOOF/BRIDGE/trampa + STEALTH dentro del tope de 3 RAM y KILL(3) sin combinación; mazo autoincluido vía `ScriptType.entries` (11→14 cartas en espera); textos EN/ES de rechazo y ayuda, `SoundCue.Stealth` sintetizado y vibración en `Haptics`; ilustración original en `assets/cards/card_stealth.png` con exportación `script_card_stealth.png` 1254×1254 (prompt en `CARTAS.md`); `REVISION` sin cambios. Evidencia: `ScriptRulesTest` +5 → dominio **51/51**, app **7/7**, lint sin errores, suite instrumental 28/28 en CLK‑LX3 por USB.
+
+- [x] **F03 — Skins Zafiro, Ámbar y Amatista:** cerrado 2026-09-22 (decisión 2026-09-22; alcance: 3 PCB premium + 3 fichas) — mismos términos que F01: PCB premium a 200 créditos vía `Rewards.premiumSkins` con ids `sapphire`, `amber`, `amethyst` y sus tres fichas gratuitas; 6 originales en `assets/skins/originals/` con prompts versionados en `sapphire-amber-amethyst-prompts.md` (tableros 1774×887 opacos con 0 px transparentes verificados, fichas 887×1774 con 20–25 % de alpha fuera de la silueta); 12 exportaciones (`PrepareSkinAsset`: PCB 1024×512 y preview 384×192, fichas 256×512 y preview 96×192); mapeo en `BoardSkinResources`/`dominoShellResource`, colores de punto por material (zafiro `#BFE7FF`, ámbar `#FFAB3D`, amatista `#D9B3FF`), galería y textos EN/ES; `REVISION` sin cambios (la clave ya incluye el id de skin). Evidencia: `SkinCatalogTest` 3/3, dominio **52/52**, app **8/8**, `ProgressionUiTest` 10/10, lint sin errores, `assembleDebug` correcto, suite instrumental **28/28** en CLK‑LX3 por USB.
 
 **Cierre por incremento F:** igual que E — spec acordada, implementación, tests,
 textos EN/ES y documentación en el mismo incremento.
