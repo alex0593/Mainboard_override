@@ -24,6 +24,9 @@ object GameEngine {
                     pingPreview = current.dominoBag.take(current.pingPreview.size + 1),
                 )
             }
+            is GameAction.PlayStealth -> playCard(state, action.cardId, ScriptType.STEALTH) { current ->
+                current.copy(pendingNoise = 0)
+            }
             is GameAction.PlaySpoof -> playSpoof(state, action)
             is GameAction.PlayKillProcess -> playKill(state, action)
             is GameAction.PlayBridge -> playBridge(state, action)
@@ -274,6 +277,11 @@ object GameEngine {
         if (expectedType == ScriptType.PING &&
             (state.board.honeypots - state.board.revealedHoneypots - state.board.triggeredHoneypots).isEmpty() &&
             state.pingPreview.size >= state.dominoBag.size) return rejected(state, RejectReason.INVALID_TARGET)
+        // STEALTH with nothing queued would burn a card and RAM for no gain;
+        // reject before paying, mirroring PING's "no new information" guard.
+        if (expectedType == ScriptType.STEALTH && state.pendingNoise == 0) {
+            return rejected(state, RejectReason.NO_PENDING_NOISE)
+        }
         val paid = state.copy(
             scriptHand = state.scriptHand.filterNot { it.id == card.id },
             ram = state.ram - card.type.ramCost,

@@ -137,6 +137,7 @@
     <string name="error_insufficient_ram">No hay suficiente RAM. Coloca una ficha y ejecuta el turno para reponerla.</string>
     <string name="error_invalid_target">Elige un objetivo válido: un puerto de la mano para SPOOF, un firewall, honeypot visible o ficha colocada para KILL, o un firewall junto a una ficha con salida compatible para BRIDGE.</string>
     <string name="error_must_place_domino">Coloca una ficha antes de ejecutar el turno.</string>
+    <string name="error_no_pending_noise">STEALTH no puede ejecutarse: no hay ruido pendiente que borrar en este turno.</string>
     <string name="result_victory">Extracción conectada correctamente.</string>
     <string name="result_trace_intercepted">El rastreo llegó a 100. Usa menos scripts ruidosos.</string>
     <string name="result_daemon_breach">El daemon alcanzó inicio.</string>
@@ -170,6 +171,8 @@
     <string name="help_kill_body">Selecciona la carta y toca un firewall, honeypot visible o cualquiera de las dos mitades de una ficha colocada. Al apuntar a una ficha se eliminan sus dos celdas. Eliminar una trampa evita que se active al cubrirla; no devuelve ruido ni cartas perdidas. No elimina al daemon.</string>
     <string name="help_bridge_title">BRIDGE</string>
     <string name="help_bridge_body">Selecciona la carta, cambia horizontal o vertical con el botón junto a Cancelar y toca un firewall junto a una ficha. El puente copia su puerto y cruza el firewall sin eliminarlo. La casilla opuesta queda libre para colocar una ficha del mismo número. Si ya hay puertos a ambos lados, deben coincidir. Cada firewall admite un puente. Los bordes verdes señalan los objetivos válidos para la orientación elegida.</string>
+    <string name="help_stealth_title">STEALTH</string>
+    <string name="help_stealth_body">Selecciona la carta para descartar todo el ruido pendiente de este turno antes de que se sume al rastreo al ejecutar el turno. Cuesta 1 RAM y no añade ruido. Juega después de SPOOF (5), un puente (10) o un honeypot (20) para cancelar ese ruido; KILL gasta las 3 RAM completas, así que no puede combinarse en el mismo turno. Sin ruido pendiente la carta se rechaza y no se consume.</string>
     <string name="help_script_cost">Coste: %1$d RAM · Ruido: +%2$d</string>
     <string name="spoof_before">Antes</string>
     <string name="spoof_after">Después</string>

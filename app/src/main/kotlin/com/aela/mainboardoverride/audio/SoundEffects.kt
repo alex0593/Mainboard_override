@@ -30,6 +30,7 @@ enum class SoundCue(val durationMs: Long) {
     Spoof(240),
     Kill(380),
     Bridge(260),
+    Stealth(300),
     Alarm(420),
     Cooler(260),
     Ram(220),
@@ -175,6 +176,12 @@ class SoundEffects {
             decay = 9.0,
             gain = .38,
         )
+        SoundCue.Stealth -> DoubleArray(count) { i ->
+            // Downward sweep plus a dying hiss reads as pending noise wiping away.
+            val t = i.toDouble() / SAMPLE_RATE
+            (sin(TAU * (330.0 * t + 550.0 * (1.0 - exp(-t * 5.0)) / 5.0)) * exp(-t * 6.0) +
+                noise(i.toLong()) * exp(-t * 18.0) * .3) * attack(t, 2.0) * .34
+        }
         SoundCue.Alarm -> DoubleArray(count) { i ->
             val t = i.toDouble() / SAMPLE_RATE
             val pulse = if (t < .18 || t >= .2 && t < .38) 1.0 else 0.0

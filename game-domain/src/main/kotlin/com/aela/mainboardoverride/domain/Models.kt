@@ -66,6 +66,8 @@ enum class ScriptType(
     SPOOF(2, 5),
     KILL_PROCESS(3, 15),
     BRIDGE(2, 10),
+    /** Cheap utility: discards this turn's pending noise before it reaches trace. */
+    STEALTH(1, 0),
 }
 
 data class ScriptCard(val id: String, val type: ScriptType)
@@ -160,6 +162,7 @@ sealed interface GameAction {
     ) : GameAction
 
     data class PlayPing(val cardId: String) : GameAction
+    data class PlayStealth(val cardId: String) : GameAction
     data class PlaySpoof(val cardId: String, val dominoId: String, val half: Int, val value: Int) : GameAction
     data class PlayKillProcess(val cardId: String, val target: Position) : GameAction
     data class PlayBridge(val cardId: String, val center: Position, val horizontal: Boolean) : GameAction
@@ -188,6 +191,7 @@ enum class RejectReason {
     INSUFFICIENT_RAM,
     INVALID_TARGET,
     MUST_PLACE_DOMINO,
+    NO_PENDING_NOISE,
 }
 
 /** Reducer output: durable [state] plus one-shot presentation [events]. */

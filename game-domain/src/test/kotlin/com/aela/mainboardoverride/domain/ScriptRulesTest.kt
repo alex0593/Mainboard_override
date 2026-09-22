@@ -46,6 +46,80 @@ class ScriptRulesTest {
         scriptDeck = emptyList(),
     )
 
+    @Test fun `stealth wipes pending noise for one ram`() {
+        val initial = state(BoardState(honeypots = setOf(Position(3, 2)))).copy(
+            scriptHand = listOf(ScriptCard("stealth", ScriptType.STEALTH)),
+            pendingNoise = 20,
+        )
+        val masked = GameEngine.reduce(initial, GameAction.PlayStealth("stealth"))
+        assertEquals(listOf(GameEvent.ScriptExecuted(ScriptType.STEALTH)), masked.events)
+        assertEquals(0, masked.state.pendingNoise)
+        assertEquals(MAX_RAM - 1, masked.state.ram)
+        assertTrue(masked.state.scriptHand.isEmpty())
+        // The wipe is durable only inside the turn: endTurn still applies trace +8.
+        assertEquals(8, GameEngine.reduce(
+            masked.state.copy(
+                dominoHand = listOf(Domino("a", 0, 2)),
+                tilePlacedThisTurn = true,
+            ), GameAction.EndTurn,
+        ).state.trace)
+    }
+
+    @Test fun `stealth without pending noise is rejected untouched`() {
+        val initial = state(BoardState()).copy(scriptHand = listOf(ScriptCard("stealth", ScriptType.STEALTH)))
+        assertEquals(0, initial.pendingNoise)
+        val rejected = GameEngine.reduce(initial, GameAction.PlayStealth("stealth"))
+        assertEquals(initial, rejected.state)
+        assertEquals(listOf(GameEvent.Rejected(RejectReason.NO_PENDING_NOISE)), rejected.events)
+    }
+
+    @Test fun `honeypot noise can be erased the same turn it triggers`() {
+        val board = BoardState(width = 8, height = 5, honeypots = setOf(Position(0, 2)))
+        val hand = listOf(Domino("a", 0, 2))
+        val initial = state(board).copy(
+            dominoHand = hand,
+            scriptHand = listOf(ScriptCard("ping", ScriptType.PING), ScriptCard("stealth", ScriptType.STEALTH)),
+        )
+        val placed = GameEngine.reduce(initial, GameAction.PlaceDomino("a", Position(0, 2), Orientation.HORIZONTAL)).state
+        assertEquals(20, placed.pendingNoise)
+        // The honeypot still discards the oldest script before stealth can run.
+        assertEquals(listOf(ScriptCard("stealth", ScriptType.STEALTH)), placed.scriptHand)
+        // Without the wipe the trap lands on trace; with it only the turn's base +8 remains.
+        assertEquals(28, GameEngine.reduce(placed, GameAction.EndTurn).state.trace)
+        val masked = GameEngine.reduce(placed, GameAction.PlayStealth("stealth")).state
+        assertEquals(0, masked.pendingNoise)
+        assertEquals(8, GameEngine.reduce(masked, GameAction.EndTurn).state.trace)
+    }
+
+    @Test fun `spoof then stealth nets zero noise within the ram ceiling`() {
+        val initial = state(BoardState()).copy(
+            scriptHand = listOf(ScriptCard("spoof", ScriptType.SPOOF), ScriptCard("stealth", ScriptType.STEALTH)),
+        )
+        val spoofed = GameEngine.reduce(initial, GameAction.PlaySpoof("spoof", "next", half = 1, value = 4)).state
+        assertEquals(5, spoofed.pendingNoise)
+        assertEquals(MAX_RAM - ScriptType.SPOOF.ramCost, spoofed.ram)
+        val masked = GameEngine.reduce(spoofed, GameAction.PlayStealth("stealth")).state
+        assertEquals(0, masked.pendingNoise)
+        assertEquals(0, masked.ram)
+        assertTrue(masked.scriptHand.isEmpty())
+        // The rewritten port persists after the noise wipe.
+        assertEquals(Domino("next", 3, 4), masked.dominoHand.single())
+    }
+
+    @Test fun `kill noise survives because stealth cannot fit the ram ceiling`() {
+        val trap = Position(3, 2)
+        val initial = state(BoardState(honeypots = setOf(trap), revealedHoneypots = setOf(trap))).copy(
+            scriptHand = listOf(ScriptCard("kill", ScriptType.KILL_PROCESS), ScriptCard("stealth", ScriptType.STEALTH)),
+        )
+        val killed = GameEngine.reduce(initial, GameAction.PlayKillProcess("kill", trap)).state
+        assertEquals(0, killed.ram)
+        assertEquals(15, killed.pendingNoise)
+        val masked = GameEngine.reduce(killed, GameAction.PlayStealth("stealth"))
+        assertEquals(killed, masked.state)
+        assertEquals(listOf(GameEvent.Rejected(RejectReason.INSUFFICIENT_RAM)), masked.events)
+        assertTrue(ScriptCard("stealth", ScriptType.STEALTH) in killed.scriptHand)
+    }
+
     @Test fun pingRevealsOneNewHiddenTrapAndOneTileWithoutDrawing() {
         val traps = setOf(Position(2, 2), Position(3, 2), Position(4, 2), Position(5, 2))
         val initial = state(BoardState(honeypots = traps, revealedHoneypots = setOf(Position(2, 2)),

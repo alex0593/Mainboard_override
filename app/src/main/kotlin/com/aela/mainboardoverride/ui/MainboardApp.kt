@@ -105,6 +105,7 @@ internal fun rejectionText(reason: RejectReason): Int = when (reason) {
     RejectReason.INSUFFICIENT_RAM -> R.string.error_insufficient_ram
     RejectReason.INVALID_TARGET -> R.string.error_invalid_target
     RejectReason.MUST_PLACE_DOMINO -> R.string.error_must_place_domino
+    RejectReason.NO_PENDING_NOISE -> R.string.error_no_pending_noise
 }
 
 internal fun resultText(result: GameResult): Int = when (result) {

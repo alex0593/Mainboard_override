@@ -74,6 +74,7 @@ private fun scriptArtwork(type: ScriptType): Int? = when (type) {
     ScriptType.SPOOF -> R.drawable.script_card_spoof
     ScriptType.KILL_PROCESS -> R.drawable.script_card_kill
     ScriptType.BRIDGE -> R.drawable.script_card_bridge
+    ScriptType.STEALTH -> R.drawable.script_card_stealth
     else -> null
 }
 

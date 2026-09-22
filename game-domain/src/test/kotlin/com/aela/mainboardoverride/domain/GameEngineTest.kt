@@ -191,7 +191,7 @@ class GameEngineTest {
         // A new match deals a single script and keeps the rest of the deck waiting.
         val generated = LevelGenerator.generate(2024L)
         assertEquals(1, generated.scriptHand.size)
-        assertEquals(11, generated.scriptDeck.size)
+        assertEquals(14, generated.scriptDeck.size)
 
         val deck = (1..8).map { ScriptCard("deck-$it", ScriptType.PING) }
         var state = GameState(

@@ -139,6 +139,7 @@
     <string name="error_insufficient_ram">Not enough RAM. Place hardware and execute the turn to refill it.</string>
     <string name="error_invalid_target">Choose a valid target: a hand port for SPOOF, a firewall, visible honeypot or placed domino for KILL, or a firewall beside a domino with a compatible exit for BRIDGE.</string>
     <string name="error_must_place_domino">Place one domino before executing the turn.</string>
+    <string name="error_no_pending_noise">STEALTH cannot run: there is no pending noise to erase this turn.</string>
     <string name="result_victory">Extraction connected successfully.</string>
     <string name="result_trace_intercepted">Trace reached 100. Use fewer noisy scripts.</string>
     <string name="result_daemon_breach">The daemon reached start.</string>
@@ -172,6 +173,8 @@
     <string name="help_kill_body">Select the card, then tap a firewall, visible honeypot or either half of a placed domino. A domino target removes the complete ficha and frees both cells. Removing a honeypot prevents it from triggering when covered; previous noise and discarded cards are not refunded. It cannot remove the daemon.</string>
     <string name="help_bridge_title">BRIDGE</string>
     <string name="help_bridge_body">Select the card, toggle horizontal or vertical beside Cancel, then tap a firewall beside a domino. The bridge copies its port across the firewall without removing it. The opposite cell stays free for a matching domino. Existing ports on both sides must match. Each firewall can hold one bridge. Green outlines mark valid targets for the selected orientation.</string>
+    <string name="help_stealth_title">STEALTH</string>
+    <string name="help_stealth_body">Select the card to wipe all pending noise from this turn before it is added to trace when you execute the turn. It costs 1 RAM and adds no noise itself. Play it after SPOOF (5), a bridge (10) or a honeypot (20) to cancel that noise; KILL spends the full 3 RAM so it cannot combine in the same turn. With no pending noise the card is rejected and never consumed.</string>
     <string name="help_script_cost">Cost: %1$d RAM · Noise: +%2$d</string>
     <string name="spoof_before">Before</string>
     <string name="spoof_after">After</string>

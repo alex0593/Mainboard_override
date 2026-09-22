@@ -39,6 +39,7 @@ internal enum class HelpTopic(val title: Int, val body: Int, val script: ScriptT
     SPOOF(R.string.help_spoof_title, R.string.help_spoof_body, ScriptType.SPOOF),
     KILL(R.string.help_kill_title, R.string.help_kill_body, ScriptType.KILL_PROCESS),
     BRIDGE(R.string.help_bridge_title, R.string.help_bridge_body, ScriptType.BRIDGE),
+    STEALTH(R.string.help_stealth_title, R.string.help_stealth_body, ScriptType.STEALTH),
 }
 
 internal fun ScriptType.helpTopic(): HelpTopic = when (this) {
@@ -46,6 +47,7 @@ internal fun ScriptType.helpTopic(): HelpTopic = when (this) {
     ScriptType.SPOOF -> HelpTopic.SPOOF
     ScriptType.KILL_PROCESS -> HelpTopic.KILL
     ScriptType.BRIDGE -> HelpTopic.BRIDGE
+    ScriptType.STEALTH -> HelpTopic.STEALTH
 }
 
 @Composable

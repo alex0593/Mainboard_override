@@ -28,6 +28,7 @@ fun hapticPattern(cue: SoundCue): HapticPattern? = when (cue) {
     SoundCue.Spoof -> HapticPattern(longArrayOf(0, 30), intArrayOf(0, 110))
     SoundCue.Kill -> HapticPattern(longArrayOf(0, 70, 50, 90), intArrayOf(0, 200, 0, 255))
     SoundCue.Bridge -> HapticPattern(longArrayOf(0, 45), intArrayOf(0, 150))
+    SoundCue.Stealth -> HapticPattern(longArrayOf(0, 30), intArrayOf(0, 110))
     SoundCue.Alarm -> HapticPattern(longArrayOf(0, 80, 60, 80), intArrayOf(0, 220, 0, 220))
     SoundCue.Cooler -> HapticPattern(longArrayOf(0, 35), intArrayOf(0, 120))
     SoundCue.Ram -> HapticPattern(longArrayOf(0, 35), intArrayOf(0, 120))

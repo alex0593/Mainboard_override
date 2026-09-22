@@ -183,6 +183,7 @@ class MainViewModel(application: Application, private val repository: PlayerPref
         val card = game.scriptHand.find { it.id == id } ?: return
         if (session.value.game?.result != null) return
         if (card.type == ScriptType.PING) dispatch(GameAction.PlayPing(id))
+        else if (card.type == ScriptType.STEALTH) dispatch(GameAction.PlayStealth(id))
         else {
             session.update { it.copy(selectedScriptId = id, selectedDominoId = null, message = null, spoofHalf = 0, spoofValue = 0, bridgeHorizontal = true) }
             playUiTick()
@@ -269,6 +270,7 @@ class MainViewModel(application: Application, private val repository: PlayerPref
                         ScriptType.SPOOF -> SoundCue.Spoof
                         ScriptType.KILL_PROCESS -> SoundCue.Kill
                         ScriptType.BRIDGE -> SoundCue.Bridge
+                        ScriptType.STEALTH -> SoundCue.Stealth
                     },
                 )
                 is GameEvent.HoneypotTriggered -> emitCue(SoundCue.Alarm)
