@@ -7,7 +7,7 @@ y bilingüe (ES/EN).
 
 ## Estado
 
-Versión actual: **0.1.0-alpha.20**.
+Versión actual: **0.1.0-alpha.21**.
 
 Vertical slice jugable: motor Kotlin puro, app Jetpack Compose, generación
 determinista por semillas, persistencia local de ajustes y récords, y pruebas
