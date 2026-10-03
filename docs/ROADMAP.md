@@ -312,6 +312,76 @@ ficha de tienda; H cierra con los tres vhosts en HTTPS respondiendo, landing
 descargable con checksum verificado y despliegue reproducible de una versión
 nueva. Los pasos externos de Play (G05) se registran con su fecha.
 
+### I — Ronda de audio, animación y pulido (P1)
+
+Detectado en pruebas sobre el CLK-LX3 por WiFi (2026-10-03): los SFX de botón
+suena(n) mudos tras ~1 s y la música del menú se percibe muy baja, además de
+las mejoras de UI aprobadas (animaciones de tablero/HUD, tutorial y texturas
+suavizadas). Los volúmenes se descartan como causa leyendo el DataStore del
+dispositivo (`music_volume=1.0`, `sfx_volume=1.0`, `audio` ausente → true).
+
+- [x] **I01 — SFX mudos:** instrumentar `SoundEffects` (código de `write`,
+  `track.state` tras `build()`, cues descartados y por qué) y hacer el
+  mezclador **autorecuperable**: si `write` falla sin `release` externo,
+  recrear la pista conservando las voces en cola; verificar
+  `STATE_INITIALIZED` y no dejar voces varadas en `MAX_CONCURRENT`.
+  Evidencia: la pista #107 nació 11:50:29.944 y murió a 1,01 s.
+  *Hecho 2026-10-03:* `runMixer()` con re-adquisición (`RETRY_WAIT_MS=250`,
+  `MAX_TRACK_FAILURES=5`), verificación de `STATE_INITIALIZED` y logs de
+  `write`/`track.state`. Falta confirmación audible con logcat limpio.
+- [x] **I02 — Música de menú baja:** subir el nivel del escena `MENU`
+  (energía .18 → .34: pads+sub más fuertes y entra el bajo ligero, sin
+  batería) y ganancia de pads (.028 → .038); autorecuperación también en
+  `AmbientSoundtrack` (la pista #105 murió a 0,3 s con «write failed»).
+  *Hecho 2026-10-03:* escena `MENU` a .34, pads .038, sub .026; intercambio
+  de pista con contador `generation` bajo lock y `render(track, generation)`
+  autorecuperable con logs de `start`/`stop`. Falta confirmación audible.
+- [x] **I03 — Animaciones de tablero:** glow pulsante en celdas
+  legales/objetivo, daemon con desplazamiento animado entre celdas y flash al
+  descubrir honeypot (reusa la ráfaga existente en color Warning).
+  *Hecho 2026-10-03:* glow `Warning`/`Terminal` .55→1 en `BoardCell`
+  (estático con reduced-motion), overlay `D!` con `animateDpAsState`
+  (`daemon-x/y`), `DestructionBurst` `honeypot-burst` al descubrir
+  (`board.revealedHoneypots` en diff, sin flash en la primera captura).
+- [x] **I04 — HUD y feedback:** contadores animados (RAM, rastreo, saldo) y
+  micro-glitch de entrada en el diálogo de rechazo (banco §4/§7: «indicios de
+  glitch» y «feedback visual de acciones»).
+  *Hecho 2026-10-03:* `animateIntAsState` en turno/RAM/rastreo
+  (`GameHeader`) y `animatedCount()` en saldo (`MenuScreen`,
+  `ProgressionScreens`); `GameDialog.glitch` con jitter senoidal decaying
+  (340 ms) activo solo en el diálogo de error y desactivado con reduced-motion.
+- [x] **I05 — Tutorial:** barra de progreso persistente (lección + paso),
+  transición con fundido entre lecciones, botón «saltar lección» y resaltado
+  pulsante de la celda esperada.
+  *Hecho 2026-10-03:* franja `tutorial-lesson-progress` +
+  `tutorial-step-progress` siempre visible, fundido `lessonFade` (260 ms) en
+  cabecera/franja/tablero, `controller.skip()` + botón
+  `tutorial-skip-lesson` (cadenas en `tutorial.xml` de ambos idiomas); el
+  resaltado pulsante de la celda esperada lo aporta el glow de I03.
+- [x] **I06 — Texturas suavizadas:** decodificación con `inSampleSize` acotada
+  al tamaño de pantalla para el arte con reducciones fuertes (sprites de celda
+  del tablero y cartas de scripts), porque en Android `FilterQuality` solo
+  alterna nearest/bilineal sin mipmaps (fuente: `AndroidPaint.android.kt`).
+  *Hecho 2026-10-03:* `ui/ArtworkQuality.kt` (`reduceToDisplay` con
+  bipartición progresiva 50 % hasta banda [display, 2×display], `LruCache` de
+  16 MB) aplicado a sprites de tablero (`BoardThreatImage`/puentes/buffs/
+  puertos), cartas compactas y `DominoImage` con `artMax`;
+  `PuzzlePreview.REVISION` 2 → 3.
+- [~] **I07 — Validación y cierre:** `./gradlew test`, `:app:lintDebug`,
+  prueba manual en CLK-LX3 por WiFi (la realiza el usuario), sync de docs
+  (GDD/ESTADO/IMPROVEMENTS) y commits por incremento.
+  *2026-10-03:* `./gradlew test` verde, `:app:lintDebug` verde,
+  `:app:connectedDebugAndroidTest` **28/28** en `emulator-5554` (los 2 fallos
+  de `ContextHelpUiTest` eran entorno: display del AVD a 320dp frente a los
+  640×360 que asume el test; corregido con `wm size 640x360`, no es código).
+  Pendiente: prueba de audio/animaciones en el CLK-LX3 con logcat limpio
+  (usuario). Commits hechos: `fix:` audio, `feat:` texturas,
+  `feat:` animaciones/HUD, `feat:` tutorial y `docs:` (este bloque).
+
+**Cierre de I:** los dos bugs de audio verificados con logcat limpio en el
+dispositivo (SFX audibles en cada cue, música de menú perceptible a volumen
+medio) y las mejoras de UI visibles en la misma prueba.
+
 ### Seguimiento y entrega
 
 - Empezar por A01–A08; A09 puede investigarse en paralelo.

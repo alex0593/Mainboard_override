@@ -96,6 +96,8 @@ STEALTH se juega sin objetivo, como PING: descarta el ruido pendiente completo d
 
 Neobrutalismo de sistema operativo: PCB oscuro, verde terminal, cian, amarillo de advertencia, rojo de alerta, paneles duros y tipografía monoespaciada. La versión final ligera añade flujo luminoso, glitch al superar 80 % de rastreo, teclado mecánico, estática y ambiente synthwave. La vibración ya responde a colocaciones, scripts, trampas y resultados según el ajuste persistido; las cues informativas (PING, turno, arranque, compra) no vibran. Las recogidas emiten un destello cian y cruzar 80 de rastreo dispara un flash rojo único (ambos finitos y compatibles con movimiento reducido).
 
+El tablero respira con animaciones sutiles —glow pulsante en celdas legales y objetivo, desplazamiento animado del daemon y destello de advertencia al descubrir un honeypot— y el HUD anima sus contadores (turno, RAM, rastreo y saldo) con micro-glitch de entrada en el diálogo de rechazo. El tutorial muestra una franja de progreso persistente (lección y paso), fundido entre lecciones y opción de saltar a la siguiente. Todas estas animaciones se apagan con el ajuste de movimiento reducido. El arte de celdas, cartas y fichas se decodifica a la banda de tamaño de pantalla para evitar filtrado borroso en escalados fuertes.
+
 ## Verificación técnica
 
 - `:game-domain:test`: correcto (52 pruebas, 0 fallos); pruebas del motor, los 30 desafíos, barrido de 1000 semillas libres y 700 combinaciones de escenario/semilla.

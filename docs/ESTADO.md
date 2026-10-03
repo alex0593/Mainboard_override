@@ -24,6 +24,20 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 
 ## Dónde quedamos (última revisión 2026-10-03)
 
+- **Bloque I — audio, animación y pulido (2026-10-03, código cerrado):** SFX
+  con mezclador autorecuperable (`SoundEffects.runMixer`) y música de menú con
+  escena `MENU` subida (.34) e intercambio de pista por `generation` bajo lock
+  (`AmbientSoundtrack`); animaciones de tablero (glow pulsante, daemon
+  animado, flash de honeypot), HUD con contadores animados y micro-glitch en
+  el diálogo de rechazo; tutorial con franja de progreso persistente, fundido
+  entre lecciones y botón «saltar lección»; texturas con decodificación
+  acotada a la banda de pantalla (`ui/ArtworkQuality.kt`, `PuzzlePreview.REVISION` 3).
+  Validado: `./gradlew test` y `:app:lintDebug` verdes y suite instrumental
+  **28/28** en `emulator-5554` (los 2 fallos previos de `ContextHelpUiTest`
+  eran entorno: display del AVD a 320dp frente a los 640×360 que asume el
+  test). **Pendiente: prueba de audio/animaciones en el CLK-LX3 con logcat
+  limpio (usuario).** Commits del bloque I hechos. Detalle en el
+  [Roadmap](ROADMAP.md) (bloque I).
 - `fix: close A01-A07 root causes, domain suite 28/28 green` — los siete fallos
   de dominio eran fixtures desconectados y un conteo fijo de dominós, no
   semántica del motor; se corrigieron las causas y la suite quedó verde.
@@ -87,8 +101,9 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 | Progresión | Desafíos desbloquean escenarios por victorias distintas; récords y créditos persisten. | `PlayerPreferencesRepository` |
 | Economía | Compras y recompensas con transacciones DataStore e idempotencia; reapertura limpia sin pagos duplicados. | `PlayerPreferencesRepository` |
 | Escenarios | Siete fondos generados, empaquetados y usados en tarjetas, partidas y menú. | [README de escenarios](../assets/scenarios/README.md) |
-| Tutorial | 10 lecciones deterministas, flujo separado y progreso persistido; `TutorialTest` 5/5 y `PuzzleTutorialUiTest` 6/6. | [Arquitectura](ARCHITECTURE.md) |
-| Audio | Soundtrack synthwave adaptativo, 16 cues procedurales, volúmenes música/EFX, silencio, vibración cableada y movimiento reducido (E04). | [Roadmap](ROADMAP.md) |
+| Tutorial | 10 lecciones deterministas, flujo separado y progreso persistido; franja de progreso persistente, fundido entre lecciones y «saltar lección» (bloque I); `TutorialTest` 5/5 y `PuzzleTutorialUiTest` 6/6. | [Arquitectura](ARCHITECTURE.md) |
+| Audio | Soundtrack synthwave adaptativo, 16 cues procedurales, volúmenes música/EFX, silencio, vibración cableada y movimiento reducido (E04); mezclador y banda `MENU` autorecuperables con instrumentación (bloque I, pendiente de prueba audible). | [Roadmap](ROADMAP.md) |
+| UI y texturas | Contadores animados (RAM/rastreo/saldo), glow de celdas, daemon animado, flash de honeypot y micro-glitch de rechazo, todos con `LocalReducedMotion`; arte con decodificación acotada a la banda de pantalla (`ui/ArtworkQuality.kt`). | [Roadmap](ROADMAP.md) |
 | Localización | Recursos españoles e ingleses para la UI y el tutorial (47 instrucciones en paridad). | `app/src/main/res/values*` |
 | Accesibilidad | Descripciones semánticas y objetivos táctiles mínimos en controles principales; sin revisión TalkBack registrada. | [Arquitectura](ARCHITECTURE.md) |
 | Release | `0.1.0` / `versionCode 12`, firma release + R8; APK y AAB construidos, `lintRelease` sin errores; ficha de tienda lista. | [PLAY.md](PLAY.md) |

@@ -86,6 +86,55 @@ de producto; su inclusión no implica que estén aprobadas para implementación.
 - Ampliar textos de ayuda, ejemplos de jugadas y notas de diseño en GDD.
 - Considerar un pequeño glosario de sistema para novatos.
 
+## 10. Monetización — AdMob (decidido: se usará AdMob)
+
+**Decisión del producto (2026-10-03): «usaré AdMob».** Evaluación honesta antes
+de tocar código, porque hoy el proyecto afirma lo contrario en muchos sitios.
+
+### Evaluación
+
+- **Encaja, pero rompe promesas actuales.** La app hoy no pide `INTERNET`, es
+  100 % offline y la política de privacidad publicada lo afirma («no incluye el
+  permiso de red INTERNET… no hay analítica, publicidad…»). AdMob añade red, el
+  SDK `play-services-ads` y la recogida del ID de publicidad (AAID), con
+  consentimiento UMP obligatorio en la UE/EEE.
+- **Coste real de integración:** cuenta de AdMob con perfil de pago (mín. de
+  edad), permiso `INTERNET`, meta-data del App ID en el manifiesto, flujo UMP
+  al arrancar, unidades de anuncio de prueba hasta aprobar la app, y textos de
+  tienda/política **reecritos**. Publicar clics propios o tráfico inautérico
+  suspende la cuenta.
+- **Impacto en UX:** el bucle de juego es offline; los anuncios solo deben
+  vivir fuera del tablero (menú, entre partidas, opcionalmente recompensada).
+  Un banner permanente en 320dp de pantalla apretaría el layout y ensucia la
+  estética neobrutal — se recomienda intersticial ligero o recompensado.
+- **Ingresos esperados bajos al inicio** (base pequeña → eCPM bajo); es una
+  apuesta de largo plazo, no una vía de monetización inmediata.
+
+### Onda expansiva (checklist antes del primer commit con AdMob)
+
+1. `AndroidManifest.xml`: permiso `INTERNET` + meta-data
+   `com.google.android.gms.ads.APPLICATION_ID` (usar IDs de prueba en dev).
+2. `app/build.gradle.kts`: `com.google.android.gms:play-services-ads` (+ UMP).
+3. Inicialización `MobileAds.initialize` y consentimiento UMP al arrancar
+   (degradando sin red: sin conexión no hay anuncio, el juego sigue igual).
+4. **Textos que hay que corregir** (invariante: `values/` = `values-es/` y docs):
+   - `docs/PLAY.md` §1 (permisos «sin INTERNET»), §5 (Data safety «no
+     recoge» → AAID + IP del dispositivo recogidos por Google), §6 (política
+     de privacidad: añadir AdMob y enlazar «Cómo usa Google la información
+     de las apps»), frases «sin anuncios» (ES/EN) y checklist de declaraciones.
+   - `web/privacidad.html` (publicada): reescribir §1 («no incluye
+     INTERNET»), §3 («no hay publicidad») y §4 («no hay anuncios»).
+   - `web/index.html` («Todo offline…»), `README.md` («offline»): matizar a
+     «juego sin conexión; los anuncios requieren red».
+   - Ficha de Play: casillas «contiene anuncios» y revisar clasificación
+     PEGI/ESRB con anuncios.
+5. Verificación: `./gradlew test`, `:app:lintDebug`, suite instrumental, prueba
+   manual con IDs de prueba y con el móvil **sin conexión** (el bucle no puede
+   romperse si no hay red).
+
+Mientras ese checklist no se ejecute, el estado publicado sigue siendo
+«sin anuncios, sin INTERNET» y es coherente en toda la documentación.
+
 ## Prioridades sugeridas
 
 1. Resolver los fallos actuales de tests antes de ampliar reglas.
