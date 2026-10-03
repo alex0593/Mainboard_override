@@ -1,18 +1,29 @@
 #!/usr/bin/env bash
-# Publish the debug APK to itch.io with butler (https://itch.io/docs/butler).
+# Publish the APK to itch.io with butler (https://itch.io/docs/butler).
 #
 # Usage:
-#   BUTLER_API_KEY=<key> ./tools/publish-itch.sh [channel]
+#   BUTLER_API_KEY=<key> ./tools/publish-itch.sh [--release] [channel]
 #
-# Defaults to channel "android" on aela-0593/mainboard-override. The APK
-# version comes from app/build.gradle.kts (versionName -> --userversion).
+# Defaults to channel "android" on aela-0593/mainboard-override with the
+# DEBUG APK; pass --release to build and push the signed release APK
+# (needs the gitignored keystore.properties, see AGENTS.md). The APK version
+# comes from app/build.gradle.kts (versionName -> --userversion).
 # Butler is downloaded once into tools/.butler (gitignored, never committed).
 # Needs JDK 17 (export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64) and the
 # Android SDK, same as any Gradle build. Get the API key from
 # https://itch.io/user/settings/api-keys (wharf API, push permission).
 set -euo pipefail
 
-CHANNEL="${1:-android}"
+CHANNEL="android"
+FLAVOR="debug"
+for arg in "$@"; do
+    case "$arg" in
+        --release) FLAVOR="release" ;;
+        -h|--help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -*) echo "error: unknown argument: $arg" >&2; exit 2 ;;
+        *) CHANNEL="$arg" ;;
+    esac
+done
 TARGET="aela-0593/mainboard-override:${CHANNEL}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUTLER_DIR="$ROOT/tools/.butler"
@@ -37,11 +48,20 @@ fi
 
 VERSION="$(grep -oP 'versionName = "\K[^"]+' "$ROOT/app/build.gradle.kts")"
 export JAVA_HOME="${JAVA_HOME:-/usr/lib/jvm/java-17-openjdk-amd64}"
-"$ROOT/gradlew" -p "$ROOT" :app:assembleDebug
+if [ "$FLAVOR" = "release" ]; then
+    [ -f "$ROOT/keystore.properties" ] || {
+        echo "error: --release needs keystore.properties (signing config)" >&2
+        exit 1
+    }
+    "$ROOT/gradlew" -p "$ROOT" :app:assembleRelease
+else
+    "$ROOT/gradlew" -p "$ROOT" :app:assembleDebug
+fi
 
 STAGE="$ROOT/app/build/itchUpload"
 rm -rf "$STAGE" && mkdir -p "$STAGE"
-cp "$ROOT/app/build/outputs/apk/debug/app-debug.apk" "$STAGE/mainboard-override.apk"
+cp "$ROOT/app/build/outputs/apk/$FLAVOR/app-$FLAVOR.apk" "$STAGE/mainboard-override.apk"
+echo "pushing $FLAVOR APK ($VERSION) to $TARGET..."
 
 export BUTLER_API_KEY
 exec "$BUTLER" push "$STAGE" "$TARGET" --userversion "$VERSION"

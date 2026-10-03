@@ -68,6 +68,9 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
   handshake TLS. Token DuckDNS validado contra la API real y guardado en el
   gitignored `.duckdns_token`; `deploy-site.sh --duckdns` fija siempre la IP
   del servidor. Etiqueta `v0.1.0` publicada en git.
+- **itch.io (2026-10-03):** canal `android` actualizado con la **APK release
+  firmada 0.1.0** (build #2058883, 51,93 MiB) vía `publish-itch.sh --release`;
+  página pública verificada (200, `--userversion 0.1.0`).
 - Organización y icono (2026-09-21): arte de la raíz movido a `assets/reference`
   y `assets/kenney`, `assets/logo/` versionado, y el foreground del icono
   adaptativo pasa a ser la exportación del logo (`logo_foreground.png`).
@@ -158,8 +161,7 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 
 - **Play Console (G05):** pasos externos — verificación de cuenta (25 USD),
   subida del AAB a prueba cerrada y los 12 probadores × 14 días; textos y
-  checklist en [PLAY.md](PLAY.md). Con `BUTLER_API_KEY` queda también
-  pendiente la publicación en itch.io.
+  checklist en [PLAY.md](PLAY.md).
 - **Smoke test de la APK release en hardware:** hecho en emulador API 35
   (2026-10-03, 0 excepciones); instalar en el CLK-LX3 exige desinstalar la
   debug y borrar sus datos locales, pendiente de decisión.

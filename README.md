@@ -96,11 +96,13 @@ repositorio (nunca se commitea):
 `tools/publish-itch.sh` compila el APK y lo sube con
 [butler](https://itch.io/docs/butler) al canal `android` de
 [aela-0593/mainboard-override](https://aela-0593.itch.io/mainboard-override),
-usando `versionName` como `--userversion`. Necesita `BUTLER_API_KEY` en el
-entorno (clave con permiso de subida desde tu página de API keys de itch.io):
+usando `versionName` como `--userversion`. Por defecto sube la debug; con
+`--release` sube la APK firmada de release (requiere `keystore.properties`).
+Necesita `BUTLER_API_KEY` en el entorno (clave con permiso de subida desde tu
+página de API keys de itch.io):
 
 ```bash
-BUTLER_API_KEY=<clave> ./tools/publish-itch.sh [canal]
+BUTLER_API_KEY=<clave> ./tools/publish-itch.sh [--release] [canal]
 ```
 
 ## Documentación
