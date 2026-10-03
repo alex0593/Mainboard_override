@@ -118,6 +118,8 @@ data class BoardState(
     val collectedBuffs: Set<Position> = emptySet(),
     /** Lock cells demand an exact contacting value; a mismatch trips defeat. */
     val locks: Map<Position, Int> = emptyMap(),
+    /** Data nodes the connected route must sweep before extraction counts. */
+    val waypoints: Set<Position> = emptySet(),
 ) {
     fun valueAt(position: Position): Int? {
         if (position == start) return 0

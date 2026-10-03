@@ -65,6 +65,19 @@ object GameEngine {
     /** Returns true when extraction belongs to the component rooted at the start node. */
     fun isExtractionConnected(board: BoardState): Boolean = board.extraction in reachableFromStart(board)
 
+    /**
+     * Victory gate: extraction and every data node must sit in the component rooted at the
+     * start node, so the routed network has to sweep the nodes on its way to extraction.
+     */
+    fun isObjectiveReached(board: BoardState): Boolean {
+        val reachable = reachableFromStart(board)
+        return board.extraction in reachable && board.waypoints.all { it in reachable }
+    }
+
+    /** The data nodes already swept by the connected network; feeds the HUD and rendering. */
+    fun waypointsCovered(board: BoardState): Set<Position> =
+        board.waypoints.intersect(reachableFromStart(board))
+
     /** Enumerates every legal origin, orientation and port order for the current hand. */
     fun legalPlacements(state: GameState): List<GameAction.PlaceDomino> = buildList {
         state.dominoHand.forEach { tile ->
@@ -298,7 +311,7 @@ object GameEngine {
             traced >= MAX_TRACE -> GameResult.TRACE_INTERCEPTED
             movedBoard.daemon?.position == movedBoard.start -> GameResult.DAEMON_BREACH
             state.challengeRules?.maxTrace?.let { traced > it } == true -> GameResult.CHALLENGE_LIMIT
-            isExtractionConnected(movedBoard) -> GameResult.VICTORY
+            isObjectiveReached(movedBoard) -> GameResult.VICTORY
             state.challengeRules?.maxTurns?.let { state.turn >= it } == true -> GameResult.CHALLENGE_LIMIT
             else -> null
         }

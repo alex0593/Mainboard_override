@@ -135,6 +135,14 @@ object LevelGenerator {
         val firewallCap = if ((challengeLevel ?: 0) >= 31) open.size / 2 else open.size
         val firewallCount = scenario?.firewalls ?: random.nextInt(4 + (challengeLevel ?: 1) / 3, 8 + (challengeLevel ?: 1) / 2)
             .coerceAtMost(firewallCap)
+        // Data nodes sit on the witness corridor, away from the ports, so the reference
+        // replay sweeps them by construction. The pick is arithmetic on the path order,
+        // so it never consumes the RNG stream that levels 1-40 rely on.
+        val nodeCount = challengeLevel?.let { dataNodeCount(it) } ?: 0
+        val waypoints: Set<Position> = if (nodeCount == 0) emptySet() else {
+            val corridor = path.drop(2).dropLast(2)
+            (1..nodeCount).map { step -> corridor[step * corridor.size / (nodeCount + 1)] }.toSet()
+        }
         val board = base.copy(
             firewalls = open.take(firewallCount).toSet(),
             honeypots = open.drop(firewallCount).take(scenario?.traps ?: random.nextInt(2, 4 + (challengeLevel ?: 0) / 3)).toSet(),
@@ -145,6 +153,7 @@ object LevelGenerator {
                 }.toMap()
             } else emptyMap(),
             locks = if (lockCell == null) emptyMap() else mapOf(lockCell),
+            waypoints = waypoints,
         )
         val decoys = (0..6).flatMap { a -> (a..6).map { b -> a to b } }.shuffled(random).take(12)
             .mapIndexed { index, (a, b) -> Domino("hardware-${route.size + index}", a, b) }
