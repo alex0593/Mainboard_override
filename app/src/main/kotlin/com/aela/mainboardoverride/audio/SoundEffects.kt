@@ -12,12 +12,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.PI
 import kotlin.math.exp
 import kotlin.math.sin
@@ -65,7 +65,12 @@ fun SoundEffectsHost(
 
     LaunchedEffect(player) {
         cues.collect { cue ->
-            if (currentEnabled && currentVolume > 0f) player.play(cue, currentVolume)
+            if (currentEnabled && currentVolume > 0f) {
+                player.play(cue, currentVolume)
+            } else {
+                // Proof-of-life log: distinguishes "cue never arrived" from "mixer silent".
+                Log.d("SoundEffects", "cue $cue dropped by host (enabled=$currentEnabled, volume=$currentVolume)")
+            }
         }
     }
 }
@@ -73,69 +78,199 @@ fun SoundEffectsHost(
 /**
  * Fire-and-forget player for [SoundCue].
  *
- * Each cue renders into its own short static [AudioTrack], so overlapping cues mix
- * naturally. Concurrency is bounded; extras are dropped to protect the UI thread.
+ * All cues share one streaming [AudioTrack] mixer: [play] only queues a voice, so cues
+ * start as soon as the stream has room, overlap naturally, and the calling (UI) thread
+ * never synthesizes audio. Cues are dropped only when [MAX_CONCURRENT] voices are
+ * already mixing. Rendered PCM is cached per cue at unity gain and scaled per voice.
  */
 class SoundEffects {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val active = AtomicInteger(0)
+    private val lock = java.lang.Object()
+    private val cache = ConcurrentHashMap<SoundCue, ShortArray>()
+    private val voices = ArrayList<Voice>()
+    private var mixer: Job? = null
+    private var released = false
+
+    init {
+        // Warm the PCM cache off the UI thread so the first hit of each cue is free.
+        scope.launch {
+            for (cue in SoundCue.values()) cache.getOrPut(cue) { render(cue) }
+        }
+    }
 
     fun play(cue: SoundCue, volume: Float) {
-        if (volume <= 0f || active.get() >= MAX_CONCURRENT) return
-        val samples = render(cue, volume)
-        scope.launch {
-            active.incrementAndGet()
-            try {
-                val track = AudioTrack.Builder()
-                    .setAudioAttributes(
-                        AudioAttributes.Builder()
-                            .setUsage(AudioAttributes.USAGE_GAME)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                            .build(),
-                    )
-                    .setAudioFormat(
-                        AudioFormat.Builder()
-                            .setSampleRate(SAMPLE_RATE)
-                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                            .build(),
-                    )
-                    .setBufferSizeInBytes(samples.size * 2)
-                    .setTransferMode(AudioTrack.MODE_STATIC)
-                    .build()
-                try {
-                    track.write(samples, 0, samples.size)
-                    track.play()
-                    delay(cue.durationMs + 80L)
-                } finally {
-                    runCatching {
-                        track.stop()
-                        track.release()
-                    }
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "dropping cue $cue", e)
-            } finally {
-                active.decrementAndGet()
+        if (volume <= 0f) return
+        synchronized(lock) {
+            if (released) return
+            if (voices.size >= MAX_CONCURRENT) {
+                Log.w(TAG, "cue $cue dropped: $MAX_CONCURRENT voices already mixing")
+                return
             }
+            voices.add(Voice(cue, volume.coerceIn(0f, 1f)))
+            Log.d(TAG, "cue $cue queued (voices=${voices.size})")
+            if (mixer?.isActive != true) mixer = scope.launch { runMixer() }
+            lock.notifyAll()
         }
     }
 
     fun release() {
+        val job: Job?
+        synchronized(lock) {
+            released = true
+            voices.clear()
+            job = mixer
+            mixer = null
+            lock.notifyAll()
+        }
+        job?.cancel()
         scope.cancel()
     }
 
-    private fun render(cue: SoundCue, volume: Float): ShortArray {
+    /**
+     * Single mixer loop: mixes a chunk under the lock, then writes it (may block).
+     *
+     * A failing write with no [release] in flight means the track died (audio policy
+     * invalidation, device routing change): the loop rebuilds it and keeps the queued
+     * voices instead of going silent. Only [MAX_CONCURRENT] or [MAX_TRACK_FAILURES]
+     * give up, and the next [play] relaunches the whole mixer.
+     */
+    private fun runMixer() {
+        var track: AudioTrack? = null
+        var failures = 0
+        try {
+            val chunk = ShortArray(CHUNK_SAMPLES)
+            while (true) {
+                if (track == null) {
+                    while (true) {
+                        if (synchronized(lock) { released }) return
+                        val created = createTrack()
+                        if (created != null) {
+                            if (failures > 0) Log.i(TAG, "mixer track recreated after $failures failed attempt(s)")
+                            failures = 0
+                            track = created
+                            break
+                        }
+                        failures++
+                        if (failures >= MAX_TRACK_FAILURES) {
+                            Log.w(TAG, "AudioTrack unavailable after $failures attempts, mixer idle until the next cue")
+                            return
+                        }
+                        synchronized(lock) { if (!released) lock.wait(RETRY_WAIT_MS) }
+                    }
+                }
+                val active = track ?: return
+                val running = synchronized(lock) {
+                    while (voices.isEmpty() && !released) lock.wait(WAIT_MS)
+                    if (released) return@synchronized false
+                    mixLocked(chunk)
+                    true
+                }
+                if (!running) return
+                var writeError: String? = null
+                try {
+                    val wrote = active.write(chunk, 0, chunk.size)
+                    if (wrote < 0) {
+                        writeError = "write returned $wrote"
+                    } else {
+                        failures = 0
+                        if (active.playState != AudioTrack.PLAYSTATE_PLAYING) active.play()
+                    }
+                } catch (e: Exception) {
+                    writeError = "write threw ${e.javaClass.simpleName}"
+                }
+                if (writeError == null) continue
+                if (synchronized(lock) { released }) return
+                failures++
+                Log.w(TAG, "AudioTrack $writeError, recreating mixer track (attempt $failures/$MAX_TRACK_FAILURES)")
+                if (failures >= MAX_TRACK_FAILURES) {
+                    Log.w(TAG, "giving up after $failures consecutive failures; the next cue retries")
+                    return
+                }
+                runCatching {
+                    active.pause()
+                    active.flush()
+                    active.release()
+                }
+                track = null
+                synchronized(lock) { if (!released) lock.wait(RETRY_WAIT_MS) }
+            }
+        } finally {
+            runCatching {
+                track?.pause()
+                track?.flush()
+                track?.release()
+            }
+        }
+    }
+
+    /** Adds every active voice into [chunk] and prunes the finished ones. */
+    private fun mixLocked(chunk: ShortArray) {
+        chunk.fill(0)
+        val iterator = voices.iterator()
+        while (iterator.hasNext()) {
+            val voice = iterator.next()
+            val pcm = cache.getOrPut(voice.cue) { render(voice.cue) }
+            val from = voice.position
+            val count = minOf(chunk.size, pcm.size - from)
+            for (i in 0 until count) {
+                val mixed = chunk[i] + pcm[from + i] * voice.gain
+                chunk[i] = mixed.coerceIn(-PEAK, PEAK).toInt().toShort()
+            }
+            voice.position = from + count
+            if (voice.position >= pcm.size) iterator.remove()
+        }
+    }
+
+    private fun createTrack(): AudioTrack? {
+        val track = runCatching {
+            val minBytes = AudioTrack.getMinBufferSize(
+                SAMPLE_RATE,
+                AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
+            )
+            AudioTrack.Builder()
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_GAME)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build(),
+                )
+                .setAudioFormat(
+                    AudioFormat.Builder()
+                        .setSampleRate(SAMPLE_RATE)
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                        .build(),
+                )
+                // Four chunks of headroom so the mixer rarely blocks and short bursts queue.
+                .setBufferSizeInBytes((CHUNK_SAMPLES * 4 * 2).coerceAtLeast(minBytes))
+                .setTransferMode(AudioTrack.MODE_STREAM)
+                .build()
+        }.getOrElse {
+            Log.w(TAG, "AudioTrack build threw: ${it.message}")
+            return null
+        }
+        // build() can hand back an uninitialized track (audio focus/routing races);
+        // writing to it fails instantly, so treat it the same as "no track".
+        if (track.state != AudioTrack.STATE_INITIALIZED) {
+            Log.w(TAG, "AudioTrack state=${track.state} after build, discarding")
+            runCatching { track.release() }
+            return null
+        }
+        return track
+    }
+
+    private fun render(cue: SoundCue): ShortArray {
         val count = (SAMPLE_RATE * cue.durationMs / 1_000).toInt().coerceAtLeast(1)
         val out = ShortArray(count)
         val wave = renderWave(cue, count)
         for (i in wave.indices) {
-            out[i] = (wave[i] * volume.coerceIn(0f, 1f)).coerceIn(-.9, .9).let {
-                (it * Short.MAX_VALUE).toInt().toShort()
-            }
+            out[i] = (wave[i].coerceIn(-.9, .9) * Short.MAX_VALUE).toInt().toShort()
         }
         return out
     }
+
+    private class Voice(val cue: SoundCue, val gain: Float, var position: Int = 0)
 
     private fun renderWave(cue: SoundCue, count: Int): DoubleArray = when (cue) {
         SoundCue.Tick -> DoubleArray(count) { i ->
@@ -286,5 +421,10 @@ class SoundEffects {
         const val SAMPLE_RATE = 22_050
         const val TAU = 2.0 * PI
         const val MAX_CONCURRENT = 6
+        const val CHUNK_SAMPLES = 1_024
+        const val WAIT_MS = 200L
+        const val RETRY_WAIT_MS = 250L
+        const val MAX_TRACK_FAILURES = 5
+        val PEAK = Short.MAX_VALUE * 0.9f
     }
 }

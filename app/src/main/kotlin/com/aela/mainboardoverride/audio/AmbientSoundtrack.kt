@@ -93,6 +93,8 @@ private class AmbientSoundtrack {
     private val lock = Any()
     private var audioTrack: AudioTrack? = null
     private var renderJob: Job? = null
+    /** Bumped by start/stop under [lock]; a render generation stale after a stop never swaps tracks. */
+    private var generation = 0
 
     @Volatile private var targetScene: SoundtrackScene = SoundtrackScene.MENU
     @Volatile private var targetTrace: Int = 0
@@ -110,10 +112,13 @@ private class AmbientSoundtrack {
 
             val track = createTrack() ?: return
             audioTrack = track
-            track.play()
+            // Playback starts inside render(), once the head of the buffer is filled:
+            // play() on an empty track underruns immediately (audible startup glitch).
+            val generation = ++this.generation
             renderJob = kotlinx.coroutines.CoroutineScope(Dispatchers.Default).launch {
-                render(track)
+                render(track, generation)
             }
+            Log.d(TAG, "soundtrack start (scene=$targetScene, trace=$targetTrace, volume=$targetVolume)")
         }
     }
 
@@ -121,11 +126,14 @@ private class AmbientSoundtrack {
         val job: Job?
         val track: AudioTrack?
         synchronized(lock) {
+            // Bumping the generation invalidates any in-flight write recovery below.
+            generation++
             job = renderJob
             track = audioTrack
             renderJob = null
             audioTrack = null
         }
+        if (job != null || track != null) Log.d(TAG, "soundtrack stop")
         job?.cancel()
         runCatching {
             track?.pause()
@@ -134,56 +142,122 @@ private class AmbientSoundtrack {
         }
     }
 
-    private fun createTrack(): AudioTrack? = runCatching {
-        val bufferSize = AudioTrack.getMinBufferSize(
-            SAMPLE_RATE,
-            AudioFormat.CHANNEL_OUT_MONO,
-            AudioFormat.ENCODING_PCM_16BIT,
-        ).coerceAtLeast(BUFFER_SAMPLES * 2) * 2
-        AudioTrack.Builder()
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_GAME)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build(),
+    private fun createTrack(): AudioTrack? {
+        val track = runCatching {
+            val minBytes = AudioTrack.getMinBufferSize(
+                SAMPLE_RATE,
+                AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
             )
-            .setAudioFormat(
-                AudioFormat.Builder()
-                    .setSampleRate(SAMPLE_RATE)
-                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                    .build(),
-            )
-            .setBufferSizeInBytes(bufferSize)
-            .setTransferMode(AudioTrack.MODE_STREAM)
-            .build()
-    }.getOrNull().also { if (it == null) Log.w(TAG, "AudioTrack unavailable, soundtrack silent") }
+            AudioTrack.Builder()
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_GAME)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build(),
+                )
+                .setAudioFormat(
+                    AudioFormat.Builder()
+                        .setSampleRate(SAMPLE_RATE)
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                        .build(),
+                )
+                // Four chunks (~370 ms) of headroom so a GC pause or a busy UI frame during
+                // startup or scene changes never drains the buffer into an audible underrun.
+                .setBufferSizeInBytes((BUFFER_SAMPLES * 4 * 2).coerceAtLeast(minBytes))
+                .setTransferMode(AudioTrack.MODE_STREAM)
+                .build()
+        }.getOrElse {
+            Log.w(TAG, "AudioTrack build threw: ${it.message}")
+            return null
+        }
+        // build() can return an uninitialized track; writes on it fail instantly.
+        if (track.state != AudioTrack.STATE_INITIALIZED) {
+            Log.w(TAG, "AudioTrack state=${track.state} after build, discarding")
+            runCatching { track.release() }
+            return null
+        }
+        return track
+    }
 
-    private suspend fun render(track: AudioTrack) = withContext(Dispatchers.Default) {
+    /**
+     * Renders loop buffers into [initialTrack].
+     *
+     * When a write fails while this generation is still the live one (audio policy
+     * invalidation, routing change), the track is rebuilt and prefilled again instead
+     * of silencing the soundtrack; a stale generation (stop() raced us) exits quietly.
+     */
+    private suspend fun render(initialTrack: AudioTrack, generation: Int) = withContext(Dispatchers.Default) {
+        var track = initialTrack
+        var failures = 0
         val samples = ShortArray(BUFFER_SAMPLES)
         var cursor = 0L
         var rendered = 0L
+        var trackWritten = 0L
         var energy = 0.0
         var lead = 0.0
         var level = 0.0
+        var started = false
         while (isActive) {
             energy += (targetEnergy(targetScene, targetTrace) - energy) * ENERGY_SMOOTHING
             val leadTarget = if (targetScene == SoundtrackScene.VICTORY) 1.0 else 0.0
             lead += (leadTarget - lead) * LEAD_SMOOTHING
             level += (targetVolume.toDouble().coerceIn(0.0, 1.0) - level) * VOLUME_SMOOTHING
             renderBuffer(samples, cursor, energy, lead, level, rendered)
+            var failure: String? = null
             try {
-                if (track.write(samples, 0, samples.size) < 0) {
-                    Log.w(TAG, "AudioTrack write failed, stopping soundtrack")
-                    break
-                }
+                val wrote = track.write(samples, 0, samples.size)
+                if (wrote < 0) failure = "write returned $wrote"
             } catch (e: Exception) {
                 // The track can be released by stop() while a blocking write is in flight.
-                Log.w(TAG, "AudioTrack write threw, stopping soundtrack", e)
+                failure = "write threw ${e.javaClass.simpleName}"
+            }
+            if (failure == null) {
+                cursor += samples.size
+                rendered += samples.size
+                trackWritten += samples.size
+                // Only hand the track to the mixer once the head of the buffer holds audio,
+                // so the soundtrack fades in from real samples instead of starting underrun.
+                if (!started && trackWritten >= PREFILL_SAMPLES) {
+                    try {
+                        track.play()
+                        started = true
+                    } catch (e: Exception) {
+                        failure = "play threw ${e.javaClass.simpleName}"
+                    }
+                }
+            }
+            if (failure == null) continue
+            if (!isActive) break
+            failures++
+            Log.w(TAG, "AudioTrack $failure, recovering soundtrack track (attempt $failures/$MAX_TRACK_FAILURES)")
+            if (failures >= MAX_TRACK_FAILURES) {
+                Log.w(TAG, "giving up after $failures consecutive soundtrack failures")
                 break
             }
-            cursor += samples.size
-            rendered += samples.size
+            runCatching {
+                track.pause()
+                track.flush()
+                track.release()
+            }
+            val replacement = createTrack() ?: run {
+                Log.w(TAG, "no replacement AudioTrack, soundtrack silent")
+                break
+            }
+            val swapped = synchronized(lock) {
+                if (this@AmbientSoundtrack.generation == generation) {
+                    audioTrack = replacement
+                    true
+                } else false
+            }
+            if (!swapped) {
+                runCatching { replacement.release() }
+                break
+            }
+            track = replacement
+            trackWritten = 0L
+            started = false
         }
     }
 
@@ -204,31 +278,30 @@ private class AmbientSoundtrack {
             val chordIndex = (loopBeat / BEATS_PER_BAR).toInt().coerceIn(0, CHORDS - 1)
             val barBeat = loopBeat % BEATS_PER_BAR
 
-            val root = BASS_ROOTS[chordIndex]
-            val padTones = PAD_TONES[chordIndex]
-            val arpTones = ARP_TONES[chordIndex]
+            val padFreq = PAD_FREQ[chordIndex]
+            val prevPadFreq = PAD_FREQ[(chordIndex + CHORDS - 1) % CHORDS]
+            val arpFreq = ARP_FREQ[chordIndex]
 
             // Pads: detuned chord-stack crossfaded into the next bar, always present.
             val attack = smoothstep((loopBeat % BEATS_PER_BAR) / .75)
-            val prevTones = PAD_TONES[(chordIndex + CHORDS - 1) % CHORDS]
             var pad = 0.0
-            for (i in padTones.indices) {
-                val frequency = midiFrequency(padTones[i])
+            for (i in padFreq.indices) {
+                val frequency = padFreq[i]
                 val lfo = .75 + .25 * sin(TAU * .07 * time + i * 1.7)
                 val voice = (sin(TAU * frequency * time) +
                     .8 * sin(TAU * frequency * 1.003 * time)) * .5 * lfo
-                val prevFrequency = midiFrequency(prevTones[i])
+                val prevFrequency = prevPadFreq[i]
                 val prevVoice = (sin(TAU * prevFrequency * time) +
                     .8 * sin(TAU * prevFrequency * 1.003 * time)) * .5 * lfo
                 pad += attack * voice + (1.0 - attack) * prevVoice
             }
-            pad *= .028 * (.6 + .4 * energy)
-            val sub = sin(TAU * midiFrequency(root) * time) * .02
+            pad *= .038 * (.6 + .4 * energy)
+            val sub = sin(TAU * ROOT_FREQ[chordIndex] * time) * .026
 
             // Bass: driving eighth notes with a kick-ducked pump.
             val eighth = beat * 2.0
             val eighthTime = (eighth % 1.0) * SECONDS_PER_BEAT / 2.0
-            val bassFrequency = midiFrequency(root + EIGHTH_BASS[eighth.toInt() % EIGHTH_BASS.size])
+            val bassFrequency = BASS_FREQ[chordIndex][eighth.toInt() % EIGHTH_BASS.size]
             val beatSeconds = (beat % 1.0) * SECONDS_PER_BEAT
             val duck = 1.0 - .55 * exp(-beatSeconds * 16.0)
             val bassAttack = (eighthTime * 220.0).coerceIn(0.0, 1.0)
@@ -240,7 +313,7 @@ private class AmbientSoundtrack {
 
             // Arp: bright sixteenth pattern, denser and doubled as energy rises.
             val step = (beat * 4.0).toInt()
-            val arpFrequency = midiFrequency(arpTones[ARP_PATTERN[step % ARP_PATTERN.size]])
+            val arpFrequency = arpFreq[ARP_PATTERN[step % ARP_PATTERN.size]]
             val sixteenthTime = ((beat * 4.0) % 1.0) * SECONDS_PER_BEAT / 4.0
             val arpEnv = (sixteenthTime * 320.0).coerceIn(0.0, 1.0) * exp(-sixteenthTime * 22.0)
             val oddGate = if (step % 2 == 1) gate(energy, .3, .45) else 1.0
@@ -290,7 +363,7 @@ private class AmbientSoundtrack {
             val leadNote = LEAD[quarter]
             val quarterTime = (beat % 1.0) * SECONDS_PER_BEAT
             val leadVoice = if (leadNote > 0) {
-                sin(TAU * midiFrequency(leadNote) * quarterTime + .6 * sin(TAU * 5.5 * time)) *
+                sin(TAU * LEAD_FREQ[quarter] * quarterTime + .6 * sin(TAU * 5.5 * time)) *
                     (quarterTime * 40.0).coerceIn(0.0, 1.0) * exp(-quarterTime * 4.0) *
                     .055 * leadLevel
             } else 0.0
@@ -312,7 +385,9 @@ private class AmbientSoundtrack {
     }
 
     private fun targetEnergy(scene: SoundtrackScene, trace: Int): Double = when (scene) {
-        SoundtrackScene.MENU -> .18
+        // Menus: pads plus a gentle bass line (bass gate .2/.5), still below the drum
+        // gate (.35): present at a comfortable level without stealing from SFX.
+        SoundtrackScene.MENU -> .34
         SoundtrackScene.GAME -> .45 + .5 * (trace.coerceIn(0, 100) / 100.0)
         SoundtrackScene.VICTORY -> .8
         SoundtrackScene.DEFEAT -> .12
@@ -327,12 +402,12 @@ private class AmbientSoundtrack {
         return ((h ushr 11).toDouble() / 9007199254740992.0) * 2.0 - 1.0
     }
 
-    private fun midiFrequency(note: Int): Double = 440.0 * 2.0.pow((note - 69) / 12.0)
-
     private companion object {
         const val TAG = "AmbientSoundtrack"
         const val SAMPLE_RATE = 22_050
         const val BUFFER_SAMPLES = 2_048
+        const val PREFILL_SAMPLES = BUFFER_SAMPLES * 2
+        const val MAX_TRACK_FAILURES = 5
         const val BPM = 100.0
         const val SAMPLES_PER_BEAT = SAMPLE_RATE * 60.0 / BPM
         const val SECONDS_PER_BEAT = 60.0 / BPM
@@ -359,5 +434,22 @@ private class AmbientSoundtrack {
         val ARP_PATTERN = intArrayOf(0, 1, 2, 3, 2, 1, 0, 2)
         val EIGHTH_BASS = intArrayOf(0, 0, 12, 0, 0, 0, 7, 12)
         val LEAD = intArrayOf(69, -1, 72, -1, 76, -1, 79, 76, 72, -1, 69, -1, 67, 64, -1, -1)
+
+        // Chord-derived frequencies, precomputed once: calling pow() per sample was the
+        // hottest cost in renderBuffer (2048 samples x ~7 calls per buffer) and could
+        // delay writes enough to underrun on weak devices.
+        val ROOT_FREQ = DoubleArray(CHORDS) { midiFrequency(BASS_ROOTS[it]) }
+        val PAD_FREQ = Array(CHORDS) { c ->
+            DoubleArray(PAD_TONES[c].size) { i -> midiFrequency(PAD_TONES[c][i]) }
+        }
+        val ARP_FREQ = Array(ARP_TONES.size) { c ->
+            DoubleArray(ARP_TONES[c].size) { i -> midiFrequency(ARP_TONES[c][i]) }
+        }
+        val BASS_FREQ = Array(CHORDS) { c ->
+            DoubleArray(EIGHTH_BASS.size) { i -> midiFrequency(BASS_ROOTS[c] + EIGHTH_BASS[i]) }
+        }
+        val LEAD_FREQ = DoubleArray(LEAD.size) { if (LEAD[it] > 0) midiFrequency(LEAD[it]) else 0.0 }
+
+        fun midiFrequency(note: Int): Double = 440.0 * 2.0.pow((note - 69) / 12.0)
     }
 }
