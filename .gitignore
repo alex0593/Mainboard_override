@@ -23,6 +23,7 @@ captures/
 # Signing keys stay out of the repository.
 *.jks
 *.keystore
+keystore.properties
 
 # Misc local junk.
 .DS_Store
