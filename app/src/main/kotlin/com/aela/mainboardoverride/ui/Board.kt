@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aela.mainboardoverride.R
 import com.aela.mainboardoverride.domain.BoardState
+import com.aela.mainboardoverride.domain.GameEngine
 import com.aela.mainboardoverride.domain.Orientation
 import com.aela.mainboardoverride.domain.Position
 import com.aela.mainboardoverride.domain.BoardBuff
@@ -72,6 +73,9 @@ internal fun Board(
     sessionKey: Any? = null,
 ) {
     val boardArtwork = boardSkinResource(skin, previewOnly)
+    // Data nodes are only swept when the connected network covers them, so one BFS per
+    // snapshot (not per cell) decides which nodes read as secured.
+    val coveredNodes = remember(board) { GameEngine.waypointsCovered(board) }
     val placementKeys = remember(board.placed) {
         board.placed.map { placed ->
             "${placed.domino.id}:${placed.origin.x}:${placed.origin.y}:${placed.orientation}"
@@ -286,9 +290,19 @@ internal fun Board(
                         }
                     }
                 }
+                board.waypoints.forEach { position ->
+                    Box(Modifier.offset(cell * position.x, cell * position.y).size(cell).padding(2.dp),
+                        contentAlignment = Alignment.Center) {
+                        Text(
+                            if (position in coveredNodes) "✓" else "◆",
+                            color = if (position in coveredNodes) Terminal else Warning,
+                            fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black,
+                        )
+                    }
+                }
             } else for (y in 0 until board.height) for (x in 0 until board.width) {
                 val position = Position(x, y)
-                BoardCell(board, position, cell, position in legalOrigins, position == target, onCell)
+                BoardCell(board, position, cell, position in legalOrigins, position == target, position in coveredNodes, onCell)
             }
             // Bursts cover the destroyed footprint, which is two cells for a removed domino.
             // Pickups reuse the same effect in cyan over the single collected cell.
@@ -366,7 +380,7 @@ private fun PortSprite(resource: Int, label: String, row: Int, size: Dp, start: 
 }
 
 @Composable
-private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Boolean, target: Boolean, onCell: (Position) -> Unit) {
+private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Boolean, target: Boolean, nodeCovered: Boolean, onCell: (Position) -> Unit) {
     val value = board.valueAt(position)
     val isPlaced = board.placed.any { it.valueAt(position) != null }
     val isStart = position == board.start
@@ -374,6 +388,7 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
     val firewall = position in board.firewalls
     val trap = position in board.revealedHoneypots
     val buff = board.buffs[position]?.takeUnless { position in board.collectedBuffs }
+    val waypoint = position in board.waypoints
     val daemon = board.daemon?.position == position
     val bridge = board.bridges.find { it.center == position }
     val lock = board.locks[position]
@@ -384,6 +399,7 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
         if (trap) stringResource(R.string.node_trap) else null,
         lock?.let { stringResource(R.string.node_lock, it) },
         buff?.let { stringResource(if (it == BoardBuff.TRACE_COOLER) R.string.node_trace_cooler else R.string.node_ram_reserve) },
+        if (waypoint) stringResource(if (nodeCovered) R.string.node_waypoint_done else R.string.node_waypoint) else null,
         if (daemon) stringResource(R.string.node_daemon) else null,
         bridge?.let { stringResource(R.string.bridge_label, stringResource(if (it.horizontal) R.string.horizontal else R.string.vertical)) + " ${it.value}" },
         value?.let { stringResource(R.string.node_value, it) },
@@ -397,14 +413,15 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
         lock != null -> Warning
         buff != null -> Cyan
         isStart || isExit -> Cyan
+        waypoint -> Warning
         value != null -> Terminal
         legal -> Terminal.copy(alpha = .16f)
         else -> Color.Transparent
     }
     val reducedMotion = LocalReducedMotion.current
-    // Legal and target cells breathe so the next action reads at a glance; reduced motion
-    // keeps the border steady instead of moving it.
-    val glowAlpha = if (legal || target) {
+    // Legal, target and pending data nodes breathe so the next action reads at a glance;
+    // reduced motion keeps the border steady instead of moving it.
+    val glowAlpha = if (legal || target || (waypoint && !nodeCovered)) {
         if (reducedMotion) 1f else {
             rememberInfiniteTransition(label = "cell-glow").animateFloat(
                 .55f, 1f,
@@ -419,13 +436,24 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
             .size(size)
             .testTag("board-cell-${position.x}-${position.y}")
             .padding(2.dp)
-            .background(if (isPlaced) Color.Transparent else placedColor.copy(alpha = if (value != null || firewall || trap || lock != null || buff != null) .22f else placedColor.alpha))
-            .then(if (target) Modifier.border(3.dp, Warning.copy(alpha = glowAlpha)) else if (lock != null) Modifier.border(2.dp, Warning) else if (legal) Modifier.border(1.dp, Terminal.copy(alpha = glowAlpha)) else Modifier)
+            .background(if (isPlaced) Color.Transparent else placedColor.copy(alpha = if (value != null || firewall || trap || lock != null || buff != null || waypoint) .22f else placedColor.alpha))
+            .then(if (target) Modifier.border(3.dp, Warning.copy(alpha = glowAlpha)) else if (lock != null) Modifier.border(2.dp, Warning) else if (legal) Modifier.border(1.dp, Terminal.copy(alpha = glowAlpha)) else if (waypoint && !nodeCovered) Modifier.border(1.dp, Warning.copy(alpha = glowAlpha)) else Modifier)
             .clickable(role = Role.Button) { onCell(position) }
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {
         if (isPlaced) {
+            if (waypoint) {
+                // Secured nodes read as a green tick chip; a lone tile covering the cell
+                // without joining the network keeps the amber marker.
+                Row(Modifier.align(Alignment.TopEnd).background(Void.copy(alpha = .9f), RoundedCornerShape(2.dp))) {
+                    Text(
+                        if (nodeCovered) "✓" else "◆",
+                        color = if (nodeCovered) Terminal else Warning,
+                        fontSize = 11.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace,
+                    )
+                }
+            }
             if (trap) {
                 Row(Modifier.align(Alignment.TopEnd).background(Void.copy(alpha = .9f), RoundedCornerShape(2.dp))) {
                     BoardThreatImage(firewall = false, maxDisplay = size * .4f, modifier = Modifier.size(size * .4f))
@@ -446,6 +474,7 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
                 bridge != null -> if (bridge.horizontal) "═${bridge.value}" else "║${bridge.value}"
                 isStart -> "S0"
                 isExit -> "X6"
+                waypoint -> if (nodeCovered) "✓" else "◆"
                 buff != null -> if (buff == BoardBuff.TRACE_COOLER) "−8" else "+1R"
                 value != null -> "$value"
                 else -> "·"

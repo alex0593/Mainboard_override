@@ -264,6 +264,9 @@ internal fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart
                 challenge.rules.maxTurns?.let { Text(stringResource(R.string.challenge_rules_turns, it)) }
                 challenge.rules.maxTrace?.let { Text(stringResource(R.string.challenge_rules_trace, it)) }
                 challenge.rules.bannedScripts.forEach { Text(stringResource(R.string.challenge_rules_banned, scriptDisplayName(it)), color = Warning) }
+                dataNodeCount(challenge.number).takeIf { it > 0 }?.let {
+                    Text(stringResource(R.string.challenge_rules_nodes, it), color = Warning)
+                }
                 Spacer(Modifier.height(4.dp))
                 Text(stringResource(R.string.expected_reward, Rewards.VICTORY + if (record == null) Rewards.FIRST_CHALLENGE else 0), color = Warning)
                 record?.let { Text(stringResource(R.string.puzzle_record, it.turns, it.trace)) }

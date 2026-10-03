@@ -30,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aela.mainboardoverride.R
+import com.aela.mainboardoverride.domain.GameEngine
 import com.aela.mainboardoverride.domain.GameState
 import com.aela.mainboardoverride.domain.MAX_RAM
 import kotlinx.coroutines.launch
@@ -57,6 +58,7 @@ internal fun GameHeader(
                 Text(stringResource(R.string.turn, turn), color = Cyan, fontSize = 11.sp, lineHeight = 13.sp)
                 Text(stringResource(R.string.ram, ram, MAX_RAM), color = Terminal, fontSize = 11.sp, lineHeight = 13.sp)
                 TraceIndicator(game.trace)
+                NodesIndicator(game)
             }
             Box(
                 Modifier.width(1.dp).height(44.dp)
@@ -68,6 +70,23 @@ internal fun GameHeader(
             trailing()
         }
     }
+}
+
+/** Data-node sweep counter; only matches with nodes (challenges 41+) show it. */
+@Composable
+private fun NodesIndicator(game: GameState) {
+    if (game.board.waypoints.isEmpty()) return
+    val covered = remember(game.board) { GameEngine.waypointsCovered(game.board) }
+    val reducedMotion = LocalReducedMotion.current
+    val countSpec: AnimationSpec<Int> = if (reducedMotion) snap() else tween(350, easing = FastOutSlowInEasing)
+    val shown by animateIntAsState(covered.size, countSpec, label = "nodes-count")
+    Text(
+        stringResource(R.string.nodes_counter, shown, game.board.waypoints.size),
+        color = Warning,
+        fontSize = 11.sp,
+        lineHeight = 13.sp,
+        modifier = Modifier.testTag("nodes-counter"),
+    )
 }
 
 @Composable
