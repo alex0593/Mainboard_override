@@ -1,0 +1,154 @@
+/* Mainboard Override — landing de descarga. Paleta del juego (GDD). */
+:root {
+  --void: #07110f;
+  --panel: #10231d;
+  --line: #1d3b33;
+  --lime: #b6ff2e;
+  --cyan: #39e7e0;
+  --amber: #ffd43b;
+  --text: #d7e7e1;
+  --muted: #76968c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 24px 16px;
+  background:
+    radial-gradient(1200px 400px at 50% -100px, #0d1f1a 0%, transparent 70%),
+    var(--void);
+  color: var(--text);
+  font: 16px/1.6 ui-monospace, "Cascadia Code", "Fira Code", Menlo, Consolas, monospace;
+  -webkit-text-size-adjust: 100%;
+}
+
+.panel {
+  max-width: 860px;
+  margin: 0 auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 32px clamp(20px, 5vw, 48px);
+  box-shadow: 0 0 0 1px #00000055, 0 24px 60px #00000066;
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 20px;
+}
+
+.hero img {
+  border-radius: 12px;
+  border: 1px solid var(--line);
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(24px, 5vw, 34px);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--lime);
+  text-shadow: 0 0 18px #b6ff2e33;
+}
+
+.tagline { margin: 6px 0 0; color: var(--muted); }
+
+.lead { margin: 22px 0 16px; }
+.lead strong { color: var(--amber); }
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 0 0 26px;
+  list-style: none;
+}
+
+.chips li {
+  border: 1px solid var(--line);
+  background: #0b1a16;
+  color: var(--cyan);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 13px;
+}
+
+.download {
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, #0d211b, #0a1714);
+  border-radius: 12px;
+  padding: 22px;
+  text-align: center;
+}
+
+.button {
+  display: inline-block;
+  background: var(--lime);
+  color: var(--void);
+  font-weight: 700;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 14px 26px;
+  border-radius: 8px;
+  border: 1px solid #d9ff8a;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.button:hover, .button:focus {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px #b6ff2e33;
+}
+
+.meta { margin: 14px 0 0; font-size: 13px; color: var(--muted); }
+.meta a { color: var(--cyan); }
+.meta.warn { color: var(--amber); }
+
+code {
+  font-family: inherit;
+  background: #06120f;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+
+.hash { display: inline-block; word-break: break-all; color: var(--cyan); }
+
+.cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 22px;
+  margin: 28px 0 8px;
+}
+
+h2 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+.links {
+  margin: 26px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.links a { color: var(--lime); text-decoration: none; }
+.links a:hover { text-decoration: underline; }
+
+.foot {
+  margin-top: 20px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+@media (max-width: 560px) {
+  .hero { flex-direction: column; text-align: center; }
+}
