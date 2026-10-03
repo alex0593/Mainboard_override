@@ -17,6 +17,7 @@
     <string name="tutorial_next_lesson">Siguiente lección</string>
     <string name="tutorial_finish">Terminar tutorial</string>
     <string name="tutorial_repeat">Repetir lección</string>
+    <string name="tutorial_skip">Saltar lección</string>
     <string name="tutorial_step_progress">Paso %1$d de %2$d</string>
     <string name="tutorial_wrong">Sigue la acción resaltada. Las demás acciones no cambian este ejercicio.</string>
     <string name="tutorial_status">Turno %1$d · RAM %2$d/3 · Rastreo %3$d%% · Ruido +%4$d</string>

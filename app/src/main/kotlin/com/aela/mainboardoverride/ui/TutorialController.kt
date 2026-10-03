@@ -35,6 +35,14 @@ class TutorialController(
         if (current.finished && current.lesson < TutorialCatalog.lessons.lastIndex) start(current.lesson + 1)
         onCue(SoundCue.Boot)
     }
+    /** Jumps to the next lesson without finishing this one; progress saves like a normal start. */
+    fun skip() {
+        val current = mutableState.value
+        if (current.lesson < TutorialCatalog.lessons.lastIndex) {
+            start(current.lesson + 1)
+            onCue(SoundCue.Boot)
+        }
+    }
     private fun save(completed: Boolean) {
         val lesson = mutableState.value.lesson
         scope.launch { repository.setTutorialProgress(lesson, completed) }

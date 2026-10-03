@@ -1,5 +1,7 @@
 package com.aela.mainboardoverride.ui
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -10,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -36,6 +39,14 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
     val expected = state.expected
     val titles = stringArrayResource(R.array.tutorial_titles)
     val instructions = stringArrayResource(R.array.tutorial_instructions)
+    // Lessons dissolve in: the board, hand and header rebuild together on `start()`.
+    val lessonFade = remember { Animatable(if (preferences.reducedMotion) 1f else 0f) }
+    LaunchedEffect(state.lesson, preferences.reducedMotion) {
+        if (!preferences.reducedMotion) {
+            lessonFade.snapTo(0f)
+            lessonFade.animateTo(1f, tween(260))
+        }
+    }
     val dispatch: (TutorialInput) -> Unit = { input ->
         if (!instructionOpen && !state.finished) controller.dispatch(input)
     }
@@ -79,7 +90,27 @@ internal fun TutorialScreen(preferences: PlayerPreferences, controller: Tutorial
                         modifier = Modifier.width(92.dp).pressFeedback(backInteraction, label = "tutorial back", pressedScale = .97f),
                     ) { Text(stringResource(R.string.back)) }
                 }
-                BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+                // Persistent progress: lesson and step are visible even with the panel closed.
+                Row(Modifier.fillMaxWidth().graphicsLayer { alpha = lessonFade.value },
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("${state.lesson + 1}/${titles.size} · ${titles[state.lesson]}",
+                        color = Terminal, fontSize = 11.sp, maxLines = 1,
+                        modifier = Modifier.weight(1f).testTag("tutorial-lesson-progress"))
+                    if (!state.finished) Text(
+                        stringResource(R.string.tutorial_step_progress, state.step + 1, state.definition.steps.size),
+                        color = Muted, fontSize = 11.sp, maxLines = 1,
+                        modifier = Modifier.testTag("tutorial-step-progress"))
+                    if (state.lesson < titles.lastIndex) {
+                        val skipLessonInteraction = remember { MutableInteractionSource() }
+                        TextButton(
+                            onClick = { controller.skip() },
+                            interactionSource = skipLessonInteraction,
+                            modifier = Modifier.testTag("tutorial-skip-lesson")
+                                .pressFeedback(skipLessonInteraction, label = "tutorial skip lesson", pressedScale = .97f),
+                        ) { Text(stringResource(R.string.tutorial_skip), fontSize = 11.sp) }
+                    }
+                }
+                BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().graphicsLayer { alpha = lessonFade.value }) {
                     val panelWidth = (maxWidth * .29f).coerceIn(160.dp, 230.dp)
                     Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         val target = (expected as? TutorialInput.Cell)?.position
