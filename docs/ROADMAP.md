@@ -167,7 +167,7 @@ y fuentes grandes. No se regenera arte existente como requisito de esta fase.
 Depende de A–C. Cada incremento conserva la reproducibilidad por semilla.
 
 - [x] **D01 — Semillas:** conjunto reproducible en `GameEngineTest` (barrido de 1000 semillas + 7 escenarios × 100 semillas con rutas validadas); las semillas problemáticas del catálogo siguen abiertas como A02.
-- [x] **D02 — Equilibrio:** cerrado 2026-09-21 — criterios en `BalanceTest`: referencia limpia (rastreo = 8×turnos, sin trampas ni ruido), 100 % de manos iniciales con jugada legal, headroom mínimo 28 en libre (fantasma cierra en 72), y las 30 referencias de desafío dentro de presupuesto (niveles 2, 10 y 20-30 al límite exacto). Medido sobre el conjunto D01 antes de cualquier ajuste de generación.
+- [x] **D02 — Equilibrio:** cerrado 2026-09-21 — criterios en `BalanceTest`: referencia limpia (rastreo = 8×turnos, sin trampas ni ruido), 100 % de manos iniciales con jugada legal, headroom mínimo 28 en libre (fantasma cierra en 72), y las referencias de desafío dentro de presupuesto (30 entonces; 100 desde el bloque J; niveles 2, 10 y 20-30 al límite exacto). Medido sobre el conjunto D01 antes de cualquier ajuste de generación.
 - [x] **D03 — Tutorial avanzado:** lecciones de KILL (7) y BRIDGE (8) con fixtures deterministas, ruta de entrada incorrecta, textos EN/ES en paridad y pruebas de finalización (`TutorialTest` 5/5, `PuzzleTutorialUiTest` 6/6).
 - [x] **D04 — Práctica:** alcance acordado = práctica guiada rejugable (continuar/reiniciar/siguiente explícitos) con progreso aislado (`TutorialController` solo persiste `tutorialLesson`; sin créditos ni récords). Sandbox libre no incluido.
 
