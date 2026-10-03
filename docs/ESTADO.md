@@ -4,7 +4,7 @@
 y conserva las decisiones que afectan al trabajo siguiente. El plan de trabajo
 vive únicamente en [ROADMAP.md](ROADMAP.md).
 
-**Revisión:** 2026-10-02.
+**Revisión:** 2026-10-03.
 
 ## Fuentes de verdad
 
@@ -22,7 +22,7 @@ vive únicamente en [ROADMAP.md](ROADMAP.md).
 Los contratos técnicos viven en el código; los cambios de reglas deben
 reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus detalles.
 
-## Dónde quedamos (última revisión 2026-10-02)
+## Dónde quedamos (última revisión 2026-10-03)
 
 - `fix: close A01-A07 root causes, domain suite 28/28 green` — los siete fallos
   de dominio eran fixtures desconectados y un conteo fijo de dominós, no
@@ -62,6 +62,12 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
   vhosts (catch-all 444), landing de descarga publicada, APK con checksum
   verificado en el servidor, página de Nexus Chat en `nexxxusapp` y
   `tools/deploy-site.sh` para despliegues repetibles vía S3 + SSM.
+- **HTTPS y DuckDNS (2026-10-03):** certificado Let's Encrypt de los tres
+  nombres emitido y renovación automática verificada (`renew --dry-run` OK);
+  los tres vhosts sirven HTTP/2 con redirect 301 y el catch-all rechaza el
+  handshake TLS. Token DuckDNS validado contra la API real y guardado en el
+  gitignored `.duckdns_token`; `deploy-site.sh --duckdns` fija siempre la IP
+  del servidor. Etiqueta `v0.1.0` publicada en git.
 - Organización y icono (2026-09-21): arte de la raíz movido a `assets/reference`
   y `assets/kenney`, `assets/logo/` versionado, y el foreground del icono
   adaptativo pasa a ser la exportación del logo (`logo_foreground.png`).
@@ -83,7 +89,7 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 | Localización | Recursos españoles e ingleses para la UI y el tutorial (47 instrucciones en paridad). | `app/src/main/res/values*` |
 | Accesibilidad | Descripciones semánticas y objetivos táctiles mínimos en controles principales; sin revisión TalkBack registrada. | [Arquitectura](ARCHITECTURE.md) |
 | Release | `0.1.0` / `versionCode 12`, firma release + R8; APK y AAB construidos, `lintRelease` sin errores; ficha de tienda lista. | [PLAY.md](PLAY.md) |
-| Sitio y descarga | Landing en `mainboard-override.duckdns.org` (APK + `latest.apk` + `SHA256SUMS`), Nexus Chat en `nexxxusapp.duckdns.org`, API reservada; HTTP hoy, HTTPS pendiente de DNS/token. | [Roadmap](ROADMAP.md) (bloque H) |
+| Sitio y descarga | Landing en `mainboard-override.duckdns.org` (APK + `latest.apk` + `SHA256SUMS`), Nexus Chat en `nexxxusapp.duckdns.org` y API reservada; **HTTPS activo** en los tres nombres (Let's Encrypt, renovación automática) con redirect HTTP→HTTPS. | [Roadmap](ROADMAP.md) (bloque H) |
 | Servidor | `t4g.micro` + 10 GiB en us-east-2 (~7,3 $/mes), acceso solo por SSM (SG: 80/443 + 22 restringido), bucket `mainboard-override-artifacts-689217346963`. | [Roadmap](ROADMAP.md) (H02) |
 
 ## Contratos de entrada (para retomar el trabajo)
@@ -136,8 +142,10 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
   `mainboard-override.duckdns.org`, Nexus Chat en `nexxxusapp.duckdns.org` y
   API reservada en `nexxus-api.duckdns.org` (proxy comentado hasta que exista
   el servicio). Servidor `t4g.micro` + gp3 10 GiB en us-east-2 con Amazon
-  Linux 2023; la IP pública cambió a `52.14.253.158`, así que los registros A
-  se re apuntan con token DuckDNS (H04). Acceso de gestión **solo por SSM**
+  Linux 2023; la IP pública cambió a `52.14.253.158` y los tres registros A
+  ya apuntan a ella, mantenidos por `deploy-site.sh --duckdns` con el token
+  (gitignored). TLS con un único certificado Let's Encrypt para los tres
+  nombres. Acceso de gestión **solo por SSM**
   (el puerto 22 queda restringido a la IP del desarrollador).
 - **H06 (landing):** página estática en español servida por nginx, con
   versión/tamaño/SHA-256 del release y enlace a itch.io; `latest.apk` es un
@@ -148,16 +156,13 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 
 ## Deuda activa
 
-- **HTTPS pendiente (H03/H04):** certbot no puede emitir hasta que los tres
-  nombres DuckDNS apunten a `52.14.253.158`; falta el **token de DuckDNS**
-  (y el correo para el registro en Let's Encrypt). Mientras, los vhosts
-  responden por HTTP.
 - **Play Console (G05):** pasos externos — verificación de cuenta (25 USD),
   subida del AAB a prueba cerrada y los 12 probadores × 14 días; textos y
-  checklist en [PLAY.md](PLAY.md).
-- **Smoke test de la APK release en dispositivo:** con R8 activo conviene
-  verificar arranque real en hardware; la última suite instrumental completa
-  (28/28) corresponde al build debug del 2026-09-22.
+  checklist en [PLAY.md](PLAY.md). Con `BUTLER_API_KEY` queda también
+  pendiente la publicación en itch.io.
+- **Smoke test de la APK release en hardware:** hecho en emulador API 35
+  (2026-10-03, 0 excepciones); instalar en el CLK-LX3 exige desinstalar la
+  debug y borrar sus datos locales, pendiente de decisión.
 - **TalkBack:** revisión manual con lector en mano pendiente; la evidencia
   actual es automatizada (roles, targets ≥48dp, fuente 1.3x, contraste AA).
 - **Pantallas pequeñas e horizontal invertido** sin verificación física;
@@ -181,7 +186,7 @@ máquina del desarrollador, credenciales AWS en el perfil `default`):
 ```sh
 ./gradlew :app:assembleRelease :app:bundleRelease :app:lintRelease
 ./tools/deploy-site.sh --apk              # sitio + APK + SHA256SUMS (S3 + SSM)
-DUCKDNS_TOKEN=<token> ./tools/deploy-site.sh --duckdns   # refresca los registros A
+./tools/deploy-site.sh --duckdns          # refresca los 3 registros A (lee .duckdns_token)
 ```
 
 ## Criterios de mantenimiento

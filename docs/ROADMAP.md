@@ -263,15 +263,26 @@ Depende de G02 (necesita la APK firmada). DNS gestionado en DuckDNS.
   `mainboard-override-ssm` (+ política `site-deploy-artifacts-read`), instancia
   vieja `i-0bd23db676f3f3ec3` terminada y su volumen de 50 GiB eliminado;
   acceso solo vía SSM (agente 3.3.x Online).
-- [ ] **H03 — nginx + TLS:** tres server blocks con certbot/Let's Encrypt,
+- [x] **H03 — nginx + TLS:** tres server blocks con certbot/Let's Encrypt,
   redirect HTTP→HTTPS, `default_server` que rechaza hosts desconocidos.
-  Evidencia parcial (2026-10-02): nginx 1.30.5 + certbot instalados; los tres
-  vhosts HTTP funcionan (`200` por Host header) y el catch-all devuelve `444`
-  a hosts desconocidos (`ops/nginx/*.conf` versionados); **TLS pendiente** de
-  que el DNS apunte a la IP nueva y del correo Let's Encrypt.
-- [ ] **H04 — DuckDNS automático:** con token, el despliegue fija la IP en los
-  tres nombres. Bloqueado: falta el token (soportado por
-  `DUCKDNS_TOKEN=… ./tools/deploy-site.sh --duckdns`).
+  Evidencia (2026-10-03): DNS de los tres nombres ya en la IP nueva; certificado
+  Let's Encrypt de 3 SANs emitido con `certbot --nginx` (caduca 2027-01-01) y
+  renovación automática verificada con `certbot renew --dry-run` (*all simulated
+  renewals succeeded*); configs finales en `ops/nginx/` (`00-ssl.conf` con los
+  parámetros TLS a nivel http, puerto 80 con reto ACME + `return 301`, bloque 443
+  con `http2 on` por vhost y catch-all 443 con `ssl_reject_handshake on`);
+  verificación pública: **HTTPS 200 (HTTP/2, `ssl_verify=0`) en los tres nombres**,
+  HTTP→301, APK con MIME correcto por HTTPS y handshake rechazado en hosts
+  desconocidos (curl exit 35).
+- [x] **H04 — DuckDNS automático:** con token, el despliegue fija la IP en los
+  tres nombres.
+  Evidencia (2026-10-03): token del usuario validado contra la API real
+  (`update?...&ip=52.14.253.158` → `OK` en los tres nombres); guardado en
+  `.duckdns_token` (gitignored, permisos 600) y leído por
+  `tools/deploy-site.sh --duckdns` si falta la variable de entorno; el script
+  siempre envía **la IP pública del servidor** (`ip=$IP`, nunca la del llamador)
+  para que los registros no deriven. Verificación pública HTTPS incluida en el
+  paso 6 del script.
 - [x] **H05 — Publicar APK:** `app-release-0.1.0.apk`, `latest.apk` y
   `SHA256SUMS` en `/var/www/mainboard-override/downloads/`.
   Evidencia (2026-10-02): APK 54.457.058 B en el servidor con

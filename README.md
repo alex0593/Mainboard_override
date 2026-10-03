@@ -13,13 +13,14 @@ Vertical slice jugable: motor Kotlin puro, app Jetpack Compose, generación
 determinista por semillas, persistencia local de ajustes y récords, y pruebas
 unitarias del bucle principal.
 
-Estado verificado (2026-10-02): bloques A–F cerrados (A01–A10, B01–B06,
-C01–C06, D01–D04, E01–E06, F01–F03) y salida de alfa en marcha: build de
-release firmado (APK + AAB), ficha de tienda en `docs/PLAY.md` y servidor
-web propio con la landing publicada. Suite de dominio **52/52** y
-`:app:testDebugUnitTest` **8/8** en verde, lint sin errores, suite
-instrumental **28/28** en CLK‑LX3 por USB. Pendientes externos: token de
-DuckDNS (HTTPS) y Play Console — detallados en el [Roadmap](docs/ROADMAP.md).
+Estado verificado (2026-10-03): bloques A–F cerrados (A01–A10, B01–B06,
+C01–C06, D01–D04, E01–E06, F01–F03) y salida de alfa completada: build de
+release firmado (APK + AAB, etiqueta `v0.1.0`), ficha de tienda en
+`docs/PLAY.md` y sitio publicado con **HTTPS** en sus tres nombres.
+Suite de dominio **52/52** y `:app:testDebugUnitTest` **8/8** en verde, lint
+sin errores, suite instrumental **28/28** en CLK‑LX3 por USB y smoke test de
+la APK release (R8) sin excepciones en emulador API 35. Pendiente externo:
+Play Console — detallado en el [Roadmap](docs/ROADMAP.md).
 
 ## Cómo se juega
 
