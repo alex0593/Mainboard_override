@@ -204,6 +204,8 @@
     <string name="phase_local">Local network</string>
     <string name="phase_routing">Routing / DNS</string>
     <string name="phase_overwrite">Hardware overwrite</string>
+    <string name="phase_firewall">Firewall</string>
+    <string name="phase_singularity">Singularity</string>
     <string name="achievements_title">Achievements</string>
     <string name="achievement_new">Achievement: %1$s</string>
     <string name="ach_first_victory">First victory</string>

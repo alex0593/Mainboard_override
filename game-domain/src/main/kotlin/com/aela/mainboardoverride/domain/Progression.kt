@@ -15,8 +15,8 @@ object ScenarioCatalog {
     fun get(id: String) = all.firstOrNull { it.id == id } ?: all.first()
 }
 
-/** Campaign phases over the 30 challenge levels; labels only, rules untouched. */
-fun challengePhase(number: Int): Int = ((number - 1) / 10).coerceIn(0, 2)
+/** Campaign phases over the 100 challenge levels (five phases of 20); labels only, rules untouched. */
+fun challengePhase(number: Int): Int = ((number - 1) / 20).coerceIn(0, 4)
 
 /** Additive achievement ids; grants never pay twice because storage is a set. */
 enum class Achievement(val id: String) {

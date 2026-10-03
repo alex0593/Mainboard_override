@@ -221,7 +221,7 @@ internal fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart
             }
             LazyVerticalGrid(GridCells.Adaptive(220.dp), horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.weight(1f)) {
-                for (phase in 0..2) {
+                for (phase in 0..4) {
                     item(span = { GridItemSpan(maxLineSpan) }, key = "phase-$phase", contentType = "phase") {
                         Text(
                             stringResource(R.string.phase_title, phase + 1, stringResource(phaseNameRes(phase))),
@@ -280,5 +280,7 @@ private fun scriptDisplayName(type: ScriptType): String =
 private fun phaseNameRes(phase: Int): Int = when (phase) {
     1 -> R.string.phase_routing
     2 -> R.string.phase_overwrite
+    3 -> R.string.phase_firewall
+    4 -> R.string.phase_singularity
     else -> R.string.phase_local
 }

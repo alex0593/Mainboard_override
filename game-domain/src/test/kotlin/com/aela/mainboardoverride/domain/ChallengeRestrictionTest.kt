@@ -6,7 +6,7 @@ import kotlin.test.assertTrue
 
 /** E02 hand restrictions: banned script types are never dealt in those challenges. */
 class ChallengeRestrictionTest {
-    private val restricted = setOf(7, 17, 27)
+    private val restricted = setOf(7, 17, 27, 37, 47, 57, 67, 77, 87, 97)
 
     private fun fullReplay(level: ChallengeLevel): GameState {
         val generated = LevelGenerator.generateVerified(level.seed, level.number)

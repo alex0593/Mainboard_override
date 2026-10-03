@@ -6,13 +6,17 @@ import kotlin.test.assertTrue
 
 /** E05 campaign phases and achievement evaluation. */
 class CampaignTest {
-    @Test fun `thirty levels split into three phases`() {
+    @Test fun `hundred levels split into five phases of twenty`() {
         assertEquals(0, challengePhase(1))
-        assertEquals(0, challengePhase(10))
-        assertEquals(1, challengePhase(11))
-        assertEquals(1, challengePhase(20))
-        assertEquals(2, challengePhase(21))
-        assertEquals(2, challengePhase(30))
+        assertEquals(0, challengePhase(20))
+        assertEquals(1, challengePhase(21))
+        assertEquals(1, challengePhase(40))
+        assertEquals(2, challengePhase(41))
+        assertEquals(2, challengePhase(60))
+        assertEquals(3, challengePhase(61))
+        assertEquals(3, challengePhase(80))
+        assertEquals(4, challengePhase(81))
+        assertEquals(4, challengePhase(100))
     }
 
     @Test fun `achievements unlock by the agreed conditions`() {

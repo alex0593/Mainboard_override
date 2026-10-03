@@ -4,6 +4,9 @@ const val BOARD_WIDTH = 9
 const val BOARD_HEIGHT = 7
 const val MIN_GENERATED_BOARD_WIDTH = 8
 const val MAX_GENERATED_BOARD_WIDTH = 10
+/** Challenge-only growth tiers: levels 31-60 draw 11-12 columns, 61-100 draw 13-14. */
+const val WIDE_GENERATED_BOARD_WIDTH = 12
+const val WIDER_GENERATED_BOARD_WIDTH = 14
 const val MAX_RAM = 3
 const val MAX_TRACE = 100
 const val DOMINO_HAND_SIZE = 3

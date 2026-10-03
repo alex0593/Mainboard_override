@@ -125,10 +125,10 @@ class GameEngineTest {
         assertEquals(GameResult.CHALLENGE_LIMIT, GameEngine.reduce(placed, GameAction.EndTurn).state.result)
     }
 
-    @Test fun `challenge catalog contains thirty constrained solvable levels`() {
-        assertEquals(30, ChallengeCatalog.COUNT)
+    @Test fun `challenge catalog contains a hundred constrained solvable levels`() {
+        assertEquals(100, ChallengeCatalog.COUNT)
         assertTrue(ChallengeCatalog.levels.all { it.rules.maxTurns != null || it.rules.maxTrace != null })
-        assertEquals(30, ChallengeCatalog.levels.distinctBy { it.seed }.size)
+        assertEquals(100, ChallengeCatalog.levels.distinctBy { it.seed }.size)
         for (level in ChallengeCatalog.levels) {
             val generated = LevelGenerator.generateVerified(level.seed, level.number)
             var state = generated.state

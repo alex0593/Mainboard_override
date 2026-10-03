@@ -12,10 +12,11 @@ import kotlin.test.assertTrue
  * - Free play (1000 classic seeds + 7 scenarios x 100 seeds): every opening
  *   hand offers at least one legal placement, and every reference victory
  *   keeps at least 28 trace of headroom (ghost route 9 closes at 72).
- * - Challenges (30 levels): every reference solution fits its turn and trace
- *   budgets, including the exact-limit levels (2 at 48/48, 10 and 20-30 at
- *   9/9 turns). Any deviation in real play (noise, traps, detours) spends
- *   that margin, which is the intended difficulty gradient.
+ * - Challenges (100 levels): every reference solution fits its turn and trace
+ *   budgets, including the exact-limit levels (2 at 48/48, 10 and the tight
+ *   every-fifth levels from 20 up, which run the witness budget exactly). Any
+ *   deviation in real play (noise, traps, detours) spends that margin, which is
+ *   the intended difficulty gradient.
  */
 class BalanceTest {
     private fun replay(state: GameState, solution: List<GameAction.PlaceDomino>): GameState {

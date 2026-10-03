@@ -202,6 +202,8 @@
     <string name="phase_local">Red local</string>
     <string name="phase_routing">Enrutamiento / DNS</string>
     <string name="phase_overwrite">Sobreescritura de hardware</string>
+    <string name="phase_firewall">Cortafuegos</string>
+    <string name="phase_singularity">Singularidad</string>
     <string name="achievements_title">Logros</string>
     <string name="achievement_new">Logro: %1$s</string>
     <string name="ach_first_victory">Primera victoria</string>

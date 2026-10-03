@@ -35,22 +35,29 @@ object LevelGenerator {
         val startY = random.nextInt(1, 6)
         val exitY = (startY + random.nextInt(1, 6)) % 6 + 1
         val start = Position(-1, startY)
-        // Some seeds use an eight-column board, others nine or ten columns.
-        val boardWidth = random.nextInt(MIN_GENERATED_BOARD_WIDTH, MAX_GENERATED_BOARD_WIDTH + 1)
+        // Some seeds use an eight-column board, others nine or ten. The campaign grows
+        // past that from challenge 31: one draw either way, so levels 1-30 keep the exact
+        // boards they have always had.
+        val boardWidth = when {
+            challengeLevel == null -> random.nextInt(MIN_GENERATED_BOARD_WIDTH, MAX_GENERATED_BOARD_WIDTH + 1)
+            challengeLevel >= 61 -> random.nextInt(WIDER_GENERATED_BOARD_WIDTH - 1, WIDER_GENERATED_BOARD_WIDTH + 1)
+            challengeLevel >= 31 -> random.nextInt(WIDE_GENERATED_BOARD_WIDTH - 1, WIDE_GENERATED_BOARD_WIDTH + 1)
+            else -> random.nextInt(MIN_GENERATED_BOARD_WIDTH, MAX_GENERATED_BOARD_WIDTH + 1)
+        }
         val extraction = Position(boardWidth, exitY)
         // Challenge routes need enough dominoes to span from start to extraction:
         // the walk must cover (0, startY) through (width - 1, exitY) at minimum.
         val minChallengeCount = if (challengeLevel != null)
             (boardWidth + kotlin.math.abs(extraction.y - start.y) + 1) / 2 else 0
         repeat(24) {
-            val base = challengeLevel?.let { (4 + it / 2).coerceIn(5, 9) } ?: random.nextInt(5, 8)
+            val base = challengeLevel?.let { (4 + it / 2).coerceIn(5, maxDominoes(it)) } ?: random.nextInt(5, 8)
             val count = maxOf(base, minChallengeCount)
             val path = findPath(random, count, start, extraction, boardWidth)
             if (path != null) buildLevel(seed, random, path, start, extraction, challengeLevel, boardWidth = boardWidth)?.let { return it }
         }
         // Deterministic detour built from the actual endpoints, so the first cell
         // always neighbors start and the last always neighbors extraction.
-        val fallbackCount = maxOf((4 + (challengeLevel ?: 4) / 2).coerceIn(5, 9), minChallengeCount)
+        val fallbackCount = maxOf((4 + (challengeLevel ?: 4) / 2).coerceIn(5, maxDominoes(challengeLevel ?: 4)), minChallengeCount)
         val fallback = fallbackPath(random, fallbackCount, start, extraction, boardWidth)
         return checkNotNull(fallback?.let { buildLevel(seed, random, it, start, extraction, challengeLevel, boardWidth = boardWidth) })
     }
@@ -123,7 +130,11 @@ object LevelGenerator {
                 }
         } else null
         val open = if (lockCell == null) available else available - lockCell.first
-        val firewallCount = scenario?.firewalls ?: random.nextInt(4 + (challengeLevel ?: 1) / 3, 8 + (challengeLevel ?: 1) / 2).coerceAtMost(open.size)
+        // Wide tiers keep the denser level-scaled roll but cap it at half the open cells,
+        // so detours outside the corridor stay possible; levels 1-30 keep the old cap.
+        val firewallCap = if ((challengeLevel ?: 0) >= 31) open.size / 2 else open.size
+        val firewallCount = scenario?.firewalls ?: random.nextInt(4 + (challengeLevel ?: 1) / 3, 8 + (challengeLevel ?: 1) / 2)
+            .coerceAtMost(firewallCap)
         val board = base.copy(
             firewalls = open.take(firewallCount).toSet(),
             honeypots = open.drop(firewallCount).take(scenario?.traps ?: random.nextInt(2, 4 + (challengeLevel ?: 0) / 3)).toSet(),
@@ -164,6 +175,17 @@ object LevelGenerator {
 
     private fun adjacent(first: Position, second: Position): Boolean =
         kotlin.math.abs(first.x - second.x) + kotlin.math.abs(first.y - second.y) == 1
+
+    /**
+     * Dominoes the witness route spans: wider challenge boards need longer corridors, so
+     * the cap grows with the tier (9 up to level 30, then 10 and 11) while free play and
+     * scenarios keep their own route length.
+     */
+    private fun maxDominoes(challengeLevel: Int): Int = when {
+        challengeLevel >= 61 -> 11
+        challengeLevel >= 31 -> 10
+        else -> 9
+    }
 
     /**
      * Deterministic fallback walk with exactly [count] dominoes from the only
