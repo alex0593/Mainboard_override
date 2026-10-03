@@ -24,6 +24,22 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 
 ## Dónde quedamos (última revisión 2026-10-03)
 
+- **Bloque J — campaña a 100 y nodos de datos (2026-10-03, cerrado):**
+  `ChallengeCatalog.COUNT` 30 → 100 en cinco fases de 20 (Firewall y
+  Singularity como fases nuevas, EN/ES) con reglas por banda (31–60 y
+  61–100, nivel exacto cada 5.º) y SPOOF vetado cada décimo desde el 37;
+  tableros más grandes solo desde el desafío 31 (11–12 y 13–14 columnas,
+  corredor de referencia a 10/11 dominós) preservando el RNG de 1–30, modo
+  libre y escenarios (`PuzzlePreview.REVISION` intacto); nodos de datos
+  obligatorios desde el 41 (`BoardState.waypoints` + `isObjectiveReached`:
+  extracción **y** nodos dentro de la red conectada, 1/2/3 por banda,
+  colocados sobre la ruta de referencia sin consumir RNG). UI: ◆ ámbar
+  pulsante → ✓ verde al cubrir, contador `NODOS k/N` en el header, regla en
+  el diálogo del reto y ayuda del tablero (EN/ES).
+  Validado: `./gradlew test` verde (**56 dominio + 8 app**),
+  `:app:lintDebug` verde y suite instrumental **28/28** en `emulator-5554`.
+  Commits del bloque hechos (3 `feat:` + 1 `docs:`). Detalle en el
+  [Roadmap](ROADMAP.md) (bloque J).
 - **Bloque I — audio, animación y pulido (2026-10-03, código cerrado):** SFX
   con mezclador autorecuperable (`SoundEffects.runMixer`) y música de menú con
   escena `MENU` subida (.34) e intercambio de pista por `generation` bajo lock
@@ -95,10 +111,10 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 | Área | Estado actual | Fuente principal |
 | --- | --- | --- |
 | Motor | Estado inmutable, acciones explícitas y `GameEngine.reduce`. | [Arquitectura](ARCHITECTURE.md) |
-| Generación | Semillas reproducibles; niveles libres, escenarios y desafíos catalogados; suite de dominio 52/52 verde. | [Arquitectura](ARCHITECTURE.md) |
+| Generación | Semillas reproducibles; niveles libres, escenarios y catálogo de 100 desafíos (5 fases, tableros anchos desde el 31 y nodos desde el 41); suite de dominio 56/56 verde. | [Arquitectura](ARCHITECTURE.md) |
 | Skins | 18 fichas y 17 PCB en galería; Cobre, Aurora, Titanio, Jade, Rubí, Zafiro, Ámbar y Amatista premium (200), grafito y señal a 80, resto gratis. | [README de skins](../assets/skins/README.md) |
 | Scripts | `PING`, `SPOOF`, `KILL` (`KILL_PROCESS` internamente), `BRIDGE` y `STEALTH` (F02, descarta el ruido pendiente). | [GDD](GDD.md) |
-| Progresión | Desafíos desbloquean escenarios por victorias distintas; récords y créditos persisten. | `PlayerPreferencesRepository` |
+| Progresión | 100 desafíos en 5 fases con nodos de datos obligatorios desde el 41; los desafíos desbloquean escenarios por victorias distintas; récords y créditos persisten. | `PlayerPreferencesRepository` |
 | Economía | Compras y recompensas con transacciones DataStore e idempotencia; reapertura limpia sin pagos duplicados. | `PlayerPreferencesRepository` |
 | Escenarios | Siete fondos generados, empaquetados y usados en tarjetas, partidas y menú. | [README de escenarios](../assets/scenarios/README.md) |
 | Tutorial | 10 lecciones deterministas, flujo separado y progreso persistido; franja de progreso persistente, fundido entre lecciones y «saltar lección» (bloque I); `TutorialTest` 5/5 y `PuzzleTutorialUiTest` 6/6. | [Arquitectura](ARCHITECTURE.md) |

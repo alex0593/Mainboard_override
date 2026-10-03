@@ -382,6 +382,50 @@ dispositivo (`music_volume=1.0`, `sfx_volume=1.0`, `audio` ausente → true).
 dispositivo (SFX audibles en cada cue, música de menú perceptible a volumen
 medio) y las mejoras de UI visibles en la misma prueba.
 
+### J — Campaña a 100, tableros grandes y nodos de datos (P2)
+
+Propuesta y decisiones del usuario (2026-10-03, plan aprobado): la ruta
+conectada debe **barrer** los nodos obligatorios (sin interacción nueva),
+el tablero más grande solo afecta a desafíos altos (1–30 intactos) y la
+campaña pasa a 100 desafíos en cinco fases de 20 (Firewall y Singularity
+como fases nuevas).
+
+- [x] **J01 — 100 desafíos y 5 fases:** `ChallengeCatalog.COUNT` 30 → 100,
+  `challengePhase` por bandas de 20, bucle de fases `0..4` y claves
+  `phase_firewall`/`phase_singularity` en ambos idiomas; curva de reglas
+  por banda (31–60: 11 turnos/88 rastreo con nivel exacto cada 5.º;
+  61–100: 12/96 con exacto cada 5.º) y SPOOF vetado cada décimo desde el
+  37 (37…97).
+  *Hecho 2026-10-03:* `GameEngineTest` (COUNT=100, semillas distintas),
+  `CampaignTest` (5×20) y `ChallengeRestrictionTest` (10 niveles vetados).
+- [x] **J02 — Tablero grande solo en desafíos ≥31:** tramos 11–12 (31–60) y
+  13–14 (61–100) con un único draw de RNG (niveles 1–30, modo libre y
+  escenarios byte-idénticos; `PuzzlePreview.REVISION` intacto), corredor
+  de referencia más largo (10 y 11 dominós) y firewall con tope a media
+  celda abierta en las bandas anchas.
+  *Hecho 2026-10-03:* constantes `WIDE_GENERATED_BOARD_WIDTH`/`WIDER_…`,
+  `maxDominoes()` y `DataNodesTest` (anchuras por tramo).
+- [x] **J03 — Nodos de datos obligatorios (desde el 41):** `BoardState.waypoints`
+  + `isObjectiveReached` (extracción **y** nodos dentro de
+  `reachableFromStart`); el generador los reparte por la ruta de
+  referencia con aritmética de índices (sin consumir RNG) y nunca sobre
+  firewalls ni honeypots. UI: ◆ ámbar pulsante → ✓ verde al cubrir,
+  contador `NODOS k/N` en el header, regla en el diálogo del reto y ayuda
+  del tablero en ambos idiomas. Escalado 1/2/3 nodos en 41–60/61–80/81–100.
+  *Hecho 2026-10-03:* `DataNodesTest` (4 pruebas) y `BalanceTest`
+  revalida la solución de referencia de los 100 niveles con la nueva
+  condición de victoria.
+- [x] **J04 — Validación y cierre:** `./gradlew test` verde
+  (56 dominio + 8 app), `:app:lintDebug` verde,
+  `:app:connectedDebugAndroidTest` **28/28** en `emulator-5554`
+  (`wm size 640x360`), sync de docs (GDD/README/PLAY/ESTADO) y commits por
+  incremento (`feat:` ×3 + `docs:`).
+
+**Cierre de J:** los 100 desafíos generan y resuelven con sus nodos
+(`BalanceTest` replayea la referencia de cada nivel), niveles 1–30 y modo
+libre sin cambios de semilla, y la UI de fases/nodos cubierta por tests de
+dominio y la suite instrumentada completa.
+
 ### Seguimiento y entrega
 
 - Empezar por A01–A08; A09 puede investigarse en paralelo.

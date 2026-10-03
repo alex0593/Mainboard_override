@@ -24,7 +24,8 @@ Play Console — detallado en el [Roadmap](docs/ROADMAP.md).
 
 ## Cómo se juega
 
-- **Progresión:** 30 desafíos secuenciales. Cada 5 desafíos distintos
+- **Progresión:** 100 desafíos secuenciales en cinco fases, con nodos de
+  datos obligatorios desde el 41. Cada 5 desafíos distintos
   completados desbloquea un escenario del modo libre: Laboratorio, Centro de
   datos, Red industrial, Archivo profundo, Núcleo blindado y Red fantasma.
   Cada escenario tiene dimensiones y obstáculos propios, con generación

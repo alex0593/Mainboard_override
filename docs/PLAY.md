@@ -67,7 +67,8 @@ CÓMO SE JUEGA
 • Cartas, guías en pista y un sistema de ruido legible: el tablero nunca miente.
 
 CONTENIDO
-• 30 desafíos con semillas reproducibles: mismas reglas, mismos huecos.
+• 100 desafíos con semillas reproducibles: mismas reglas, mismos huecos.
+• Nodos de datos que la ruta debe barrer antes de extraer.
 • Modo libre con 7 escenarios y récords locales.
 • Tutorial de 10 lecciones que enseña las reglas sin manuales.
 • 18 skins de ficha y 17 de placa para personalizar el tablero.
@@ -101,7 +102,8 @@ HOW IT PLAYS
 • Cards, hint guides and a readable noise system: the board never lies.
 
 WHAT'S INSIDE
-• 30 reproducible seeded challenges: same rules, same gaps.
+• 100 reproducible seeded challenges: same rules, same gaps.
+• Data nodes your route must sweep before extracting.
 • Free play with 7 scenarios and local records.
 • A 10-turn tutorial that teaches the rules without a manual.
 • 18 domino skins and 17 board skins to personalize the table.
