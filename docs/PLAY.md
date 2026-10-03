@@ -152,15 +152,16 @@ Justificación interna (no se sube, queda aquí):
 - Sin SDKs de terceros: ni analítica, ni anuncios, ni crash reporters, ni
   red social. Tampoco hay compras in-app (los créditos son de juego).
 
-## 6. Política de privacidad (plantilla)
+## 6. Política de privacidad (publicada)
 
-Si Play pide URL (no es obligatoria sin recogida de datos, pero tranquiliza),
-hostear en `https://mainboard-override.duckdns.org/privacidad.html` con este
-contenido:
+**Publicada el 2026-10-03** en
+`https://mainboard-override.duckdns.org/privacidad.html` (fuente en el repo:
+`web/privacidad.html`, enlazada desde el pie de la landing). Si Play pide URL
+en la consola, pegar esa dirección. Texto de referencia:
 
 ```text
 Política de privacidad — Mainboard Override
-Última actualización: 2026-10-02
+Última actualización: 2026-10-03
 
 Mainboard Override no recoge, transmite ni comparte datos personales.
 
@@ -187,7 +188,7 @@ Mainboard Override no recoge, transmite ni comparte datos personales.
    datos de ningún usuario.
 
 6. Contacto
-   Correo del desarrollador: [CORREO DE CONTACTO]
+   Correo del desarrollador: aalopezalv@gmail.com
 
 7. Cambios
    Cualquier cambio de esta política se publicará en esta misma dirección
@@ -214,6 +215,7 @@ Mainboard Override no recoge, transmite ni comparte datos personales.
 ## 8. Checklist de publicación
 
 - [ ] `./gradlew :game-domain:test :app:testDebugUnitTest :app:lintRelease` en verde.
+- [x] Política de privacidad publicada (`privacidad.html`, 2026-10-03) — URL lista por si Play la pide.
 - [ ] AAB y APK regenerados y hashes actualizados en §2.
 - [ ] Textos revisados en §3 (ES y EN).
 - [ ] Assets del §4 exportados y validados (sin alfa en el icono).

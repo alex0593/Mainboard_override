@@ -117,6 +117,8 @@ code {
   padding: 1px 6px;
 }
 
+a { color: var(--cyan); }
+
 .hash { display: inline-block; word-break: break-all; color: var(--cyan); }
 
 .cols {
