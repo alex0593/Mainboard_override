@@ -73,12 +73,12 @@ internal fun SpoofDialog(tile: Domino, half: Int, value: Int, error: Int?,
                     Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(stringResource(R.string.spoof_before), Modifier.weight(1f), fontSize = 12.sp)
-                        DominoImage(tile, Modifier.width(52.dp))
+                        DominoImage(tile, Modifier.width(52.dp), artMax = 26.dp)
                     }
                     Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(stringResource(R.string.spoof_after), Modifier.weight(1f), fontSize = 12.sp)
-                        DominoImage(if (half == 0) tile.copy(first = value) else tile.copy(second = value), Modifier.width(52.dp))
+                        DominoImage(if (half == 0) tile.copy(first = value) else tile.copy(second = value), Modifier.width(52.dp), artMax = 26.dp)
                     }
                 }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {

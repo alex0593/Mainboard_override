@@ -343,6 +343,7 @@ private fun PingHeader(
                         Modifier.width(60.dp),
                         orientation = Orientation.HORIZONTAL,
                         skin = skin,
+                        artMax = 30.dp,
                     )
                 }
             }

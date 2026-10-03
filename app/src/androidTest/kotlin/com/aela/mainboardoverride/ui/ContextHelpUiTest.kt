@@ -55,7 +55,7 @@ class ContextHelpUiTest {
         val firewall = mutableStateOf(true)
         val edge = mutableStateOf(32.dp)
         compose.setContent {
-            BoardThreatImage(firewall.value, Modifier.size(edge.value).testTag("threat-art"))
+            BoardThreatImage(firewall.value, edge.value, Modifier.size(edge.value).testTag("threat-art"))
         }
         for (isFirewall in listOf(true, false)) for (size in listOf(32.dp, 12.dp)) {
             compose.runOnIdle { firewall.value = isFirewall; edge.value = size }

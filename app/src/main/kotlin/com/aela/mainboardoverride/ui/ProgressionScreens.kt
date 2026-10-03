@@ -125,8 +125,8 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                         Column(Modifier.fillMaxWidth().heightIn(min = 240.dp).padding(18.dp), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp, androidx.compose.ui.Alignment.CenterVertically)) {
                             if (pcb) Board(BoardState(placed = listOf(PlacedDomino(Domino("sample", 0, 3), Position(1, 3), Orientation.HORIZONTAL))), skin.id, prefs.dominoSkin, emptySet(), modifier = Modifier.fillMaxWidth().height(88.dp), onCell = {}, previewOnly = true)
                             else Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                DominoImage(Domino("preview1", 2, 5), Modifier.width(64.dp), skin = skin.id, previewOnly = true)
-                                DominoImage(Domino("preview2", 0, 6), Modifier.width(64.dp), skin = skin.id, previewOnly = true)
+                                DominoImage(Domino("preview1", 2, 5), Modifier.width(64.dp), skin = skin.id, previewOnly = true, artMax = 32.dp)
+                                DominoImage(Domino("preview2", 0, 6), Modifier.width(64.dp), skin = skin.id, previewOnly = true, artMax = 32.dp)
                             }
                             Text(stringResource(skin.label), Modifier.fillMaxWidth(), color = Cyan, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                             if (paid) Text(stringResource(R.string.skin_price, price), color = Warning, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 10.sp)

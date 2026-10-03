@@ -34,7 +34,7 @@ internal fun RotationPreview(
             Text(stringResource(if (orientation == Orientation.HORIZONTAL) R.string.horizontal else R.string.vertical),
                 color = accent, fontSize = 10.sp)
             DominoImage(preview, Modifier.width(if (orientation == Orientation.HORIZONTAL) 68.dp else 34.dp),
-                orientation, skin = skin)
+                orientation, skin = skin, artMax = 34.dp)
             Text("${preview.first} : ${preview.second}", color = Terminal, fontSize = 11.sp)
         }
     }

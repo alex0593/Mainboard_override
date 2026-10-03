@@ -213,6 +213,7 @@ internal fun Board(
                     describe = false,
                     skin = dominoSkin,
                     previewOnly = previewOnly,
+                    artMax = cell,
                 )
             }
             if (previewOnly) {
@@ -238,7 +239,7 @@ internal fun Board(
                 }
                 (board.buffs.keys - board.collectedBuffs).forEach { position ->
                     Box(Modifier.offset(cell * position.x, cell * position.y).size(cell).padding(2.dp)) {
-                        BoardBuffSprite(board.buffs.getValue(position))
+                        BoardBuffSprite(board.buffs.getValue(position), cell)
                     }
                 }
                 (board.firewalls + board.revealedHoneypots).forEach { position ->
@@ -246,18 +247,19 @@ internal fun Board(
                     Box(Modifier.offset(cell * position.x, cell * position.y).size(cell).padding(2.dp)) {
                         BoardThreatImage(
                             firewall = position in board.firewalls,
+                            maxDisplay = if (isPlaced) cell * .4f else cell,
                             modifier = if (isPlaced) Modifier.align(Alignment.TopEnd).size(cell * .4f)
                                 .background(Void.copy(alpha = .9f), RoundedCornerShape(2.dp))
                             else Modifier.fillMaxSize().padding(1.dp),
                         )
                         board.bridges.find { it.center == position }?.let { bridge ->
-                            BoardBridgeSprite(bridge.horizontal, bridge.value)
+                            BoardBridgeSprite(bridge.horizontal, bridge.value, cell)
                         }
                     }
                 }
                 board.locks.forEach { (position, demanded) ->
                     Box(Modifier.offset(cell * position.x, cell * position.y).size(cell).padding(2.dp)) {
-                        BoardLockImage(Modifier.fillMaxSize().padding(1.dp))
+                        BoardLockImage(cell, Modifier.fillMaxSize().padding(1.dp))
                         Row(
                             Modifier.align(Alignment.TopEnd).background(Void.copy(alpha = .9f), RoundedCornerShape(2.dp))
                         ) {
@@ -306,7 +308,7 @@ private fun PortSprite(resource: Int, label: String, row: Int, size: Dp, start: 
         contentAlignment = Alignment.BottomCenter,
     ) {
         Image(
-            painterResource(resource), contentDescription = label,
+            smoothArtworkPainter(resource, size, size), contentDescription = label,
             modifier = Modifier.fillMaxSize(),
             contentScale = androidx.compose.ui.layout.ContentScale.Fit,
         )
@@ -373,20 +375,20 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
         if (isPlaced) {
             if (trap || daemon) {
                 Row(Modifier.align(Alignment.TopEnd).background(Void.copy(alpha = .9f), RoundedCornerShape(2.dp))) {
-                    if (trap) BoardThreatImage(firewall = false, modifier = Modifier.size(size * .4f))
+                    if (trap) BoardThreatImage(firewall = false, maxDisplay = size * .4f, modifier = Modifier.size(size * .4f))
                     if (daemon) Text("D!", color = Danger, fontSize = 9.sp)
                 }
             }
         } else if (firewall || (trap && !daemon && !isStart && !isExit)) {
-            BoardThreatImage(firewall, Modifier.fillMaxSize().padding(1.dp))
-            if (bridge != null) BoardBridgeSprite(bridge.horizontal, bridge.value)
+            BoardThreatImage(firewall, size, Modifier.fillMaxSize().padding(1.dp))
+            if (bridge != null) BoardBridgeSprite(bridge.horizontal, bridge.value, size)
         } else if (lock != null && !daemon && !isStart && !isExit) {
-            BoardLockImage(Modifier.fillMaxSize().padding(1.dp))
+            BoardLockImage(size, Modifier.fillMaxSize().padding(1.dp))
             Row(Modifier.align(Alignment.TopEnd).background(Void.copy(alpha = .9f), RoundedCornerShape(2.dp))) {
                 Text("$lock", color = Warning, fontSize = 11.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace)
             }
         } else if (buff != null && !daemon && !isStart && !isExit) {
-            BoardBuffSprite(buff)
+            BoardBuffSprite(buff, size)
         } else Text(
             when {
                 bridge != null -> if (bridge.horizontal) "═${bridge.value}" else "║${bridge.value}"
@@ -460,9 +462,9 @@ private fun DestructionBurst(
 }
 
 @Composable
-private fun BoardBridgeSprite(horizontal: Boolean, value: Int) {
+private fun BoardBridgeSprite(horizontal: Boolean, value: Int, size: Dp) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
-        Image(painterResource(R.drawable.board_bridge_v1), contentDescription = null,
+        Image(smoothArtworkPainter(R.drawable.board_bridge_v1, size, size), contentDescription = null,
             modifier = Modifier.fillMaxSize().rotate(if (horizontal) 0f else 90f))
         Text("$value", color = Warning, fontWeight = FontWeight.Black, fontSize = 10.sp,
             modifier = Modifier.background(Void.copy(alpha = .85f)).padding(horizontal = 2.dp))
@@ -470,11 +472,11 @@ private fun BoardBridgeSprite(horizontal: Boolean, value: Int) {
 }
 
 @Composable
-private fun BoardBuffSprite(buff: BoardBuff) {
+private fun BoardBuffSprite(buff: BoardBuff, size: Dp) {
     // The label is a small corner chip so the pickup artwork underneath stays visible.
     Box(Modifier.fillMaxSize()) {
-        Image(painterResource(if (buff == BoardBuff.TRACE_COOLER) R.drawable.board_trace_cooler_v1
-            else R.drawable.board_ram_reserve_v1), contentDescription = null, modifier = Modifier.fillMaxSize().padding(1.dp))
+        Image(smoothArtworkPainter(if (buff == BoardBuff.TRACE_COOLER) R.drawable.board_trace_cooler_v1
+            else R.drawable.board_ram_reserve_v1, size, size), contentDescription = null, modifier = Modifier.fillMaxSize().padding(1.dp))
         Text(if (buff == BoardBuff.TRACE_COOLER) "−8" else "+1R", color = Cyan,
             fontSize = 9.sp, fontWeight = FontWeight.Black, maxLines = 1,
             modifier = Modifier.align(Alignment.TopEnd).padding(horizontal = 3.dp, vertical = 1.dp))

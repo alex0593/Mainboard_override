@@ -9,7 +9,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.unit.Dp
 import com.aela.mainboardoverride.R
 
 // All nodpi assets are fixed across densities and locales; share their decoded pixels across cells.
@@ -17,18 +19,24 @@ private val threatImages = LruCache<Int, Bitmap>(3)
 
 /** Cell semantics describe the threat; the artwork is decorative. */
 @Composable
-internal fun BoardThreatImage(firewall: Boolean, modifier: Modifier = Modifier) {
+internal fun BoardThreatImage(firewall: Boolean, maxDisplay: Dp, modifier: Modifier = Modifier) {
     val resources = LocalResources.current
     val resource = if (firewall) R.drawable.board_firewall else R.drawable.board_honeypot
-    val image = remember(resources, resource) { threatBitmap(resources, resource).asImageBitmap() }
+    val maxPx = with(LocalDensity.current) { maxDisplay.toPx() }
+    val image = remember(resources, resource, maxPx) {
+        reduceToDisplay(threatBitmap(resources, resource), "threat:$resource:$maxPx", maxPx, maxPx).asImageBitmap()
+    }
     Image(image, contentDescription = null, modifier = modifier, contentScale = ContentScale.Fit)
 }
 
 /** Lock sprite; the demanded value is drawn by the caller, never baked into the art. */
 @Composable
-internal fun BoardLockImage(modifier: Modifier = Modifier) {
+internal fun BoardLockImage(maxDisplay: Dp, modifier: Modifier = Modifier) {
     val resources = LocalResources.current
-    val image = remember(resources) { threatBitmap(resources, R.drawable.board_lock).asImageBitmap() }
+    val maxPx = with(LocalDensity.current) { maxDisplay.toPx() }
+    val image = remember(resources, maxPx) {
+        reduceToDisplay(threatBitmap(resources, R.drawable.board_lock), "lock:$maxPx", maxPx, maxPx).asImageBitmap()
+    }
     Image(image, contentDescription = null, modifier = modifier, contentScale = ContentScale.Fit)
 }
 

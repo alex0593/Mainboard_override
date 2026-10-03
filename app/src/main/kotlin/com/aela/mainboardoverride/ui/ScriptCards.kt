@@ -47,7 +47,8 @@ internal fun ScriptCardView(card: ScriptCard, selected: Boolean, enabled: Boolea
             .border(1.dp, if (highlighted) Warning else if (selected) Cyan else Muted, RoundedCornerShape(8.dp))),
     ) {
         Image(
-            painter = painterResource(R.drawable.menu_card_v1),
+            painter = if (compact) smoothArtworkPainter(R.drawable.menu_card_v1, 88.dp, 48.dp)
+                else painterResource(R.drawable.menu_card_v1),
             contentDescription = null,
             modifier = Modifier.matchParentSize(),
             contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
@@ -55,10 +56,11 @@ internal fun ScriptCardView(card: ScriptCard, selected: Boolean, enabled: Boolea
         if (selected) Box(Modifier.matchParentSize().background(Cyan.copy(alpha = .2f)))
         Row(Modifier.padding(4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             scriptArtwork(card.type)?.let { artwork ->
+                val artSize = if (compact) 26.dp else 34.dp
                 Image(
-                    painter = painterResource(artwork),
+                    painter = smoothArtworkPainter(artwork, artSize, artSize),
                     contentDescription = null,
-                    modifier = Modifier.size(if (compact) 26.dp else 34.dp),
+                    modifier = Modifier.size(artSize),
                 )
             }
             Column {
@@ -87,6 +89,6 @@ internal fun DominoView(tile: Domino, selected: Boolean, skin: String = "kenney"
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-            DominoImage(tile, Modifier.height(64.dp).width(32.dp), Orientation.VERTICAL, describe = false, skin = skin)
+            DominoImage(tile, Modifier.height(64.dp).width(32.dp), Orientation.VERTICAL, describe = false, skin = skin, artMax = 32.dp)
     }
 }

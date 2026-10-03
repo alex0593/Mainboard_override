@@ -15,6 +15,7 @@ import androidx.compose.ui.semantics.semantics
 import com.aela.mainboardoverride.R
 import com.aela.mainboardoverride.domain.Domino
 import com.aela.mainboardoverride.domain.Orientation
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 private val kenneyDominoResources = arrayOf(
@@ -141,10 +142,13 @@ internal fun DominoImage(
     describe: Boolean = true,
     skin: String = "kenney",
     previewOnly: Boolean = false,
+    // Shortest side of the sprite on screen; lets the art pre-reduce for sharp minification.
+    artMax: Dp? = null,
 ) {
     val customCircuit = skin == "circuit"
     val shell = dominoShellResource(skin, previewOnly)
-    val painter = painterResource(shell ?: dominoResource(tile.first, tile.second, skin))
+    val resource = shell ?: dominoResource(tile.first, tile.second, skin)
+    val painter = if (artMax != null) smoothArtworkPainter(resource, artMax, artMax * 2) else painterResource(resource)
     val label = stringResource(R.string.domino_description, tile.first, tile.second)
     val horizontal = orientation == Orientation.HORIZONTAL
     Canvas(modifier.aspectRatio(if (horizontal) 2f else .5f)
