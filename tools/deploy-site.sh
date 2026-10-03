@@ -14,7 +14,10 @@
 #   INSTANCE_ID      SSM instance id   (default i-0bf2980671102b46f)
 #   AWS_REGION       region            (default us-east-2)
 #   ARTIFACTS_BUCKET artifact bucket   (default mainboard-override-artifacts-689217346963)
-#   DUCKDNS_TOKEN    duckdns.org token (required with --duckdns)
+#   DUCKDNS_TOKEN    duckdns.org token (required with --duckdns; if unset it
+#                    is read from the gitignored .duckdns_token file). The
+#                    update always pins the *server's* public IP, never the
+#                    caller's, so the records never drift.
 #   DUCKDNS_DOMAINS  comma list without suffix
 #                    (default mainboard-override,nexxxusapp,nexxus-api)
 #   KEEP_TMP=1       keep the staging dir (params.json, tar) for debugging
@@ -113,10 +116,10 @@ cat >> "$PARAMS" <<EOF
     "nginx -t",
     "systemctl reload nginx",
     "sleep 1",
-    "curl -sSI http://127.0.0.1/ -H 'Host: mainboard-override.duckdns.org' | head -1",
-    "curl -sSI http://127.0.0.1/ -H 'Host: nexxxusapp.duckdns.org' | head -1",
-    "curl -sSI http://127.0.0.1/ -H 'Host: nexxus-api.duckdns.org' | head -1",
-    "curl -sS -m 5 -o /dev/null -w 'unknown-host=%{http_code}' http://127.0.0.1/ -H 'Host: intruso.example' || echo unknown-host=444"
+    "curl -skI --resolve mainboard-override.duckdns.org:443:127.0.0.1 https://mainboard-override.duckdns.org/ | head -1",
+    "curl -skI --resolve nexxxusapp.duckdns.org:443:127.0.0.1 https://nexxxusapp.duckdns.org/ | head -1",
+    "curl -skI --resolve nexxus-api.duckdns.org:443:127.0.0.1 https://nexxus-api.duckdns.org/ | head -1",
+    "curl -sS -m 5 -o /dev/null -w 'unknown-host=%{http_code}' --resolve intruso.example:443:127.0.0.1 https://intruso.example/ || echo unknown-host=handshake-rejected"
   ]
 }
 EOF
@@ -141,26 +144,29 @@ aws ssm get-command-invocation --command-id "$CMD_ID" \
     --query '[StandardOutputContent,StandardErrorContent]' --output text
 [ "$STATUS" = "Success" ] || { echo "error: deploy failed ($STATUS)" >&2; exit 1; }
 
-# --- 6) verify from outside with the Host header -------------------------
+# --- 6) verify over public HTTPS ----------------------------------------
 IP="$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" \
     --region "$AWS_REGION" \
     --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)"
-echo "http://$IP/"
+echo "server: http://$IP/ (HTTPS vía DNS público)"
 FAILED=0
 for d in ${DUCKDNS_DOMAINS//,/ }; do
-    CODE="$(curl -s -o /dev/null -w '%{http_code}' -m 10 \
-        -H "Host: $d.duckdns.org" "http://$IP/")"
-    echo "  $d.duckdns.org -> $CODE"
+    CODE="$(curl -s -o /dev/null -w '%{http_code}' -m 15 \
+        "https://$d.duckdns.org/")"
+    echo "  https://$d.duckdns.org -> $CODE"
     [ "$CODE" = "200" ] || FAILED=1
 done
 
-# --- 7) optional DuckDNS IP update ---------------------------------------
+# --- 7) optional DuckDNS IP update (siempre fija la IP del servidor) -----
 if [ "$WITH_DUCKDNS" = 1 ]; then
-    : "${DUCKDNS_TOKEN:?set DUCKDNS_TOKEN or drop --duckdns}"
+    if [ -z "${DUCKDNS_TOKEN:-}" ] && [ -f "$ROOT/.duckdns_token" ]; then
+        DUCKDNS_TOKEN="$(head -n1 "$ROOT/.duckdns_token")"
+    fi
+    : "${DUCKDNS_TOKEN:?set DUCKDNS_TOKEN (env or .duckdns_token file) or drop --duckdns}"
     for d in ${DUCKDNS_DOMAINS//,/ }; do
         RESP="$(curl -fsS -m 15 \
-            "https://www.duckdns.org/update?domains=$d&ip=&token=$DUCKDNS_TOKEN")"
-        echo "duckdns: $d -> $RESP"
+            "https://www.duckdns.org/update?domains=$d&ip=$IP&token=$DUCKDNS_TOKEN")"
+        echo "duckdns: $d -> $IP ($RESP)"
         [ "$RESP" = "OK" ] || { echo "error: duckdns update failed for $d" >&2; FAILED=1; }
     done
 fi

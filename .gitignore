@@ -31,3 +31,6 @@ keystore.properties
 *.log
 # Butler binary for itch.io publishes (fetched by tools/publish-itch.sh).
 tools/.butler/
+
+# DuckDNS token de despliegue (nunca se commitea)
+.duckdns_token
