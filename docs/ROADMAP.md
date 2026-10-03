@@ -4,14 +4,16 @@
 
 Este documento recoge, estructura y prioriza las ideas de mejora para el juego, a partir del banco de ideas en `docs/IMPROVEMENTS.md`. No es un plan definitivo, sino una propuesta de ruta para decidir qué hacer primero y qué dejar para después.
 
-**Revisión:** 2026-09-22. Único plan operativo del proyecto: orden,
+**Revisión:** 2026-10-02. Único plan operativo del proyecto: orden,
 dependencias, tareas y criterios de cierre. El estado comprobable y las
-decisiones viven en [ESTADO.md](ESTADO.md). Ayer (2026-09-20) se cerraron
+decisiones viven en [ESTADO.md](ESTADO.md). El 2026-09-20 se cerraron
 A01–A09 con causas raíz registradas y B06 con reapertura limpia verificada.
 El 2026-09-21 se cerró A10 con la suite instrumental completa en verde,
 también cerraron C01–C06, D02–D04 y E01–E06, y se abrió el bloque F con F01
 (skins Titanio/Jade/Rubí) y F02 (script STEALTH); la suite instrumental quedó
-en 28/28. Hoy (2026-09-22) se cerró F03 (skins Zafiro/Ámbar/Amatista).
+en 28/28. El 2026-09-22 se cerró F03 (skins Zafiro/Ámbar/Amatista). Hoy
+(2026-10-02) se abren los bloques G (salida de alfa, versión 0.1.0) y H
+(servidor propio y descarga directa en DuckDNS).
 Los hilos temáticos son propuestas; no representan funciones aprobadas
 ni tareas terminadas. `[ ]` significa pendiente; marcar `[x]` solo con evidencia
 de cierre. Las decisiones de producto se registran antes de implementar sus ramas.
@@ -199,6 +201,105 @@ Depende de E. Cada incremento registra su decisión antes de implementar su rama
 
 **Cierre por incremento F:** igual que E — spec acordada, implementación, tests,
 textos EN/ES y documentación en el mismo incremento.
+
+### G — Salida de alfa y publicación (P1, release)
+
+Depende de F (bloque cerrado). Objetivo: dejar el sufijo `alpha` atrás,
+tener build de release firmado y la documentación lista para Google Play.
+
+- [x] **G01 — Decisión de versión (2026-10-02):** `versionName = "0.1.0"`
+  (sin sufijo alfa), `versionCode 12`, tag `v0.1.0`. Play Console exige
+  `targetSdk ≥ 36` desde el 31-ago-2026: `targetSdk = 36` ya cumple.
+  Evidencia: `app/build.gradle.kts` (`versionName "0.1.0"`, `versionCode 12`).
+- [x] **G02 — Build de release:** `keystore.properties` (gitignored) con la
+  ruta y claves de un keystore propio fuera del repositorio;
+  `signingConfigs.release` + `buildTypes.release` con R8/minify;
+  `assembleRelease` (APK firmada para descarga directa) y `bundleRelease`
+  (AAB para Google Play, que usa Play App Signing).
+  Evidencia (2026-10-02): keystore `~/.android/mainboard-override-upload.jks`
+  (alias `mainboard-override`, cert SHA-256 `3af521aaa8202a90da5cbc4169e1ef3ca8fec0dc4d21aecd421976325a5aeeaf`);
+  APK 54.457.058 B `504e82b4…796d`, AAB 56.698.614 B `6d0e9379…1387`,
+  ambos firmados con la clave de subida; `.gitignore` excluye
+  `keystore.properties` y `app/proguard-rules.pro` creado.
+- [x] **G03 — QA de cierre:** dominio y app en verde, `lintRelease` sin
+  errores, AAB y APK instalados en dispositivo autorizado.
+  Evidencia (2026-10-03): `./gradlew test` y `:app:lintRelease` BUILD
+  SUCCESSFUL (0 errores, 63 warnings); APK release (R8) instalada y lanzada en
+  emulador API 35 — proceso estable, **0 `FATAL EXCEPTION`**, menú principal y
+  lista de desafíos renderizados tras interacción (capturas en
+  `docs/validation/release/`); AAB firmado con la misma clave. Detalle en
+  `docs/validation/release/README.md`.
+- [x] **G04 — Ficha de tienda:** textos EN/ES, checklist de assets, *Data
+  safety* sin recolección de datos y plantilla de política de privacidad en
+  `docs/PLAY.md`. Evidencia (2026-10-02): ficha creada con datos reales del
+  build (paquete, SDKs, permiso único `VIBRATE`, hashes de AAB/APK).
+- [ ] **G05 — Play Console (externo):** cuenta verificada; subir el AAB a
+  **prueba cerrada el día 1** (cuenta personal post-13-nov-2023: 12 testers
+  continuos 14 días → solicitar producción, revisión ~7 días) y publicar.
+  Bloqueado por acciones externas (pago 25 USD, pasos manuales en consola).
+- [x] **G06 — Sync de docs:** README, ESTADO y AGENTS con versión 0.1.0,
+  comandos de release y evidencia. Evidencia (2026-10-02): README con secciones
+  «Descarga directa» y «Release y publicación» + PLAY.md en el índice; ESTADO
+  revisado a 2026-10-02 (decisiones G/H, deuda y comandos); AGENTS con comandos
+  de release/deploy y nota de keystore.
+
+### H — Servidor propio y descarga directa (P1)
+
+Depende de G02 (necesita la APK firmada). DNS gestionado en DuckDNS.
+
+- [x] **H01 — Decisión de hosting (2026-10-02):** tres nombres DuckDNS sobre
+  la misma IP — `mainboard-override.duckdns.org` (landing y descarga de la
+  APK), `nexxxusapp.duckdns.org` (app futura) y `nexxus-api.duckdns.org`
+  (API futura de nexxus chat). Ambos últimos quedan **preparados**: certificado
+  emitido y `proxy_pass` comentado hasta que exista el servicio.
+  (El certificado depende del DNS: ver H03.)
+- [x] **H02 — Instancia económica:** reemplazar la instancia on-demand
+  `c7i-flex.large` (~66 $/mes) por **`t4g.micro`** + gp3 10 GiB en us-east-2
+  (Amazon Linux 2023, SG solo 80/443 + SSM, rol IAM SSM) → **~7,3 $/mes**;
+  terminar la instancia vieja. La IP pública cambia: los registros A de
+  DuckDNS se re apuntan después (script con token).
+  Evidencia (2026-10-02): `i-0bf2980671102b46f` (`t4g.micro`, arm64, AMI
+  AL2023, IP `52.14.253.158`, SG `sg-037db6d160d1023d5`), rol
+  `mainboard-override-ssm` (+ política `site-deploy-artifacts-read`), instancia
+  vieja `i-0bd23db676f3f3ec3` terminada y su volumen de 50 GiB eliminado;
+  acceso solo vía SSM (agente 3.3.x Online).
+- [ ] **H03 — nginx + TLS:** tres server blocks con certbot/Let's Encrypt,
+  redirect HTTP→HTTPS, `default_server` que rechaza hosts desconocidos.
+  Evidencia parcial (2026-10-02): nginx 1.30.5 + certbot instalados; los tres
+  vhosts HTTP funcionan (`200` por Host header) y el catch-all devuelve `444`
+  a hosts desconocidos (`ops/nginx/*.conf` versionados); **TLS pendiente** de
+  que el DNS apunte a la IP nueva y del correo Let's Encrypt.
+- [ ] **H04 — DuckDNS automático:** con token, el despliegue fija la IP en los
+  tres nombres. Bloqueado: falta el token (soportado por
+  `DUCKDNS_TOKEN=… ./tools/deploy-site.sh --duckdns`).
+- [x] **H05 — Publicar APK:** `app-release-0.1.0.apk`, `latest.apk` y
+  `SHA256SUMS` en `/var/www/mainboard-override/downloads/`.
+  Evidencia (2026-10-02): APK 54.457.058 B en el servidor con
+  `sha256sum -c: OK` (`504e82b4…796d`), `SHA256SUMS` publicado, `latest.apk`
+  como symlink y MIME `application/vnd.android.package-archive` verificado
+  con `curl -I`.
+- [x] **H06 — Landing:** página estática en español (descripción, requisitos
+  Android 8+ y solo horizontal, botón de descarga con versión, tamaño y
+  SHA-256, enlace a itch.io).
+  Evidencia (2026-10-02): `web/` publicado y verificado (HTML/CSS/PNG con sus
+  MIME correctos); además, página de **Nexus Chat** en
+  `nexxxusapp.duckdns.org` (guía de estilo neón del proyecto) y placeholder
+  en `nexxus-api`.
+- [x] **H07 — Despliegue repetible:** `tools/deploy-site.sh` (APK release +
+  checksum + IP DuckDNS + subida vía AWS CLI/SSM).
+  Evidencia (2026-10-02): script creado; modos site-only y `--apk` probados
+  extremo a extremo (staging, `params.json` válido, sed idempotente de la
+  landing) y tramos reales verificados por SSM (descarga S3 con el perfil de
+  la instancia `sha256sum -c: OK`, recarga de nginx, verificación 200/444).
+- [x] **H08 — Sync de docs:** README «Descarga directa», ESTADO (URLs, coste,
+  deuda) y AGENTS (comandos de despliegue). Evidencia (2026-10-02): los tres
+  documentos actualizados (URLs, ~7,3 $/mes, pendientes H03/H04/G05, comandos
+  de release y deploy).
+
+**Cierre de G/H:** G cierra con la suite verde, AAB y APK firmados, docs y
+ficha de tienda; H cierra con los tres vhosts en HTTPS respondiendo, landing
+descargable con checksum verificado y despliegue reproducible de una versión
+nueva. Los pasos externos de Play (G05) se registran con su fecha.
 
 ### Seguimiento y entrega
 
