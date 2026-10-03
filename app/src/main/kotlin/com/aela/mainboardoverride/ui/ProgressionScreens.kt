@@ -94,7 +94,7 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             ProgressionHeader(stringResource(R.string.skins), onBack) {
-                Text(stringResource(R.string.credit_balance, prefs.credits), color = Warning, fontSize = 12.sp)
+                Text(stringResource(R.string.credit_balance, animatedCount(prefs.credits)), color = Warning, fontSize = 12.sp)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 val dominoChip = remember { MutableInteractionSource() }
@@ -202,7 +202,7 @@ internal fun MatchResultDialog(state: GameUiState, actions: MainViewModel, onMen
         }
         Surface(color = Void.copy(alpha = .6f), shape = RoundedCornerShape(12.dp)) {
             Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.credit_balance, state.preferences.credits), color = Warning, style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.credit_balance, animatedCount(state.preferences.credits)), color = Warning, style = MaterialTheme.typography.titleMedium)
                 if (victory && state.reward == null) Text(stringResource(R.string.saving_reward))
                 else if (victory) Text(stringResource(R.string.reward_breakdown, state.reward?.base ?: 0, state.reward?.bonus ?: 0))
                 if (victory && (state.reward?.dailyBonus ?: 0) > 0) {

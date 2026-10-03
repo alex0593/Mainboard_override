@@ -229,6 +229,7 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
             onDismiss = actions::dismissMessage,
             modifier = Modifier.testTag("error-dialog"),
             accent = Danger,
+            glitch = true,
             actions = {
                 MenuArtworkButton(stringResource(R.string.help_close), actions::dismissMessage, compact = true, fillWidth = false, modifier = Modifier.testTag("close-error"))
             },

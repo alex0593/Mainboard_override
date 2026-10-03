@@ -1,7 +1,10 @@
 package com.aela.mainboardoverride.ui
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -39,14 +42,20 @@ internal fun GameHeader(
     trailing: @Composable () -> Unit = {},
     scripts: @Composable RowScope.() -> Unit,
 ) {
+    val reducedMotion = LocalReducedMotion.current
     Box(modifier.heightIn(min = 64.dp).testTag("game-header").clip(RoundedCornerShape(10.dp))) {
         Image(painterResource(R.drawable.menu_header_v1), null, Modifier.matchParentSize(),
             contentScale = ContentScale.FillBounds)
         Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 18.dp, vertical = 9.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(stringResource(R.string.turn, game.turn), color = Cyan, fontSize = 11.sp, lineHeight = 13.sp)
-                Text(stringResource(R.string.ram, game.ram, MAX_RAM), color = Terminal, fontSize = 11.sp, lineHeight = 13.sp)
+                // Counters tween between values; reduced motion swaps them instantly. A fresh
+                // composition starts at the target, so tests and new matches read true values.
+                val countSpec: AnimationSpec<Int> = if (reducedMotion) snap() else tween(350, easing = FastOutSlowInEasing)
+                val turn by animateIntAsState(game.turn, countSpec, label = "turn-count")
+                val ram by animateIntAsState(game.ram, countSpec, label = "ram-count")
+                Text(stringResource(R.string.turn, turn), color = Cyan, fontSize = 11.sp, lineHeight = 13.sp)
+                Text(stringResource(R.string.ram, ram, MAX_RAM), color = Terminal, fontSize = 11.sp, lineHeight = 13.sp)
                 TraceIndicator(game.trace)
             }
             Box(
@@ -70,6 +79,9 @@ private fun TraceIndicator(trace: Int) {
     val critical = remember { Animatable(0f) }
     val reducedMotion = LocalReducedMotion.current
     val traceColor = if (trace >= 80) Danger else Warning
+    // The label counts up while the delta badge animates off the raw change.
+    val countSpec: AnimationSpec<Int> = if (reducedMotion) snap() else tween(350, easing = FastOutSlowInEasing)
+    val shownTrace by animateIntAsState(trace, countSpec, label = "trace-count")
 
     LaunchedEffect(trace) {
         val wasCritical = previousTrace >= 80
@@ -100,7 +112,7 @@ private fun TraceIndicator(trace: Int) {
             )
         }
         Text(
-            stringResource(R.string.trace, trace),
+            stringResource(R.string.trace, shownTrace),
             color = traceColor,
             fontSize = 11.sp,
             lineHeight = 13.sp,

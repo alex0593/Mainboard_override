@@ -66,7 +66,7 @@ internal fun MenuScreen(
                     fontFamily = FontFamily.Monospace,
                 )
                 Text(stringResource(R.string.tagline), color = Muted, letterSpacing = 3.sp)
-                Text(stringResource(R.string.credit_balance, state.preferences.credits), color = Warning)
+                Text(stringResource(R.string.credit_balance, animatedCount(state.preferences.credits)), color = Warning)
                 Text(
                     if (com.aela.mainboardoverride.domain.todayString() == state.preferences.dailyGoalDate) stringResource(R.string.daily_done)
                     else stringResource(R.string.daily_pending, com.aela.mainboardoverride.domain.Rewards.DAILY_GOAL),

@@ -141,6 +141,25 @@ internal fun Board(
         delay(BurstDurationMillis)
         pickups = pickups - created.toSet()
     }
+    // Revealed honeypots only grow in the state until KILL removes them, so newcomers against
+    // the previous snapshot are exactly the reveal signal, with the same session discipline.
+    var knownReveals by remember { mutableStateOf<Set<Position>?>(null) }
+    var reveals by remember { mutableStateOf(emptyList<DestructionBurst>()) }
+    var revealIds by remember { mutableStateOf(0) }
+    var revealSession by remember { mutableStateOf(sessionKey) }
+    LaunchedEffect(sessionKey, board.revealedHoneypots) {
+        val freshSession = revealSession != sessionKey
+        revealSession = sessionKey
+        val previous = knownReveals
+        knownReveals = board.revealedHoneypots
+        if (freshSession || previous == null || previewOnly) return@LaunchedEffect
+        val appeared = board.revealedHoneypots - previous
+        if (appeared.isEmpty()) return@LaunchedEffect
+        val created = appeared.map { position -> DestructionBurst(++revealIds, listOf(position)) }
+        reveals = reveals + created
+        delay(BurstDurationMillis)
+        reveals = reveals - created.toSet()
+    }
     BoxWithConstraints(
         modifier.background(androidx.compose.ui.graphics.SolidColor(Void), RoundedCornerShape(10.dp))
             .border(1.dp, Cyan.copy(alpha = .4f), RoundedCornerShape(10.dp)).padding(4.dp),
@@ -296,6 +315,28 @@ internal fun Board(
                     modifier = Modifier.offset(x = cell * position.x, y = cell * position.y).size(cell),
                 )
             }
+            // A reveal flashes the cell orange before the threat sprite itself appears.
+            for (reveal in reveals) {
+                val position = reveal.positions.first()
+                DestructionBurst(
+                    burstId = reveal.id,
+                    accent = Warning,
+                    spark = Danger,
+                    tag = "honeypot-burst",
+                    modifier = Modifier.offset(x = cell * position.x, y = cell * position.y).size(cell),
+                )
+            }
+            // The daemon glides between cells instead of teleporting; its badge lives here so
+            // one sprite carries the whole tween. Reduced motion keeps the jump instant.
+            if (!previewOnly) board.daemon?.let { daemon ->
+                val reduced = LocalReducedMotion.current
+                val spec: AnimationSpec<Dp> = if (reduced) snap() else tween(420, easing = FastOutSlowInEasing)
+                val daemonX by animateDpAsState(cell * daemon.position.x, spec, label = "daemon-x")
+                val daemonY by animateDpAsState(cell * daemon.position.y, spec, label = "daemon-y")
+                Box(Modifier.offset(daemonX, daemonY).size(cell).zIndex(3f), contentAlignment = Alignment.Center) {
+                    Text("D!", color = Danger, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black)
+                }
+            }
             }
         }
     }
@@ -360,6 +401,18 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
         legal -> Terminal.copy(alpha = .16f)
         else -> Color.Transparent
     }
+    val reducedMotion = LocalReducedMotion.current
+    // Legal and target cells breathe so the next action reads at a glance; reduced motion
+    // keeps the border steady instead of moving it.
+    val glowAlpha = if (legal || target) {
+        if (reducedMotion) 1f else {
+            rememberInfiniteTransition(label = "cell-glow").animateFloat(
+                .55f, 1f,
+                infiniteRepeatable(tween(700, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+                label = "cell-glow-alpha",
+            ).value
+        }
+    } else 1f
     Box(
         Modifier
             .offset(x = size * position.x, y = size * position.y)
@@ -367,32 +420,30 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
             .testTag("board-cell-${position.x}-${position.y}")
             .padding(2.dp)
             .background(if (isPlaced) Color.Transparent else placedColor.copy(alpha = if (value != null || firewall || trap || lock != null || buff != null) .22f else placedColor.alpha))
-            .then(if (target) Modifier.border(3.dp, Warning) else if (lock != null) Modifier.border(2.dp, Warning) else if (legal) Modifier.border(1.dp, Terminal) else Modifier)
+            .then(if (target) Modifier.border(3.dp, Warning.copy(alpha = glowAlpha)) else if (lock != null) Modifier.border(2.dp, Warning) else if (legal) Modifier.border(1.dp, Terminal.copy(alpha = glowAlpha)) else Modifier)
             .clickable(role = Role.Button) { onCell(position) }
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {
         if (isPlaced) {
-            if (trap || daemon) {
+            if (trap) {
                 Row(Modifier.align(Alignment.TopEnd).background(Void.copy(alpha = .9f), RoundedCornerShape(2.dp))) {
-                    if (trap) BoardThreatImage(firewall = false, maxDisplay = size * .4f, modifier = Modifier.size(size * .4f))
-                    if (daemon) Text("D!", color = Danger, fontSize = 9.sp)
+                    BoardThreatImage(firewall = false, maxDisplay = size * .4f, modifier = Modifier.size(size * .4f))
                 }
             }
-        } else if (firewall || (trap && !daemon && !isStart && !isExit)) {
+        } else if (firewall || (trap && !isStart && !isExit)) {
             BoardThreatImage(firewall, size, Modifier.fillMaxSize().padding(1.dp))
             if (bridge != null) BoardBridgeSprite(bridge.horizontal, bridge.value, size)
-        } else if (lock != null && !daemon && !isStart && !isExit) {
+        } else if (lock != null && !isStart && !isExit) {
             BoardLockImage(size, Modifier.fillMaxSize().padding(1.dp))
             Row(Modifier.align(Alignment.TopEnd).background(Void.copy(alpha = .9f), RoundedCornerShape(2.dp))) {
                 Text("$lock", color = Warning, fontSize = 11.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace)
             }
-        } else if (buff != null && !daemon && !isStart && !isExit) {
+        } else if (buff != null && !isStart && !isExit) {
             BoardBuffSprite(buff, size)
         } else Text(
             when {
                 bridge != null -> if (bridge.horizontal) "═${bridge.value}" else "║${bridge.value}"
-                daemon -> "D!"
                 isStart -> "S0"
                 isExit -> "X6"
                 buff != null -> if (buff == BoardBuff.TRACE_COOLER) "−8" else "+1R"
