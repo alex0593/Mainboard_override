@@ -7,19 +7,19 @@ y bilingüe (ES/EN).
 
 ## Estado
 
-Versión actual: **0.1.0-alpha.21**.
+Versión actual: **0.1.0** (release firmado, `versionCode 12`).
 
 Vertical slice jugable: motor Kotlin puro, app Jetpack Compose, generación
 determinista por semillas, persistencia local de ajustes y récords, y pruebas
 unitarias del bucle principal.
 
-Estado verificado (2026-09-22): bloque A del roadmap cerrado (A01–A10) e
-incrementos F01/F02/F03 (skins Titanio/Jade/Rubí, Zafiro/Ámbar/Amatista y
-script STEALTH), suite de
-dominio **52/52** y `:app:testDebugUnitTest` **8/8** en verde, lint sin
-errores, suite instrumental **28/28** en CLK‑LX3 por USB. La reapertura limpia
-sin recompensas duplicadas (B06) y las diez lecciones del tutorial están
-verificadas en dispositivo. No hay cambios locales pendientes de revisar.
+Estado verificado (2026-10-02): bloques A–F cerrados (A01–A10, B01–B06,
+C01–C06, D01–D04, E01–E06, F01–F03) y salida de alfa en marcha: build de
+release firmado (APK + AAB), ficha de tienda en `docs/PLAY.md` y servidor
+web propio con la landing publicada. Suite de dominio **52/52** y
+`:app:testDebugUnitTest` **8/8** en verde, lint sin errores, suite
+instrumental **28/28** en CLK‑LX3 por USB. Pendientes externos: token de
+DuckDNS (HTTPS) y Play Console — detallados en el [Roadmap](docs/ROADMAP.md).
 
 ## Cómo se juega
 
@@ -63,6 +63,33 @@ El APK se genera en `app/build/outputs/apk/debug/app-debug.apk`. Las pruebas
 de interfaz (`./gradlew :app:connectedDebugAndroidTest`) requieren un
 dispositivo o emulador autorizado; por USB en vez de adb WiFi.
 
+## Descarga directa
+
+La landing publicada en
+[mainboard-override.duckdns.org](https://mainboard-override.duckdns.org)
+ofrece la APK de release con versión, tamaño y SHA-256 (también `latest.apk`
+y `SHA256SUMS`). En el servidor (nginx + Let's Encrypt sobre una `t4g.micro`
+de AWS, ~7,3 $/mes) hay además dos vhosts preparados:
+`nexxxusapp.duckdns.org` (landing de Nexus Chat) y `nexxus-api.duckdns.org`
+(API, proxy comentado). Ver [docs/ESTADO.md](docs/ESTADO.md).
+
+## Release y publicación
+
+Build de release (APK firmada + AAB para Play). Requiere un
+`keystore.properties` **gitignored** en la raíz con `storeFile`,
+`storePassword`, `keyAlias` y `keyPassword`; el keystore vive fuera del
+repositorio (nunca se commitea):
+
+```bash
+./gradlew :app:assembleRelease :app:bundleRelease :app:lintRelease
+```
+
+- **Descarga directa + sitio:** `./tools/deploy-site.sh --apk` sube la APK,
+  actualiza `SHA256SUMS`, el symlink `latest.apk` y la landing (usa el AWS CLI
+  + SSM; `--duckdns` con `DUCKDNS_TOKEN` refresca los registros A).
+- **itch.io:** `tools/publish-itch.sh` (ver abajo).
+- **Google Play:** AAB + textos y checklist en [docs/PLAY.md](docs/PLAY.md).
+
 ## Publicar en itch.io
 
 `tools/publish-itch.sh` compila el APK y lo sube con
@@ -81,6 +108,7 @@ BUTLER_API_KEY=<clave> ./tools/publish-itch.sh [canal]
 | --- | --- |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Único plan operativo: orden, dependencias y criterios de cierre |
 | [docs/ESTADO.md](docs/ESTADO.md) | Estado comprobable, decisiones cerradas y deuda activa |
+| [docs/PLAY.md](docs/PLAY.md) | Ficha de Google Play: textos ES/EN, assets, Data safety y checklist |
 | [docs/GDD.md](docs/GDD.md) | Reglas, progresión y seguimiento del diseño |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Flujo de estado, contratos y mantenimiento |
 | [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md) | Banco de ideas sin compromiso de entrega |
