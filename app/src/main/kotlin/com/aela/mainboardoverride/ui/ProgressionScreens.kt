@@ -94,7 +94,7 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
     val prefs = state.preferences
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            ProgressionHeader(stringResource(R.string.skins), onBack) {
+            ProgressionHeader(stringResource(R.string.store), onBack) {
                 Text(stringResource(R.string.credit_balance, animatedCount(prefs.credits)), color = Warning, fontSize = 12.sp)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -131,6 +131,7 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                             }
                             Text(stringResource(skin.label), Modifier.fillMaxWidth(), color = Cyan, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                             if (paid) Text(stringResource(R.string.skin_price, price), color = Warning, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 10.sp)
+                            else Text(stringResource(R.string.skin_free), color = Cyan, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 10.sp)
                             MenuArtworkButton(
                                 label = if (equipped) stringResource(R.string.equipped) else if (owned) stringResource(R.string.equip) else stringResource(R.string.buy_credits, price),
                                 primary = equipped || owned,

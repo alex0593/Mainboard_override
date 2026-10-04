@@ -20,7 +20,7 @@
     <string name="equip">Equipar</string>
     <string name="buy_credits">Comprar · %1$d créditos</string>
     <string name="missing_credits">Consigue %1$d créditos más para comprar</string>
-    <string name="confirm_skin_purchase">Precio: %1$d créditos. Saldo restante: %2$d. Podrás equipar esta PCB después de comprarla.</string>
+    <string name="confirm_skin_purchase">Precio: %1$d créditos. Saldo restante: %2$d. Podrás equiparla después de comprarla.</string>
     <string name="free_scenarios">Escenarios de modo libre</string>
     <string name="scenario_difficulty">Dificultad %1$d · %2$d × %3$d</string>
     <string name="scenario_locked">%1$d / %2$d desafíos distintos completados</string>
@@ -182,7 +182,7 @@
     <string name="help_script_cost">Coste: %1$d RAM · Ruido: +%2$d</string>
     <string name="spoof_before">Antes</string>
     <string name="spoof_after">Después</string>
-    <string name="skins">SKINS</string>
+    <string name="store">TIENDA</string>
     <string name="domino_skin">SKIN DE FICHAS</string>
     <string name="board_skin">SKIN DE PLACA</string>
     <string name="skin_kenney">Kenney clara</string>
@@ -199,6 +199,7 @@
     <string name="skin_graphite">Relé grafito</string>
     <string name="skin_signal">Ámbar señal</string>
     <string name="skin_price">Precio: %1$d créditos</string>
+    <string name="skin_free">GRATIS</string>
     <string name="context_help">Botones de ayuda contextual</string>
     <string name="challenge">DESAFÍO</string>
     <string name="phase_title">Fase %1$d · %2$s</string>
@@ -217,7 +218,7 @@
     <string name="ach_explorer_desc">Completa un escenario libre.</string>
     <string name="ach_clean_run">Partida limpia</string>
     <string name="ach_clean_run_desc">Gana con rastreo 40 o menos.</string>
-    <string name="challenge_description">Cien desafíos. Gana para desbloquear el siguiente y conseguir créditos para skins PCB.</string>
+    <string name="challenge_description">Cien desafíos. Gana para desbloquear el siguiente y conseguir créditos para skins.</string>
     <string name="challenge_level">Puzzle %1$d</string>
     <string name="challenge_rules_turns">Regla: máximo %1$d turnos</string>
     <string name="challenge_rules_trace">Regla: máximo %1$d de rastreo</string>

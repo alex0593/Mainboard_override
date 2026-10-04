@@ -91,7 +91,7 @@ internal fun MenuScreen(
                 if (state.preferences.lastSeed != null) MenuArtworkButton(stringResource(R.string.retry_seed), onRetry)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     MenuArtworkButton(stringResource(R.string.settings), onSettings, Modifier.weight(1f), compact = true)
-                    MenuArtworkButton(stringResource(R.string.skins), onSkins, Modifier.weight(1f), compact = true)
+                    MenuArtworkButton(stringResource(R.string.store), onSkins, Modifier.weight(1f), compact = true)
                     MenuArtworkButton(stringResource(R.string.tutorial), onHelp, Modifier.weight(1.35f), compact = true, icon = R.drawable.ic_tutorial)
                 }
             }

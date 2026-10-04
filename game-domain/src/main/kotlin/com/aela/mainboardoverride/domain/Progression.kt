@@ -41,8 +41,6 @@ object Rewards {
     const val SKIN_PRICE = 200
     const val ENTRY_SKIN_PRICE = 80
     val premiumSkins = setOf("copper", "aurora", "titanium", "jade", "ruby", "sapphire", "amber", "amethyst")
-    val affordableSkins = setOf("graphite", "signal")
-    val purchasableSkins = premiumSkins + affordableSkins
 
     /** Per-category catalogs: the store sells exactly these ids, board and domino separately. */
     val freeBoardSkins = setOf("pcb", "blueprint", "industrial")

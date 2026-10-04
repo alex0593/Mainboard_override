@@ -20,7 +20,7 @@
     <string name="equip">Equip</string>
     <string name="buy_credits">Buy · %1$d credits</string>
     <string name="missing_credits">Earn %1$d more credits to buy</string>
-    <string name="confirm_skin_purchase">Price: %1$d credits. Remaining balance: %2$d. You can equip this PCB after purchase.</string>
+    <string name="confirm_skin_purchase">Price: %1$d credits. Remaining balance: %2$d. You can equip it after purchase.</string>
     <string name="free_scenarios">Free play scenarios</string>
     <string name="scenario_difficulty">Difficulty %1$d · %2$d × %3$d</string>
     <string name="scenario_locked">%1$d / %2$d distinct challenges completed</string>
@@ -184,7 +184,7 @@
     <string name="help_script_cost">Cost: %1$d RAM · Noise: +%2$d</string>
     <string name="spoof_before">Before</string>
     <string name="spoof_after">After</string>
-    <string name="skins">SKINS</string>
+    <string name="store">STORE</string>
     <string name="domino_skin">DOMINO SKIN</string>
     <string name="board_skin">BOARD SKIN</string>
     <string name="skin_kenney">Kenney clear</string>
@@ -201,6 +201,7 @@
     <string name="skin_graphite">Graphite relay</string>
     <string name="skin_signal">Signal amber</string>
     <string name="skin_price">Price: %1$d credits</string>
+    <string name="skin_free">FREE</string>
     <string name="context_help">Contextual help buttons</string>
     <string name="challenge">CHALLENGE</string>
     <string name="phase_title">Phase %1$d · %2$s</string>
@@ -219,7 +220,7 @@
     <string name="ach_explorer_desc">Complete a free-play scenario.</string>
     <string name="ach_clean_run">Clean run</string>
     <string name="ach_clean_run_desc">Win with trace 40 or less.</string>
-    <string name="challenge_description">A hundred puzzles. Win to unlock the next and earn credits for PCB skins.</string>
+    <string name="challenge_description">A hundred puzzles. Win to unlock the next and earn credits for skins.</string>
     <string name="challenge_level">Puzzle %1$d</string>
     <string name="challenge_rules_turns">Rule: max %1$d turns</string>
     <string name="challenge_rules_trace">Rule: max %1$d trace</string>
