@@ -16,6 +16,18 @@ internal fun scenarioBackgroundResource(id: String): Int = when (id) {
     else -> R.drawable.scenario_classic
 }
 
+/** Baked seed-42 preview overlay (grid, nodes, threats) layered over the board skin in free-mode cards. */
+@DrawableRes
+internal fun scenarioOverlayResource(id: String): Int = when (id) {
+    "lab" -> R.drawable.scenario_lab_overlay
+    "data" -> R.drawable.scenario_data_overlay
+    "industry" -> R.drawable.scenario_industry_overlay
+    "archive" -> R.drawable.scenario_archive_overlay
+    "core" -> R.drawable.scenario_core_overlay
+    "ghost" -> R.drawable.scenario_ghost_overlay
+    else -> R.drawable.scenario_classic_overlay
+}
+
 /** Menu art follows the last free-play scenario while keeping a safe default. */
 internal fun menuBackgroundResource(lastScenario: String): Int = scenarioBackgroundResource(lastScenario)
 

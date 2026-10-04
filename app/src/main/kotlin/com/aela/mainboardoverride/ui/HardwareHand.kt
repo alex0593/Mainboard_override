@@ -24,9 +24,9 @@ internal fun HardwareHand(tiles: List<Domino>, selected: String?, skin: String,
         Column(Modifier.padding(2.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(R.string.dominoes), color = Cyan, fontSize = 11.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                tiles.forEach { tile ->
+                tiles.forEachIndexed { index, tile ->
                     DominoView(tile, selected == tile.id, skin, highlighted == tile.id,
-                        Modifier.width(48.dp).testTag("$tagPrefix-${tile.id}")) { onSelect(tile.id) }
+                        Modifier.width(48.dp).testTag("$tagPrefix-${tile.id}"), onClick = { onSelect(tile.id) }, index = index)
                 }
             }
         }

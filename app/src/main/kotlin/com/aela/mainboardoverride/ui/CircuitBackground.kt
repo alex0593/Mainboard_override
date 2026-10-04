@@ -24,6 +24,8 @@ import androidx.compose.animation.core.*
 internal fun CircuitBackground(
     animated: Boolean = false,
     @androidx.annotation.DrawableRes backgroundResource: Int = R.drawable.menu_background_v2,
+    // Ambient motes tinted with this accent drift over the static background (free mode only).
+    ambientTint: androidx.compose.ui.graphics.Color? = null,
     content: @Composable () -> Unit,
 ) {
     val progress = if (animated) {
@@ -37,6 +39,7 @@ internal fun CircuitBackground(
             modifier = Modifier.matchParentSize().alpha(.72f),
             contentScale = androidx.compose.ui.layout.ContentScale.Crop,
         )
+        if (ambientTint != null) AnimatedAmbientWebp(ambientTint, Modifier.matchParentSize())
         Canvas(Modifier.fillMaxSize()) {
             val step = 48.dp.toPx()
             var x = -step

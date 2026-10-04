@@ -1,6 +1,7 @@
 package com.aela.mainboardoverride.ui
 
 import android.app.Application
+import android.graphics.BitmapFactory
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.*
@@ -161,22 +162,20 @@ class PuzzleTutorialUiTest {
         assertEquals(9, after.tutorialLesson)
     }
 
-    @Test fun previewCacheReusesDiskAndSeparatesSkinsWithoutRevealingTraps() = runBlocking {
-        val id = "test-${UUID.randomUUID()}"
-        val board = BoardState(honeypots = setOf(Position(3, 2)))
-        var generations = 0
-        val first = PuzzlePreviewCache.load(app, id, "pcb", "kenney") { generations++; board }
-        val again = PuzzlePreviewCache.load(app, id, "pcb", "kenney") { error("Memory cache missed") }
-        assertSame(first, again)
-        PuzzlePreviewCache.clearMemory()
-        val disk = PuzzlePreviewCache.load(app, id, "pcb", "kenney") { error("Disk cache missed") }
-        assertTrue(first.sameAs(disk))
-        assertEquals(1, generations)
-        assertEquals(640, disk.width)
-        assertEquals(400, disk.height)
-        val withoutTrap = PuzzlePreviewCache.load(app, "$id-clean", "pcb", "kenney") { board.copy(honeypots = emptySet()) }
-        assertTrue(disk.sameAs(withoutTrap))
-        assertNotEquals(PuzzlePreviewCache.key(id, "pcb", "kenney"), PuzzlePreviewCache.key(id, "aurora", "kenney"))
-        assertNotEquals(PuzzlePreviewCache.key(id, "pcb", "kenney"), PuzzlePreviewCache.key(id, "pcb", "aurora"))
+    /**
+     * Previews are now baked PNGs layered over the equipped board skin; this
+     * pins their contract (every scenario resolves, 640 x 400 with alpha) and
+     * the classic fallback. The artwork contains no honeypots or solutions:
+     * [PreviewOverlayGeometryTest] guards the geometry dump that omits them.
+     */
+    @Test fun overlayPreviewsAreBakedForEveryScenario() {
+        for (scenario in ScenarioCatalog.all) {
+            val bitmap = BitmapFactory.decodeResource(app.resources, scenarioOverlayResource(scenario.id))
+            assertNotNull(bitmap)
+            assertEquals(640, bitmap!!.width)
+            assertEquals(400, bitmap.height)
+            assertTrue(bitmap.hasAlpha())
+        }
+        assertEquals(scenarioOverlayResource("classic"), scenarioOverlayResource("unknown-id"))
     }
 }

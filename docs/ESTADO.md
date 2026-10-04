@@ -4,7 +4,7 @@
 y conserva las decisiones que afectan al trabajo siguiente. El plan de trabajo
 vive únicamente en [ROADMAP.md](ROADMAP.md).
 
-**Revisión:** 2026-10-03.
+**Revisión:** 2026-10-04.
 
 ## Fuentes de verdad
 
@@ -164,6 +164,12 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
   (histórico: desde la tienda, K01, las fichas de pago valen su precio).
   `REVISION` no cambia: la clave de previsualización ya incluye el id de skin
   y el render es el mismo.
+- **F04:** las ocho premium animan en tienda y partida — capa ambiental por
+  material sobre la PCB, halo pulsante en fichas colocadas, borde animado en
+  tarjetas de tienda y flotar/selección en mano; `ui/PremiumSkinFx.kt` centraliza
+  la configuración por id (acento de `dominoPipColor`, estilo y período) y todo
+  fallback queda estático con `LocalReducedMotion`. `nebula`, 80-credit y gratis
+  no animan; ningún string ni testTag cambió.
 - **K — Tienda:** la galería es ahora Tienda (`store`/«TIENDA» en menú y
   cabecera) con badge GRATIS. Reparto 3+3 (placas `pcb/blueprint/industrial`,
   fichas `kenney/dark/gingerbread` gratis) y 29 de pago a 80/200 según

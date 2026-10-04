@@ -15,6 +15,7 @@ import com.aela.mainboardoverride.domain.LevelGenerator
 import com.aela.mainboardoverride.domain.Orientation
 import com.aela.mainboardoverride.domain.Position
 import com.aela.mainboardoverride.domain.RejectReason
+import com.aela.mainboardoverride.domain.Rewards
 import com.aela.mainboardoverride.domain.ScriptType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -206,8 +207,8 @@ class MainViewModel(application: Application, private val repository: PlayerPref
     fun setAudio(value: Boolean) = viewModelScope.launch { repository.setAudio(value); playUiTick() }
     fun setVibration(value: Boolean) = viewModelScope.launch { repository.setVibration(value); playUiTick() }
     fun setReducedMotion(value: Boolean) = viewModelScope.launch { repository.setReducedMotion(value); playUiTick() }
-    fun setDominoSkin(value: String) = viewModelScope.launch { repository.setDominoSkin(value); playUiTick() }
-    fun setBoardSkin(value: String) = viewModelScope.launch { repository.setBoardSkin(value); playUiTick() }
+    fun setDominoSkin(value: String) = viewModelScope.launch { repository.setDominoSkin(value); if (value in Rewards.premiumSkins) emitCue(SoundCue.Shimmer) else playUiTick() }
+    fun setBoardSkin(value: String) = viewModelScope.launch { repository.setBoardSkin(value); if (value in Rewards.premiumSkins) emitCue(SoundCue.Shimmer) else playUiTick() }
     fun setContextHelpEnabled(value: Boolean) = viewModelScope.launch { repository.setContextHelpEnabled(value); playUiTick() }
     fun setMusicVolume(value: Float) = viewModelScope.launch { repository.setMusicVolume(value) }
     fun setSfxVolume(value: Float) = viewModelScope.launch { repository.setSfxVolume(value) }

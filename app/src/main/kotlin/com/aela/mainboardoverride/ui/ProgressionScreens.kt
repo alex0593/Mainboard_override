@@ -126,14 +126,30 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                         )
                         Column(Modifier.fillMaxWidth().heightIn(min = 240.dp).padding(18.dp), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp, androidx.compose.ui.Alignment.CenterVertically)) {
                             if (pcb) Box(Modifier.fillMaxWidth().height(88.dp)) {
-                                Board(BoardState(placed = listOf(PlacedDomino(Domino("sample", 0, 3), Position(1, 3), Orientation.HORIZONTAL))), skin.id, prefs.dominoSkin, emptySet(), modifier = Modifier.fillMaxSize(), onCell = {}, previewOnly = true)
-                                PremiumGlowCanvas(skin.id, Modifier.matchParentSize())
+                                // Lightweight preview: render the baked skin preview directly instead of composing a full Board.
+                                androidx.compose.foundation.Image(
+                                    painter = androidx.compose.ui.res.painterResource(
+                                        boardSkinResource(skin.id, previewOnly = true)!!),
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
+                                )
+                                AnimatedSkinFxWebp(skin.id, Modifier.matchParentSize())
                             } else Box(Modifier.fillMaxWidth()) {
+                                val preview = dominoShellResource(skin.id, previewOnly = true)
                                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    DominoImage(Domino("preview1", 2, 5), Modifier.width(64.dp), skin = skin.id, previewOnly = true, artMax = 32.dp)
-                                    DominoImage(Domino("preview2", 0, 6), Modifier.width(64.dp), skin = skin.id, previewOnly = true, artMax = 32.dp)
+                                    // Direct baked-preview rendering: cheap for the list, the F fx layer stays on top.
+                                    val shell = if (preview != null) preview else R.drawable.domino_0_0
+                                    listOf(Unit, Unit).forEach {
+                                        androidx.compose.foundation.Image(
+                                            painter = androidx.compose.ui.res.painterResource(shell),
+                                            contentDescription = null,
+                                            modifier = Modifier.width(64.dp).height(128.dp),
+                                            contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                                        )
+                                    }
                                 }
-                                PremiumGlowCanvas(skin.id, Modifier.matchParentSize())
+                                AnimatedSkinFxWebp(skin.id, Modifier.matchParentSize())
                             }
                             Text(stringResource(skin.label), Modifier.fillMaxWidth(), color = Cyan, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                             if (paid) {

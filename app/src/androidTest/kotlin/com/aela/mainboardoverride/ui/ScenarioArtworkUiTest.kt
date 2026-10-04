@@ -56,6 +56,16 @@ class ScenarioArtworkUiTest {
                 assertEquals(640, bitmap.height)
                 bitmap.recycle()
             }
+            val overlays = ScenarioCatalog.all.map { scenarioOverlayResource(it.id) }
+            assertEquals(7, overlays.toSet().size)
+            assertEquals(scenarioOverlayResource("classic"), scenarioOverlayResource("unknown"))
+            overlays.forEach { resource ->
+                val bitmap = BitmapFactory.decodeResource(app.resources, resource)
+                assertEquals(640, bitmap.width)
+                assertEquals(400, bitmap.height)
+                assertTrue(bitmap.hasAlpha())
+                bitmap.recycle()
+            }
             compose.setContent {
                 MainboardTheme {
                     if (selection.value) ScenarioScreen(state.value, vm, {}, {})

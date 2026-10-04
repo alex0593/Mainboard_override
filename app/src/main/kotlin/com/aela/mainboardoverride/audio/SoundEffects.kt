@@ -41,6 +41,8 @@ enum class SoundCue(val durationMs: Long) {
     Defeat(650),
     Boot(380),
     Coin(260),
+    /** Equipping a premium skin: a short crystal arpeggio. */
+    Shimmer(520),
 }
 
 /**
@@ -372,6 +374,18 @@ class SoundEffects {
             decay = 12.0,
             gain = .38,
         )
+        SoundCue.Shimmer -> {
+            val body = notes(
+                count,
+                listOf(0.0 to 1318.51, .08 to 1760.0, .16 to 2637.02),
+                decay = 6.0,
+                gain = .34,
+            )
+            DoubleArray(count) { i ->
+                val t = i.toDouble() / SAMPLE_RATE
+                body[i] + noise(i.toLong()) * exp(-t * 9.0) * .05
+            }
+        }
     }
 
     /** Fixed-pitch note sequence; each entry is start-seconds to frequency. */

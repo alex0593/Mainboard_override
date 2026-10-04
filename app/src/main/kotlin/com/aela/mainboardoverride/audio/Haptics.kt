@@ -39,6 +39,7 @@ fun hapticPattern(cue: SoundCue): HapticPattern? = when (cue) {
     SoundCue.Defeat -> HapticPattern(longArrayOf(0, 250), intArrayOf(0, 200))
     SoundCue.Boot -> null
     SoundCue.Coin -> null
+    SoundCue.Shimmer -> HapticPattern(longArrayOf(0, 30, 40, 60), intArrayOf(0, 90, 0, 140))
 }
 
 /**

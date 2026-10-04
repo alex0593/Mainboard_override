@@ -89,9 +89,13 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
     }
     val pingActive = pingProgress.value > 0f && game.pingPreview.isNotEmpty()
     BackHandler(enabled = pendingExitAction == null) { pendingExitAction = GameExitAction.EXIT }
-    CircuitBackground(backgroundResource = if (state.challengeLevel == null) {
-        scenarioBackgroundResource(state.scenarioId)
-    } else R.drawable.menu_background_v2) {
+    CircuitBackground(
+        animated = !state.preferences.reducedMotion,
+        backgroundResource = if (state.challengeLevel == null) {
+            scenarioBackgroundResource(state.scenarioId)
+        } else R.drawable.menu_background_v2,
+        ambientTint = if (state.challengeLevel == null) scenarioAccentColor(state.scenarioId) else null,
+    ) {
         Column(Modifier.fillMaxSize().padding(8.dp)) {
             Row(Modifier.fillMaxWidth().testTag("header-row"), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.weight(1f).heightIn(min = 64.dp)) {

@@ -22,7 +22,7 @@ El banco original de ideas vive en [IMPROVEMENTS.md](IMPROVEMENTS.md).
 ## Retos y generación (tras E02)
 
 - Geometrías nuevas: tableros con huecos, columnas asimétricas, juntas
-  irregulares (exige subir `REVISION` de previsualizaciones).
+  irregulares (exige regenerar los overlays horneados de previsualización).
 - Catálogo de retos con más restricciones: caps de RAM, manos fijas,
   combinaciones de reglas por desafío.
 - Reajuste de generación solo si un futuro informe de equilibrio lo pide;

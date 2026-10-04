@@ -35,7 +35,6 @@ private fun ScenarioCard(
     completed: Boolean,
     completedChallenges: Int,
     boardSkin: String,
-    dominoSkin: String,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
@@ -69,9 +68,7 @@ private fun ScenarioCard(
             )
             Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(Modifier.fillMaxWidth().height(108.dp), contentAlignment = Alignment.Center) {
-                    PuzzlePreview("scenario:${scenario.id}:42", boardSkin, dominoSkin, Modifier.fillMaxSize()) {
-                        LevelGenerator.generateScenario(42, scenario.id).board
-                    }
+                    ScenarioPreview(scenario.id, boardSkin, Modifier.fillMaxSize())
                     if (!unlocked) {
                         Box(Modifier.fillMaxSize().background(Void.copy(alpha = .66f)), contentAlignment = Alignment.Center) {
                             Icon(
@@ -141,7 +138,7 @@ internal fun ScenarioScreen(state: GameUiState, actions: MainViewModel, onStart:
     var selected by rememberSaveable { mutableStateOf<String?>(null) }
     val transition = LocalWindowTransition.current
     val completedChallenges = state.preferences.challengeBest.size
-    CircuitBackground {
+    CircuitBackground(animated = !state.preferences.reducedMotion) {
         Column(Modifier.fillMaxSize().padding(10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             ProgressionHeader(stringResource(R.string.free_scenarios), onBack)
             LazyVerticalGrid(GridCells.Adaptive(220.dp), horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -153,7 +150,6 @@ internal fun ScenarioScreen(state: GameUiState, actions: MainViewModel, onStart:
                         completed = scenario.id in state.preferences.completedScenarios,
                         completedChallenges = completedChallenges,
                         boardSkin = state.preferences.boardSkin,
-                        dominoSkin = state.preferences.dominoSkin,
                         modifier = Modifier.testTag("scenario-${scenario.id}"),
                     ) {
                         selected = scenario.id

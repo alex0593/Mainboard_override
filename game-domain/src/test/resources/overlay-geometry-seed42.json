@@ -1,0 +1,9 @@
+[
+{"id":"classic","width":8,"height":6,"start":[-1,2],"extraction":[8,3],"firewalls":[[3,0],[6,1],[5,5]],"buffs":[{"p":[4,1],"k":"RAM_RESERVE"},{"p":[1,4],"k":"TRACE_COOLER"}],"daemon":[8,3]},
+{"id":"lab","width":9,"height":6,"start":[-1,2],"extraction":[9,3],"firewalls":[[3,0],[3,1],[2,5],[8,5]],"buffs":[{"p":[7,1],"k":"RAM_RESERVE"},{"p":[3,2],"k":"TRACE_COOLER"}],"daemon":[9,3]},
+{"id":"data","width":9,"height":6,"start":[-1,4],"extraction":[9,1],"firewalls":[[2,1],[8,2],[2,4],[4,4],[1,5],[2,5]],"buffs":[{"p":[1,1],"k":"TRACE_COOLER"},{"p":[2,3],"k":"RAM_RESERVE"}],"daemon":[9,1]},
+{"id":"industry","width":10,"height":6,"start":[-1,4],"extraction":[10,1],"firewalls":[[1,0],[2,0],[4,0],[2,4],[6,4],[9,4],[0,5],[6,5]],"buffs":[{"p":[5,0],"k":"RAM_RESERVE"},{"p":[3,3],"k":"TRACE_COOLER"}],"daemon":[10,1]},
+{"id":"archive","width":10,"height":6,"start":[-1,4],"extraction":[10,1],"firewalls":[[1,0],[2,0],[4,0],[2,4],[6,4],[9,4],[0,5],[5,5],[6,5],[8,5]],"buffs":[{"p":[7,2],"k":"TRACE_COOLER"},{"p":[2,3],"k":"RAM_RESERVE"}],"daemon":[10,1]},
+{"id":"core","width":11,"height":6,"start":[-1,4],"extraction":[11,1],"firewalls":[[2,2],[8,2],[9,2],[0,3],[7,3],[8,3],[2,4],[9,4],[0,5],[2,5],[3,5],[9,5]],"buffs":[{"p":[5,2],"k":"TRACE_COOLER"},{"p":[10,4],"k":"RAM_RESERVE"}],"daemon":[11,1]},
+{"id":"ghost","width":11,"height":6,"start":[-1,4],"extraction":[11,1],"firewalls":[[9,0],[4,2],[10,2],[0,3],[3,3],[9,3],[10,3],[4,4],[8,4],[0,5],[2,5],[4,5],[5,5],[9,5]],"buffs":[{"p":[5,3],"k":"RAM_RESERVE"},{"p":[9,4],"k":"TRACE_COOLER"}],"daemon":[11,1]}
+]

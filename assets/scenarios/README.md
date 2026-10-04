@@ -18,6 +18,24 @@ mainboard oscuro, acentos en cian/ámbar, superficie clara para UI, sin texto de
 - `assets/scenarios/originals/` — originales generados.
 - `assets/scenarios/<id>-prompt.md` — prompt por escenario.
 - `app/src/main/res/drawable-nodpi/scenario_<id>.png` — export reducido empaquetado.
+- `assets/scenarios/originals/overlay_<id>.png` + `app/src/main/res/drawable-nodpi/scenario_<id>_overlay.png` — overlay de previsualización (original 2× y export 640×400).
+
+## Previsualizaciones horneadas (modo libre)
+
+Las tarjetas del modo libre no dibujan nada en tiempo de ejecución: componen
+la miniatura de la skin de tablero equipada con `scenario_<id>_overlay.png`,
+un PNG de 640×400 con transparencia que hornea rejilla, nodos 0/6, firewalls,
+buffs y daemon de la semilla fija 42 (`app/.../ui/ScenarioPreview.kt`).
+
+- Geometría: `game-domain/src/test/resources/overlay-geometry-seed42.json`,
+  volcado determinista de `LevelGenerator.generateScenario(42, id)`.
+  `PreviewOverlayGeometryTest` (suite de dominio) falla si el generador cambia
+  la geometría: entonces hay que regenerar el arte con el paso siguiente.
+- `python3 assets/scenarios/generate_overlays.py` — pinta a 4×, remuestrea
+  premultiplicado a 1280×800 (`originals/overlay_<id>.png`).
+- Export: `java tools/PrepareSkinAsset.java assets/scenarios/originals/overlay_<id>.png app/src/main/res/drawable-nodpi/scenario_<id>_overlay.png 640 400`.
+- Las trampas ocultas (honeypots) y las soluciones nunca se hornean: el volcado
+  de geometría las excluye por construcción y el test de dominio las ignora.
 
 ## Generación e integración
 

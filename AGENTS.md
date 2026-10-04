@@ -14,7 +14,7 @@
 - UI observes a single `GameUiState` flow from `MainViewModel`. All gameplay actions go through `GameEngine.reduce` in `game-domain`; Compose never mutates game state directly. Rejections use `RejectReason`, not exceptions.
 - `LevelGenerator.generate(seed)` / `generateScenario(seed, scenarioId)` are deterministic and validated by the engine. Keep seeded reproducibility when changing generation.
 - `MainViewModel` has two constructors: the Android `Application` one and an injectable `PlayerPreferencesRepository` one used by tests.
-- Free-mode selection previews use fixed seed 42 (`generateScenario(42, ...)`). `PuzzlePreview` cache keys hash in `REVISION` (currently 2): bump it whenever generator geometry or preview rendering changes, or stale previews survive.
+- Free-mode selection previews are static baked overlays (`drawable-nodpi/scenario_<id>_overlay.png`, 640 × 400) layered over the equipped board-skin preview; there is no runtime rendering or cache. Their seed-42 geometry lives in `game-domain/src/test/resources/overlay-geometry-seed42.json`, which `PreviewOverlayGeometryTest` keeps in sync with `LevelGenerator`: when it fails, regenerate with `assets/scenarios/generate_overlays.py` and re-export via `tools/PrepareSkinAsset.java`.
 - No CI pipelines exist in this repo; validation is manual. `local.properties` (ignored) holds `sdk.dir`.
 
 ## Build, Test, and Development Commands

@@ -109,6 +109,16 @@ internal fun Board(
             board.placed.forEach { put("domino:${it.domino.id}", it.positions.toList()) }
         }
     }
+    // Premium domino sets paint a breathing halo under every placed tile; the read happens in the
+    // draw phase, so only the halos redraw each frame. Non-premium skins never read the clock.
+    val dominoFx = premiumSkinFx(dominoSkin)
+    val haloReduced = LocalReducedMotion.current
+    val haloTransition = rememberInfiniteTransition(label = "domino-halo")
+    val haloPhase by haloTransition.animateFloat(
+        .25f, 1f,
+        infiniteRepeatable(tween(dominoFx?.periodMillis ?: 1800, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "domino-halo-phase",
+    )
     var session by remember { mutableStateOf(sessionKey) }
     var knownEntities by remember { mutableStateOf<Map<String, List<Position>>?>(null) }
     var bursts by remember { mutableStateOf(emptyList<DestructionBurst>()) }
@@ -175,6 +185,8 @@ internal fun Board(
                 modifier = Modifier.matchParentSize(),
                 contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
             )
+            // Premium board skins play their particle loop over the artwork but under the cells.
+            AnimatedSkinFxWebp(skin, Modifier.matchParentSize())
         } else Canvas(Modifier.fillMaxSize()) {
             // Generic fallback only; every built-in skin uses a pre-rendered asset.
             val inset = 6.dp.toPx()
@@ -231,6 +243,9 @@ internal fun Board(
                         }
                         .drawBehind {
                             if (animating) drawCircle(Cyan.copy(alpha = .22f), radius = size.minDimension * .42f)
+                        }
+                        .drawBehind {
+                            if (dominoFx != null) premiumHalo(dominoFx.accent, if (haloReduced) .65f else haloPhase)
                         },
                     placed.orientation,
                     describe = false,
