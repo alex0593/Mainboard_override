@@ -40,6 +40,10 @@ class ProgressionUiTest {
         assertFalse(repository.buySkin(true, "copper"))
         repository.setBoardSkin("copper")
         assertEquals("pcb", repository.preferences.first().boardSkin)
+        // Mismo pin para fichas: hearts es de pago y no se posee, así que el
+        // equipado no puede cambiar (defensa en profundidad de setDominoSkin).
+        repository.setDominoSkin("hearts")
+        assertEquals("kenney", repository.preferences.first().dominoSkin)
         for (level in 1..30) {
             val reward = repository.finishMatch("challenge-$level", level, 9, 72)
             assertEquals(60, reward.base + reward.bonus)
