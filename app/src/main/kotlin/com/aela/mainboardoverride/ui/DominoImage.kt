@@ -103,6 +103,7 @@ internal fun dominoPipColor(skin: String): Color = when (skin) {
     "ice" -> Color(0xFF075985)
     // Golden yellow remains visibly distinct from the aurora's white face and violet rim.
     "aurora" -> Color(0xFFFFC107)
+    "nebula" -> Color(0xFFFFF3E0)
     else -> Terminal
 }
 
@@ -120,6 +121,7 @@ internal fun dominoShellResource(skin: String, previewOnly: Boolean = false): In
     "copper" -> if (previewOnly) R.drawable.domino_copper_preview else R.drawable.domino_copper
     "ice" -> if (previewOnly) R.drawable.domino_ice_preview else R.drawable.domino_ice
     "aurora" -> if (previewOnly) R.drawable.domino_aurora_preview else R.drawable.domino_aurora
+    "nebula" -> if (previewOnly) R.drawable.domino_nebula_preview else R.drawable.domino_nebula
     else -> null
 }
 

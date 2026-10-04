@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mainboard Override — Skin Nebula (demo animada)</title>
+<style>
+  :root {
+    --violet: #7b4dff;
+    --cyan: #38e1ff;
+    --starlight: #fff3e0;
+    --panel: #12101f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(1200px 600px at 20% -10%, rgba(123, 77, 255, .18), transparent 60%),
+      radial-gradient(900px 500px at 90% 110%, rgba(56, 225, 255, .12), transparent 60%),
+      #07060e;
+    color: #e8e6f5;
+    font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px 64px;
+  }
+  header { text-align: center; margin-bottom: 24px; }
+  h1 {
+    margin: 0 0 6px;
+    font-size: clamp(22px, 4vw, 34px);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  h1 span { color: var(--cyan); text-shadow: 0 0 18px rgba(56, 225, 255, .6); }
+  .sub { margin: 0; color: #9d97c4; font-size: 14px; }
+
+  /* ---- Stage: the exported board as the play surface ---- */
+  .stage {
+    position: relative;
+    width: min(1024px, 96vw);
+    aspect-ratio: 2 / 1;
+    border-radius: 14px;
+    overflow: hidden;
+    perspective: 1200px;
+    box-shadow:
+      0 24px 60px rgba(0, 0, 0, .65),
+      0 0 0 1px rgba(123, 77, 255, .35),
+      0 0 60px rgba(123, 77, 255, .25);
+    background: #0a0814;
+    user-select: none;
+  }
+  .stage > .board {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    image-rendering: auto;
+  }
+
+  /* Living nebula: two soft clouds drifting over the static artwork */
+  .drift { position: absolute; inset: -20%; mix-blend-mode: screen; pointer-events: none; }
+  .drift i {
+    position: absolute; display: block; border-radius: 50%;
+    filter: blur(46px); opacity: .5;
+  }
+  .drift i.v {
+    width: 46%; height: 60%; left: 4%; top: 6%;
+    background: radial-gradient(closest-side, rgba(123, 77, 255, .55), transparent);
+    animation: drift-v 17s ease-in-out infinite alternate;
+  }
+  .drift i.c {
+    width: 38%; height: 52%; right: 2%; bottom: 4%;
+    background: radial-gradient(closest-side, rgba(56, 225, 255, .38), transparent);
+    animation: drift-c 21s ease-in-out infinite alternate;
+  }
+  @keyframes drift-v {
+    from { transform: translate3d(0, 0, 0) scale(1); opacity: .35; }
+    to   { transform: translate3d(9%, 7%, 0) scale(1.18); opacity: .6; }
+  }
+  @keyframes drift-c {
+    from { transform: translate3d(0, 0, 0) scale(1.1); opacity: .55; }
+    to   { transform: translate3d(-8%, -6%, 0) scale(.92); opacity: .3; }
+  }
+
+  /* Twinkling stars layered over the painted starfield */
+  .twinkle { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .twinkle b {
+    position: absolute; width: 2px; height: 2px; border-radius: 50%;
+    background: var(--starlight);
+    animation: twinkle 3.4s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: .12; transform: scale(.7); box-shadow: none; }
+    50%      { opacity: 1;   transform: scale(1.35); box-shadow: 0 0 6px 1px rgba(255, 243, 224, .8); }
+  }
+
+  /* LED strips from the artwork, kept breathing */
+  .led {
+    position: absolute; pointer-events: none; border-radius: 999px;
+    background: linear-gradient(180deg, rgba(56, 225, 255, .1), rgba(56, 225, 255, .9));
+    box-shadow: 0 0 12px 3px rgba(56, 225, 255, .55);
+    animation: led 2.6s ease-in-out infinite;
+  }
+  .led.top    { left: 46.5%; top: 1.6%;  width: 7.6%; height: 2.4%; animation-delay: 0s; }
+  .led.bottom { left: 46.5%; top: 96%;   width: 7.6%; height: 2.4%; animation-delay: 1.3s; }
+  .led.left   { left: 1.1%;  top: 41%;   width: 1.4%; height: 18%; animation-delay: .65s; }
+  .led.right  { left: 97.5%; top: 41%;   width: 1.4%; height: 18%; animation-delay: 1.95s; }
+  @keyframes led {
+    0%, 100% { opacity: .55; filter: brightness(.85); }
+    50%      { opacity: 1;   filter: brightness(1.5); }
+  }
+
+  /* Corner bolt rings pulsing in sync with the board */
+  .bolt {
+    position: absolute; width: 4.4%; aspect-ratio: 1; border-radius: 50%;
+    border: 2px solid rgba(160, 120, 255, .9);
+    box-shadow: 0 0 14px 4px rgba(123, 77, 255, .55), inset 0 0 8px rgba(123, 77, 255, .6);
+    pointer-events: none;
+    animation: bolt 2.6s ease-in-out infinite;
+  }
+  .bolt.tl { left: 1%;  top: 2.2%; }
+  .bolt.tr { right: 1%; top: 2.2%; animation-delay: .6s; }
+  .bolt.br { right: 1%; bottom: 2.2%; animation-delay: 1.2s; }
+  .bolt.bl { left: 1%;  bottom: 2.2%; animation-delay: 1.8s; }
+  @keyframes bolt {
+    0%, 100% { transform: scale(1);   opacity: .55; }
+    50%      { transform: scale(1.14); opacity: 1; }
+  }
+
+  /* ---- Domino tiles: artwork rotated into play orientation ---- */
+  .tile {
+    position: absolute;
+    width: 25%;
+    aspect-ratio: 2 / 1;
+    cursor: pointer;
+    animation:
+      place .75s cubic-bezier(.22, 1.15, .36, 1) var(--d, 0s) backwards,
+      sel 7s ease-in-out calc(var(--d, 0s) + 1.8s) infinite;
+  }
+  .tile.small { width: 20%; }
+  .hover {  /* interaction layer: transition only, never fights an animation */
+    position: absolute; inset: 0;
+    transition: transform .25s ease, filter .25s ease;
+  }
+  .tile:hover .hover {
+    transform: translateY(-7%) scale(1.05);
+    filter: drop-shadow(0 0 16px rgba(123, 77, 255, .9));
+  }
+  .breathe {
+    position: absolute; inset: 0;
+    animation: float 5.5s ease-in-out infinite;
+    animation-delay: var(--d, 0s);
+  }
+  .spin { position: absolute; inset: 0; }
+  .spin.flipping { animation: flip .9s cubic-bezier(.35, .1, .25, 1); }
+  .tile img {
+    position: absolute; left: 50%; top: 50%;
+    height: 200%; width: auto;
+    transform: translate(-50%, -50%) rotate(90deg);
+    filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .6));
+  }
+  .face {
+    position: absolute; top: 6.4%; height: 87.2%;
+    left: var(--l); width: 43.4%;
+  }
+  .face.l { --l: 3.6%; }
+  .face.r { --l: 53%; }
+  .pip {
+    position: absolute;
+    width: 15%; aspect-ratio: 1; border-radius: 50%;
+    left: calc(var(--x) * 100% - 7.5%);
+    top: calc(var(--y) * 100% - 7.5%);
+    background: radial-gradient(circle at 35% 30%, #fffdf6, var(--starlight) 60%, #d9c9a8);
+    box-shadow: 0 0 6px rgba(255, 243, 224, .55);
+    animation:
+      pip-in .5s ease backwards,
+      pip-glow 2.8s ease-in-out infinite alternate;
+    animation-delay:
+      calc(var(--d, 0s) + .45s + var(--i, 0) * .04s),
+      calc(var(--d, 0s) + .45s + var(--i, 0) * .04s);
+  }
+  @keyframes pip-glow {
+    from { box-shadow: 0 0 4px rgba(255, 243, 224, .3); }
+    to   { box-shadow: 0 0 11px 2px rgba(255, 243, 224, .9); }
+  }
+  @keyframes pip-in { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes place {
+    from { transform: translate(70%, -22%) rotate(9deg) scale(1.06); opacity: 0; }
+    65%  { transform: translate(-2%, 3%) rotate(-1.5deg) scale(.985); opacity: 1; }
+    to   { transform: translate(0, 0) rotate(0) scale(1); opacity: 1; }
+  }
+  @keyframes sel {  /* periodic violet flare, like a tile being highlighted */
+    0%, 86%, 100% { filter: none; }
+    90%           { filter: drop-shadow(0 0 12px rgba(123, 77, 255, .95)) brightness(1.14); }
+    95%           { filter: drop-shadow(0 0 4px rgba(123, 77, 255, .5)) brightness(1.03); }
+  }
+  @keyframes flip {
+    0%   { transform: rotateY(0) scale(1); }
+    50%  { transform: rotateY(180deg) scale(1.09); }
+    100% { transform: rotateY(360deg) scale(1); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-3.5%); }
+  }
+  .stage:not(.play) .tile,
+  .stage:not(.play) .pip { animation: none; opacity: 1; transform: none; }
+
+  /* ---- Controls & asset strip ---- */
+  .controls { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+  button {
+    font: inherit; font-size: 14px; letter-spacing: .04em;
+    color: #e8e6f5; background: rgba(123, 77, 255, .16);
+    border: 1px solid rgba(123, 77, 255, .6); border-radius: 10px;
+    padding: 10px 18px; cursor: pointer;
+    transition: background .2s, box-shadow .2s, transform .1s;
+  }
+  button:hover { background: rgba(123, 77, 255, .3); box-shadow: 0 0 18px rgba(123, 77, 255, .45); }
+  button:active { transform: translateY(1px); }
+
+  .assets {
+    display: flex; gap: 28px; margin-top: 40px; flex-wrap: wrap; justify-content: center;
+  }
+  .card {
+    background: var(--panel); border: 1px solid rgba(123, 77, 255, .3);
+    border-radius: 12px; padding: 14px; text-align: center; width: 260px;
+  }
+  .card img { max-width: 100%; border-radius: 8px; display: block; margin: 0 auto; }
+  .card figcaption { margin-top: 10px; font-size: 12px; color: #9d97c4; }
+  .card code { color: var(--cyan); }
+  .swatch {
+    display: inline-block; width: 12px; height: 12px; border-radius: 3px;
+    background: var(--starlight); vertical-align: -1px; margin-right: 6px;
+    box-shadow: 0 0 6px rgba(255, 243, 224, .7);
+  }
+  footer { margin-top: 34px; font-size: 12px; color: #6f6a94; text-align: center; line-height: 1.7; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Skin <span>Nebula</span> — demo animada</h1>
+  <p class="sub">Board + pareja de fichas · Mainboard Override · artefacto procedural (generate_nebula.py)</p>
+</header>
+
+<div class="stage play" id="stage">
+  <img class="board" src="../../app/src/main/res/drawable-nodpi/board_nebula.png" alt="Tablero Nebula">
+  <div class="drift"><i class="v"></i><i class="c"></i></div>
+  <div class="twinkle" id="twinkle"></div>
+
+  <span class="led top"></span><span class="led bottom"></span>
+  <span class="led left"></span><span class="led right"></span>
+  <span class="bolt tl"></span><span class="bolt tr"></span>
+  <span class="bolt br"></span><span class="bolt bl"></span>
+
+  <div class="tile" style="left:8%;  top:50%; --d:.15s" data-a="6" data-b="3"></div>
+  <div class="tile" style="left:40%; top:64%; --d:.55s" data-a="4" data-b="5"></div>
+  <div class="tile" style="left:70%; top:44%; --d:.95s" data-a="2" data-b="2"></div>
+  <div class="tile small" style="left:41%; top:16%; --d:1.35s" data-a="0" data-b="6"></div>
+</div>
+
+<div class="controls">
+  <button id="replay">↻ Reproducir animación</button>
+</div>
+
+<div class="assets">
+  <figure class="card">
+    <img src="../../app/src/main/res/drawable-nodpi/domino_nebula.png" alt="Ficha Nebula" height="240">
+    <figcaption><code>domino_nebula.png</code> 256×512 · fondo transparente<br>
+      <span class="swatch"></span>pips: starlight <code>#FFF3E0</code></figcaption>
+  </figure>
+  <figure class="card">
+    <img src="../../app/src/main/res/drawable-nodpi/board_nebula_preview.png" alt="Vista previa del board" height="150">
+    <figcaption><code>board_nebula_preview.png</code> 384×192<br>export de tiempo de ejecución</figcaption>
+  </figure>
+</div>
+
+<footer>
+  La ficha se rotó 90° con CSS (el artefacto es vertical, como en el juego).<br>
+  <strong>Haz clic en cualquier ficha para girarla</strong> · pasando el cursor se eleva con halo violeta.<br>
+  Pips, LEDs, tornillos y estrellas son capas HTML/CSS — el PNG solo aporta el material.
+</footer>
+
+<script>
+  // Pips: DominoImage.pipPositions rotated -90° like dominoAngle() does for a
+  // horizontal ficha, so the pattern always runs in the same direction as the
+  // tile (2, 3 and 6 are not 90°-symmetric; 1/4/5 are unchanged).
+  const LAYOUT = {
+    0: [], 1: [[.5, .5]],
+    2: [[.28, .72], [.72, .28]],
+    3: [[.28, .72], [.5, .5], [.72, .28]],
+    4: [[.28, .28], [.72, .28], [.28, .72], [.72, .72]],
+    5: [[.28, .28], [.72, .28], [.5, .5], [.28, .72], [.72, .72]],
+    6: [[.25, .28], [.5, .28], [.75, .28], [.25, .72], [.5, .72], [.75, .72]],
+  };
+
+  const SHELL = "../../app/src/main/res/drawable-nodpi/domino_nebula.png";
+
+  document.querySelectorAll(".tile").forEach(tile => {
+    const delay = getComputedStyle(tile).getPropertyValue("--d").trim() || "0s";
+
+    const hover = document.createElement("div"); hover.className = "hover";
+    const breathe = document.createElement("div"); breathe.className = "breathe";
+    const spin = document.createElement("div"); spin.className = "spin";
+    breathe.style.setProperty("--d", delay);
+    hover.appendChild(breathe);
+    breathe.appendChild(spin);
+
+    const img = document.createElement("img");
+    img.src = SHELL;
+    img.alt = "";
+    spin.appendChild(img);
+
+    [["l", tile.dataset.a], ["r", tile.dataset.b]].forEach(([side, value]) => {
+      const face = document.createElement("div");
+      face.className = "face " + side;
+      LAYOUT[Number(value)].forEach(([x, y], i) => {
+        const pip = document.createElement("span");
+        pip.className = "pip";
+        pip.style.setProperty("--x", x);
+        pip.style.setProperty("--y", y);
+        pip.style.setProperty("--d", delay);
+        pip.style.setProperty("--i", i);
+        face.appendChild(pip);
+      });
+      spin.appendChild(face);
+    });
+
+    tile.appendChild(hover);
+
+    // Click a tile to flip it, like turning a physical domino.
+    tile.addEventListener("click", () => {
+      spin.classList.remove("flipping");
+      void spin.offsetWidth;
+      spin.classList.add("flipping");
+    });
+    spin.addEventListener("animationend", e => {
+      if (e.animationName === "flip") spin.classList.remove("flipping");
+    });
+  });
+
+  // Twinkling stars, biased away from the calm centre so play stays readable.
+  const tw = document.getElementById("twinkle");
+  for (let i = 0; i < 70; i++) {
+    const s = document.createElement("b");
+    let x = Math.random(), y = Math.random();
+    if (x > .2 && x < .8 && y > .25 && y < .75) { x = Math.random() < .5 ? x * .2 : .8 + x * .2; }
+    s.style.left = (x * 100).toFixed(1) + "%";
+    s.style.top = (y * 100).toFixed(1) + "%";
+    s.style.animationDuration = (2.4 + Math.random() * 3).toFixed(2) + "s";
+    s.style.animationDelay = (-Math.random() * 4).toFixed(2) + "s";
+    tw.appendChild(s);
+  }
+
+  document.getElementById("replay").addEventListener("click", () => {
+    const stage = document.getElementById("stage");
+    stage.classList.remove("play");
+    void stage.offsetWidth;           // force reflow so the entrance replays
+    stage.classList.add("play");
+  });
+</script>
+</body>
+</html>

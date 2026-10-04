@@ -20,5 +20,6 @@ internal fun boardSkinResource(skin: String, previewOnly: Boolean = false): Int?
     "signal" -> if (previewOnly) R.drawable.board_signal_preview else R.drawable.board_signal
     "copper" -> if (previewOnly) R.drawable.board_copper_preview else R.drawable.board_copper
     "aurora" -> if (previewOnly) R.drawable.board_aurora_preview else R.drawable.board_aurora
+    "nebula" -> if (previewOnly) R.drawable.board_nebula_preview else R.drawable.board_nebula
     else -> null
 }

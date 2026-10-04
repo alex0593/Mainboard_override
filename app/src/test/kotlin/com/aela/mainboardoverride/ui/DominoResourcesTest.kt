@@ -49,6 +49,21 @@ class DominoResourcesTest {
         assertTrue(pips.none { it in materials })
     }
 
+    @Test fun nebulaPackResolvesBoardShellAndStarlightPip() {
+        // The nebula pair ships as one theme: board and shell resolve in full and preview sizes.
+        assertNotEquals(null, boardSkinResource("nebula"))
+        assertNotEquals(null, boardSkinResource("nebula", previewOnly = true))
+        assertNotEquals(null, dominoShellResource("nebula"))
+        assertNotEquals(null, dominoShellResource("nebula", previewOnly = true))
+        // Starlight warm white stays distinct from every other pip color, titanium's cool white included.
+        assertEquals(Color(0xFFFFF3E0), dominoPipColor("nebula"))
+        val everyOther = listOf(
+            "ceramic", "obsidian", "titanium", "jade", "ruby", "sapphire",
+            "amber", "amethyst", "blueprint", "copper", "ice", "aurora",
+        ).map(::dominoPipColor)
+        assertTrue(dominoPipColor("nebula") !in everyOther)
+    }
+
     @Test fun lightThemedSkinsUseDistinctReadablePipColors() {
         assertEquals(Color(0xFF075985), dominoPipColor("ice"))
         assertEquals(Color(0xFFFFC107), dominoPipColor("aurora"))
