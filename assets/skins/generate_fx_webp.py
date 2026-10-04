@@ -17,7 +17,7 @@ Design rules honoured here (docs/GDD.md + assets/skins/README.md):
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 
 FRAMES = 14
 DURATION_MS = 80
@@ -26,6 +26,19 @@ SIZE = 512
 HERE = Path(__file__).resolve().parent
 ORIGINALS = HERE / "originals"
 EXPORT = HERE.parent.parent / "app" / "src" / "main" / "res" / "drawable-nodpi"
+
+
+def silhouette_mask() -> np.ndarray:
+    """Alpha mask matching the domino shell border so FX never spills outside the tile."""
+    mask = Image.new("L", (256, 512), 0)
+    draw = ImageDraw.Draw(mask)
+    draw.rounded_rectangle([2, 2, 253, 509], radius=34, fill=255)
+    mask = mask.resize((SIZE, SIZE), Image.LANCZOS)
+    return np.asarray(mask, dtype=np.float32) / 255.0
+
+
+SILH_MASK = silhouette_mask()
+
 
 # id -> (accent RGB, style); mirrors ui/PremiumSkinFx.kt.
 SKINS = {
@@ -123,7 +136,7 @@ def render_loop(accent, style, seed):
     frames = []
     for i in range(FRAMES):
         t = i / FRAMES
-        a = ALPHA[style](t, seed)
+        a = ALPHA[style](t, seed) * SILH_MASK
         rgba = np.zeros((SIZE, SIZE, 4), np.uint8)
         rgba[..., 0], rgba[..., 1], rgba[..., 2] = accent
         rgba[..., 3] = (a * 255).astype(np.uint8)

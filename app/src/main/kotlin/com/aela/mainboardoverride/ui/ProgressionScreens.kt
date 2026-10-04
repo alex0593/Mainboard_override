@@ -137,19 +137,17 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                                 AnimatedSkinFxWebp(skin.id, Modifier.matchParentSize())
                             } else Box(Modifier.fillMaxWidth()) {
                                 val preview = dominoShellResource(skin.id, previewOnly = true)
-                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    // Direct baked-preview rendering: cheap for the list, the F fx layer stays on top.
-                                    val shell = if (preview != null) preview else R.drawable.domino_0_0
-                                    listOf(Unit, Unit).forEach {
-                                        androidx.compose.foundation.Image(
-                                            painter = androidx.compose.ui.res.painterResource(shell),
-                                            contentDescription = null,
-                                            modifier = Modifier.width(64.dp).height(128.dp),
-                                            contentScale = androidx.compose.ui.layout.ContentScale.Fit,
-                                        )
-                                    }
+                                // Single centered preview tile kept cheap for rapid recycled cards.
+                                val shell = if (preview != null) preview else R.drawable.domino_0_0
+                                Box(Modifier.fillMaxWidth().padding(4.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                                    androidx.compose.foundation.Image(
+                                        painter = androidx.compose.ui.res.painterResource(shell),
+                                        contentDescription = null,
+                                        modifier = Modifier.width(64.dp).height(128.dp),
+                                        contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                                    )
+                                    AnimatedSkinFxWebp(skin.id, Modifier.width(64.dp).height(128.dp))
                                 }
-                                AnimatedSkinFxWebp(skin.id, Modifier.matchParentSize())
                             }
                             Text(stringResource(skin.label), Modifier.fillMaxWidth(), color = Cyan, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                             if (paid) {
