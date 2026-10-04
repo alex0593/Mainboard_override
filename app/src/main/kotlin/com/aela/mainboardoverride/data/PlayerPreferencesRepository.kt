@@ -44,6 +44,10 @@ data class PlayerPreferences(
 data class ChallengeRecord(val turns: Int, val trace: Int)
 data class MatchReward(val base: Int = 0, val bonus: Int = 0, val unlockedScenario: String? = null, val newAchievements: List<String> = emptyList(), val dailyBonus: Int = 0)
 
+/** Read/write normalization: bare legacy ids become `board:<id>`; already-namespaced ids pass through. */
+internal fun normalizeOwnedSkins(ids: Set<String>): Set<String> =
+    ids.map { if (':' in it) it else "board:$it" }.toSet()
+
 /** Persistence boundary for profile data that survives process death. */
 interface PlayerPreferencesRepository {
     val preferences: Flow<PlayerPreferences>
@@ -63,7 +67,8 @@ interface PlayerPreferencesRepository {
         if (level != null) recordChallengeVictory(level, turns, trace) else recordVictory(turns, trace)
         return MatchReward()
     }
-    suspend fun buySkin(id: String): Boolean = false
+    suspend fun buySkin(board: Boolean, id: String): Boolean = false
+    suspend fun ensureEquippedOwned() {}
     suspend fun setLastScenario(id: String) {}
     suspend fun setTutorialProgress(lesson: Int, completed: Boolean) {}
 }
@@ -88,7 +93,7 @@ class DataStorePlayerPreferencesRepository(
             contextHelpEnabled = values[CONTEXT_HELP] ?: true,
             challengeUnlocked = maxOf(values[CHALLENGE_UNLOCKED] ?: 1, ((parseRecords(values[CHALLENGE_BEST]).keys.maxOrNull() ?: 0) + 1).coerceAtMost(ChallengeCatalog.COUNT)),
             credits = values[CREDITS] ?: 0,
-            ownedSkins = values[OWNED_SKINS] ?: emptySet(),
+            ownedSkins = normalizeOwnedSkins(values[OWNED_SKINS] ?: emptySet()),
             lastScenario = values[LAST_SCENARIO] ?: "classic",
             completedScenarios = values[COMPLETED_SCENARIOS] ?: emptySet(),
             tutorialLesson = values[TUTORIAL_LESSON] ?: -1,
@@ -122,28 +127,43 @@ class DataStorePlayerPreferencesRepository(
         }
     }
 
-    override suspend fun setDominoSkin(value: String) { store.edit { it[DOMINO_SKIN] = value } }
+    override suspend fun setDominoSkin(value: String) { store.edit {
+        val owned = normalizeOwnedSkins(it[OWNED_SKINS] ?: emptySet())
+        if (!Rewards.isPaid(false, value) || Rewards.ownedKey(false, value) in owned) it[DOMINO_SKIN] = value
+    } }
     override suspend fun setBoardSkin(value: String) { store.edit {
-        if (value !in Rewards.purchasableSkins || value in (it[OWNED_SKINS] ?: emptySet())) it[BOARD_SKIN] = value
+        val owned = normalizeOwnedSkins(it[OWNED_SKINS] ?: emptySet())
+        if (!Rewards.isPaid(true, value) || Rewards.ownedKey(true, value) in owned) it[BOARD_SKIN] = value
     } }
     override suspend fun setLastScenario(id: String) { store.edit { it[LAST_SCENARIO] = id } }
     override suspend fun setTutorialProgress(lesson: Int, completed: Boolean) {
         store.edit { it[TUTORIAL_LESSON] = lesson; it[TUTORIAL_COMPLETED] = completed }
     }
-    override suspend fun buySkin(id: String): Boolean {
-        if (id !in Rewards.purchasableSkins) return false
+    override suspend fun buySkin(board: Boolean, id: String): Boolean {
+        if (!Rewards.isPaid(board, id)) return false
         var purchased = false
         store.edit { values ->
-            val owned = values[OWNED_SKINS] ?: emptySet()
+            val owned = normalizeOwnedSkins(values[OWNED_SKINS] ?: emptySet())
             val balance = values[CREDITS] ?: 0
             val price = Rewards.skinPrice(id)
-            if (id !in owned && balance >= price) {
+            if (Rewards.ownedKey(board, id) !in owned && balance >= price) {
                 values[CREDITS] = balance - price
-                values[OWNED_SKINS] = owned + id
+                values[OWNED_SKINS] = owned + Rewards.ownedKey(board, id)
                 purchased = true
             }
         }
         return purchased
+    }
+    override suspend fun ensureEquippedOwned() {
+        store.edit { values ->
+            val owned = normalizeOwnedSkins(values[OWNED_SKINS] ?: emptySet())
+            var next = owned
+            val board = values[BOARD_SKIN] ?: "pcb"
+            val domino = values[DOMINO_SKIN] ?: "kenney"
+            if (Rewards.isPaid(true, board)) next += Rewards.ownedKey(true, board)
+            if (Rewards.isPaid(false, domino)) next += Rewards.ownedKey(false, domino)
+            values[OWNED_SKINS] = next
+        }
     }
     override suspend fun finishMatch(id: String, level: Int?, turns: Int, trace: Int, scenarioId: String?): MatchReward {
         var reward = MatchReward()

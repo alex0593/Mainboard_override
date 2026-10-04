@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.test.core.app.ApplicationProvider
 import com.aela.mainboardoverride.GameUiState
 import com.aela.mainboardoverride.MainViewModel
@@ -36,7 +37,7 @@ class ProgressionUiTest {
     @After fun closeStore() { scope.cancel() }
 
     @Test fun rewardsPurchasesAndMilestonesAreAtomic() = runBlocking {
-        assertFalse(repository.buySkin("copper"))
+        assertFalse(repository.buySkin(true, "copper"))
         repository.setBoardSkin("copper")
         assertEquals("pcb", repository.preferences.first().boardSkin)
         for (level in 1..30) {
@@ -58,14 +59,14 @@ class ProgressionUiTest {
         assertEquals(20, replay.base)
         assertEquals(0, replay.bonus)
         assertNull(replay.unlockedScenario)
-        val purchases = coroutineScope { List(4) { async { repository.buySkin("copper") } }.awaitAll() }
+        val purchases = coroutineScope { List(4) { async { repository.buySkin(true, "copper") } }.awaitAll() }
         assertEquals(1, purchases.count { it })
         assertEquals(1620 + Rewards.DAILY_GOAL, repository.preferences.first().credits)
         repository.setBoardSkin("copper")
         assertEquals("copper", repository.preferences.first().boardSkin)
-        assertFalse(repository.buySkin("unknown"))
+        assertFalse(repository.buySkin(true, "unknown"))
         val reread = DataStorePlayerPreferencesRepository(app, store).preferences.first()
-        assertEquals(setOf("copper"), reread.ownedSkins)
+        assertEquals(setOf("board:copper"), reread.ownedSkins)
         assertEquals(1620 + Rewards.DAILY_GOAL, reread.credits)
         val payouts = coroutineScope { List(4) { async { repository.finishMatch("free-match", null, 6, 48, "classic") } }.awaitAll() }
         assertEquals(20, payouts.sumOf { it.base + it.bonus })
@@ -100,9 +101,9 @@ class ProgressionUiTest {
         compose.onNodeWithTag("skin-action-copper").assertIsDisplayed().assertIsEnabled().performClick()
         compose.onNodeWithText(app.getString(R.string.confirm_skin_purchase, 200, 50)).assertIsDisplayed()
         compose.onNodeWithTag("confirm-purchase").performClick()
-        compose.waitUntil(5000) { runBlocking { "copper" in repository.preferences.first().ownedSkins } }
+        compose.waitUntil(5000) { runBlocking { "board:copper" in repository.preferences.first().ownedSkins } }
         // Wait for the collected UI state to reflect the repository update before equipping.
-        compose.waitUntil(5000) { "copper" in vm.uiState.value.preferences.ownedSkins }
+        compose.waitUntil(5000) { "board:copper" in vm.uiState.value.preferences.ownedSkins }
         compose.waitForIdle()
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasTestTag("skin-action-copper"))
         compose.onNodeWithTag("skin-action-copper").assertIsDisplayed().assertIsEnabled().performClick()
@@ -131,8 +132,8 @@ class ProgressionUiTest {
         compose.onNodeWithTag("skin-action-jade").assertIsDisplayed().assertIsEnabled().performClick()
         compose.onNodeWithText(app.getString(R.string.confirm_skin_purchase, 200, 50)).assertIsDisplayed()
         compose.onNodeWithTag("confirm-purchase").performClick()
-        compose.waitUntil(5000) { runBlocking { "jade" in repository.preferences.first().ownedSkins } }
-        compose.waitUntil(5000) { "jade" in vm.uiState.value.preferences.ownedSkins }
+        compose.waitUntil(5000) { runBlocking { "board:jade" in repository.preferences.first().ownedSkins } }
+        compose.waitUntil(5000) { "board:jade" in vm.uiState.value.preferences.ownedSkins }
         compose.waitForIdle()
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasTestTag("skin-action-jade"))
         compose.onNodeWithTag("skin-action-jade").assertIsDisplayed().assertIsEnabled().performClick()
@@ -140,8 +141,57 @@ class ProgressionUiTest {
         assertEquals(50, runBlocking { repository.preferences.first().credits })
         // Ruby, titanium and the crystal pack stay listed as premium PCBs behind the same price gate.
         assertTrue(runBlocking { repository.preferences.first().ownedSkins }.none {
-            it in setOf("ruby", "titanium", "sapphire", "amber", "amethyst")
+            it.removePrefix("board:").removePrefix("domino:") in setOf("ruby", "titanium", "sapphire", "amber", "amethyst")
         })
+    }
+
+    @Test fun galleryBuysAndEquipsDominoSkin() {
+        runBlocking { for (level in 1..4) repository.finishMatch("ficha-fund-$level", level, 5, 40) }
+        val vm = MainViewModel(app, repository)
+        compose.setContent {
+            val state by vm.uiState.collectAsState()
+            MainboardTheme { SkinGallery(state, vm) {} }
+        }
+        compose.waitUntil(5000) { vm.uiState.value.preferences.credits == 240 + Rewards.DAILY_GOAL }
+        // La pestaña de fichas es la que abre por defecto; hearts es de pago (80, no premium).
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasTestTag("skin-action-hearts"))
+        compose.onNodeWithTag("skin-action-hearts").assertIsDisplayed().assertIsEnabled().performClick()
+        compose.onNodeWithText(app.getString(R.string.confirm_skin_purchase, 80, 170)).assertIsDisplayed()
+        compose.onNodeWithTag("confirm-purchase").performClick()
+        compose.waitUntil(5000) { runBlocking { "domino:hearts" in repository.preferences.first().ownedSkins } }
+        compose.waitUntil(5000) { "domino:hearts" in vm.uiState.value.preferences.ownedSkins }
+        compose.waitForIdle()
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasTestTag("skin-action-hearts"))
+        compose.onNodeWithTag("skin-action-hearts").assertIsDisplayed().assertIsEnabled().performClick()
+        compose.waitUntil(5000) { runBlocking { repository.preferences.first().dominoSkin == "hearts" } }
+        assertEquals(170, runBlocking { repository.preferences.first().credits })
+    }
+
+    @Test fun equippedPaidSkinsAreGrantedAndBareIdsNormalize() = runBlocking {
+        store.edit {
+            it[stringSetPreferencesKey("owned_skins")] = setOf("copper")
+            it[stringPreferencesKey("board_skin")] = "obsidian"
+            it[stringPreferencesKey("domino_skin")] = "hearts"
+        }
+        MainViewModel(app, repository) // el init dispara ensureEquippedOwned()
+        val expected = setOf("board:copper", "board:obsidian", "domino:hearts")
+        withTimeout(5_000) { repository.preferences.first { it.ownedSkins == expected } }
+        // Solo lo equipado se otorga; sin créditos retroactivos.
+        assertEquals(0, repository.preferences.first().credits)
+    }
+
+    @Test fun equippedGrantIsIdempotent() = runBlocking {
+        store.edit {
+            it[stringSetPreferencesKey("owned_skins")] = setOf("copper")
+            it[stringPreferencesKey("board_skin")] = "obsidian"
+            it[stringPreferencesKey("domino_skin")] = "hearts"
+        }
+        val expected = setOf("board:copper", "board:obsidian", "domino:hearts")
+        MainViewModel(app, repository)
+        withTimeout(5_000) { repository.preferences.first { it.ownedSkins == expected } }
+        MainViewModel(app, repository) // segunda apertura
+        delay(500)
+        assertEquals(expected, repository.preferences.first().ownedSkins)
     }
 
     @Test fun resultCanBeDismissedToInspectBoardWithoutRewardingAgain() {

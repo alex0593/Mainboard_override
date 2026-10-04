@@ -105,9 +105,12 @@ class MainViewModel(application: Application, private val repository: PlayerPref
     fun reviewBoard() { session.update { it.copy(reviewingBoard = true, selectedDominoId = null, selectedScriptId = null) }; playUiTick() }
     fun showResult() { session.update { it.copy(reviewingBoard = false) }; playUiTick() }
     fun dismissMessage() { session.update { it.copy(message = null) }; playUiTick() }
-    fun buySkin(id: String) = viewModelScope.launch {
-        if (repository.buySkin(id)) emitCue(SoundCue.Coin) else playUiTick()
+    fun buySkin(board: Boolean, id: String) = viewModelScope.launch {
+        if (repository.buySkin(board, id)) emitCue(SoundCue.Coin) else playUiTick()
     }
+
+    /** Grants the currently equipped skins if any became paid since they were equipped. */
+    init { viewModelScope.launch { repository.ensureEquippedOwned() } }
 
     /** Plays again in the same mode, generating a new seed for free play. */
     fun retry() = restartNetwork()

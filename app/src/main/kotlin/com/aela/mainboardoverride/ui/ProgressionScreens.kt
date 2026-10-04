@@ -90,6 +90,7 @@ internal fun ProgressionHeader(
 internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () -> Unit) {
     var pcb by rememberSaveable { mutableStateOf(false) }
     var purchase by rememberSaveable { mutableStateOf<String?>(null) }
+    var purchaseBoard by rememberSaveable { mutableStateOf(false) }
     val prefs = state.preferences
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -108,9 +109,9 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
             }
             LazyVerticalGrid(columns = GridCells.Adaptive(220.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(if (pcb) boardSkins else dominoSkins, key = { it.id }) { skin ->
-                    val paid = pcb && skin.id in Rewards.purchasableSkins
+                    val paid = Rewards.isPaid(pcb, skin.id)
                     val price = Rewards.skinPrice(skin.id)
-                    val owned = !paid || skin.id in prefs.ownedSkins
+                    val owned = !paid || Rewards.ownedKey(pcb, skin.id) in prefs.ownedSkins
                     val equipped = skin.id == if (pcb) prefs.boardSkin else prefs.dominoSkin
                     Box(
                         Modifier.fillMaxWidth().heightIn(min = 240.dp).clip(RoundedCornerShape(14.dp))
@@ -135,7 +136,7 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                                 primary = equipped || owned,
                                 enabled = !equipped && (owned || prefs.credits >= price),
                                 onClick = {
-                                    if (!owned) purchase = skin.id
+                                    if (!owned) { purchase = skin.id; purchaseBoard = pcb }
                                     else if (pcb) actions.setBoardSkin(skin.id) else actions.setDominoSkin(skin.id)
                                 }, modifier = Modifier.fillMaxWidth().testTag("skin-action-${skin.id}"),
                                 compact = true,
@@ -149,15 +150,15 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
     }
     purchase?.let { id ->
         GameDialog(
-            title = stringResource(boardSkins.first { it.id == id }.label),
+            title = stringResource((if (purchaseBoard) boardSkins else dominoSkins).first { it.id == id }.label),
             onDismiss = { purchase = null },
             actions = {
                 MenuArtworkButton(stringResource(R.string.cancel), { purchase = null }, compact = true, fillWidth = false)
                 MenuArtworkButton(
                     label = stringResource(R.string.buy_credits, Rewards.skinPrice(id)),
                     modifier = Modifier.testTag("confirm-purchase"), compact = true, primary = true, fillWidth = false,
-                    enabled = prefs.credits >= Rewards.skinPrice(id) && id !in prefs.ownedSkins,
-                    onClick = { actions.buySkin(id); purchase = null },
+                    enabled = prefs.credits >= Rewards.skinPrice(id) && Rewards.ownedKey(purchaseBoard, id) !in prefs.ownedSkins,
+                    onClick = { actions.buySkin(purchaseBoard, id); purchase = null },
                 )
             },
         ) {
