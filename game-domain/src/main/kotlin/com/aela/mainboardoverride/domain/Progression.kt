@@ -43,7 +43,27 @@ object Rewards {
     val premiumSkins = setOf("copper", "aurora", "titanium", "jade", "ruby", "sapphire", "amber", "amethyst")
     val affordableSkins = setOf("graphite", "signal")
     val purchasableSkins = premiumSkins + affordableSkins
-    fun skinPrice(id: String) = if (id in affordableSkins) ENTRY_SKIN_PRICE else SKIN_PRICE
+
+    /** Per-category catalogs: the store sells exactly these ids, board and domino separately. */
+    val freeBoardSkins = setOf("pcb", "blueprint", "industrial")
+    val freeDominoSkins = setOf("kenney", "dark", "gingerbread")
+    val boardSkinIds = setOf(
+        "pcb", "blueprint", "industrial", "rust", "ice", "graphite", "signal", "copper",
+        "aurora", "obsidian", "ceramic", "titanium", "jade", "ruby", "sapphire", "amber", "amethyst",
+    )
+    val dominoSkinIds = setOf(
+        "kenney", "dark", "gingerbread", "hearts", "stars", "circuit", "blueprint", "copper",
+        "ice", "aurora", "obsidian", "ceramic", "titanium", "jade", "ruby", "sapphire", "amber", "amethyst",
+    )
+
+    /** True when [id] belongs to the [board] category and is not one of its free skins; unknown ids are never paid. */
+    fun isPaid(board: Boolean, id: String): Boolean =
+        (if (board) id in boardSkinIds else id in dominoSkinIds) && id !in (if (board) freeBoardSkins else freeDominoSkins)
+
+    /** Ownership keys are namespaced per category so the same id can be owned in one category only. */
+    fun ownedKey(board: Boolean, id: String) = if (board) "board:$id" else "domino:$id"
+
+    fun skinPrice(id: String) = if (id in premiumSkins) SKIN_PRICE else ENTRY_SKIN_PRICE
 
     /**
      * Victory score: fewer turns and less trace score higher, floored at zero.
