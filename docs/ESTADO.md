@@ -111,8 +111,8 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 | Área | Estado actual | Fuente principal |
 | --- | --- | --- |
 | Motor | Estado inmutable, acciones explícitas y `GameEngine.reduce`. | [Arquitectura](ARCHITECTURE.md) |
-| Generación | Semillas reproducibles; niveles libres, escenarios y catálogo de 100 desafíos (5 fases, tableros anchos desde el 31 y nodos desde el 41); suite de dominio 56/56 verde. | [Arquitectura](ARCHITECTURE.md) |
-| Skins | 18 fichas y 17 PCB en galería; Cobre, Aurora, Titanio, Jade, Rubí, Zafiro, Ámbar y Amatista premium (200), grafito y señal a 80, resto gratis. | [README de skins](../assets/skins/README.md) |
+| Generación | Semillas reproducibles; niveles libres, escenarios y catálogo de 100 desafíos (5 fases, tableros anchos desde el 31 y nodos desde el 41); suite de dominio 58/58 verde. | [Arquitectura](ARCHITECTURE.md) |
+| Skins | 18 fichas y 17 PCB en Tienda; gratis las tres primeras de cada catálogo (`pcb`/`blueprint`/`industrial` y `kenney`/`dark`/`gingerbread`) y 29 de pago a 80, con las ocho premium a 200; posesión por categoría `board:<id>`/`domino:<id>`. | [README de skins](../assets/skins/README.md) |
 | Scripts | `PING`, `SPOOF`, `KILL` (`KILL_PROCESS` internamente), `BRIDGE` y `STEALTH` (F02, descarta el ruido pendiente). | [GDD](GDD.md) |
 | Progresión | 100 desafíos en 5 fases con nodos de datos obligatorios desde el 41; los desafíos desbloquean escenarios por victorias distintas; récords y créditos persisten. | `PlayerPreferencesRepository` |
 | Economía | Compras y recompensas con transacciones DataStore e idempotencia; reapertura limpia sin pagos duplicados. | `PlayerPreferencesRepository` |
@@ -149,9 +149,10 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 - Las previsualizaciones de selección usan la semilla fija `42` y se etiquetan
   como ejemplo; la caché se invalida con `REVISION` y skins en la clave.
 - **F01:** las PCB Titanio, Jade y Rubí son premium de compra única a 200
-  créditos (`Rewards.premiumSkins`); sus fichas correspondientes son gratuitas,
-  porque la galería solo aplica precio a las PCB. `REVISION` no cambia: la clave
-  de previsualización ya incluye el id de skin y el render es el mismo.
+  créditos (`Rewards.premiumSkins`); sus fichas correspondientes eran
+  gratuitas (histórico: desde la tienda, K01, las fichas de pago valen su
+  precio). `REVISION` no cambia: la clave de previsualización ya incluye el
+  id de skin y el render es el mismo.
 - **F02:** STEALTH cuesta 1 RAM y añade 0 de ruido; descarta `pendingNoise`
   completo y se rechaza (`NO_PENDING_NOISE`) sin gastar nada si no hay ruido
   pendiente. Cuesta 1 RAM para que quepa el combo SPOOF/BRIDGE + STEALTH dentro
@@ -159,9 +160,17 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
   lección de tutorial y sin efecto sobre kernel panic.
 - **F03:** las PCB Zafiro, Ámbar y Amatista siguen el molde de F01: premium
   de compra única a 200 créditos (`Rewards.premiumSkins`, ids `sapphire`,
-  `amber`, `amethyst`); sus tres fichas correspondientes son gratuitas.
+  `amber`, `amethyst`); sus tres fichas correspondientes eran gratuitas
+  (histórico: desde la tienda, K01, las fichas de pago valen su precio).
   `REVISION` no cambia: la clave de previsualización ya incluye el id de skin
   y el render es el mismo.
+- **K — Tienda:** la galería es ahora Tienda (`store`/«TIENDA» en menú y
+  cabecera) con badge GRATIS. Reparto 3+3 (placas `pcb/blueprint/industrial`,
+  fichas `kenney/dark/gingerbread` gratis) y 29 de pago a 80/200 según
+  `Rewards.premiumSkins`; la posesión es `board:<id>`/`domino:<id>` con
+  normalización de ids desnudos en lectura y otorgamiento idempotente de la
+  skin equipada; compra de fichas con check de propiedad en ambas categorías.
+  `nebula` queda resources-only (entrada futura con tope >200).
 - **Icono del launcher:** el foreground del icono adaptativo es la exportación
   reducida `drawable-nodpi/logo_foreground.png` del original en `assets/logo/`;
   el fondo `#07110F` y la capa `monochrome` se conservan, y cualquier regeneración

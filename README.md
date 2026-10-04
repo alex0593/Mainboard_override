@@ -17,9 +17,10 @@ Estado verificado (2026-10-03): bloques A–F cerrados (A01–A10, B01–B06,
 C01–C06, D01–D04, E01–E06, F01–F03) y salida de alfa completada: build de
 release firmado (APK + AAB, etiqueta `v0.1.0`), ficha de tienda en
 `docs/PLAY.md` y sitio publicado con **HTTPS** en sus tres nombres.
-Suite de dominio **52/52** y `:app:testDebugUnitTest` **8/8** en verde, lint
-sin errores, suite instrumental **28/28** en CLK‑LX3 por USB y smoke test de
-la APK release (R8) sin excepciones en emulador API 35. Pendiente externo:
+Suite de dominio **58/58** y `:app:testDebugUnitTest` **11/11** en verde, lint
+sin errores, suite instrumental **31/31** (1 flake de entorno, 2/2 en retry
+aislado) y smoke test de la APK release (R8) sin excepciones en emulador API
+35. Pendiente externo:
 Play Console — detallado en el [Roadmap](docs/ROADMAP.md).
 
 ## Cómo se juega
@@ -32,11 +33,11 @@ Play Console — detallado en el [Roadmap](docs/ROADMAP.md).
   reproducible por semilla y solución comprobada por el motor.
 - **Economía:** cada victoria otorga 20 créditos y la primera victoria de cada
   desafío añade 40. Repetir desafíos concede solo los 20 de victoria; perder y
-  abandonar no dan créditos. Las PCB Cobre, Aurora, Titanio, Jade, Rubí,
-  Zafiro, Ámbar y Amatista cuestan
-  200 cada una y las de grafito y señal 80; todas son de compra única y se
-  equipan desde la galería (las fichas son siempre gratuitas). No hay créditos
-  retroactivos.
+  abandonar no dan créditos. La Tienda vende placas y fichas: tres placas
+  (pcb, plano azul, industrial) y tres fichas (Kenney, oscura, jengibre) son
+  gratuitas; las ocho premium (Cobre, Aurora, Titanio, Jade, Rubí, Zafiro,
+  Ámbar y Amatista, placa o ficha) cuestan 200 y el resto de pago 80, con
+  posesión por categoría. No hay créditos retroactivos.
 - **Tutorial:** diez lecciones jugables sobre conexiones, rotación, turnos,
   peligros y los cuatro scripts (PING, SPOOF, KILL y BRIDGE). Guarda la última
   lección para continuar o reiniciar, sin alterar créditos, récords ni partidas.

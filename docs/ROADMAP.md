@@ -438,6 +438,13 @@ dominio y la suite instrumentada completa.
   usar `./gradlew :app:connectedDebugAndroidTest` con dispositivo autorizado.
 - Preparar cambios enfocados con validación y capturas cuando corresponda.
 
+### K — Tienda de skins (P1)
+
+- [x] **K01 — Catálogo y precios:** cerrado 2026-10-03 (alcance: reparto 3+3) — `Rewards` con `freeBoardSkins`/`freeDominoSkins`, `boardSkinIds`/`dominoSkinIds`, `isPaid(categoría, id)` total, `skinPrice` invertido (premium → 200, resto de pago → 80) y `ownedKey`; `nebula` resources-only (ramas en `boardSkinResources`/`dominoShellResource`/`dominoPipColor` + assets y provenancia, sin catálogo ni strings). Evidencia: `SkinCatalogTest` 4/4, `SkinCatalogListsTest` 2/2, `DominoResourcesTest` 6/6, dominio 58/58, app 11/11.
+- [x] **K02 — Posesión y compra:** namespaced `board:<id>`/`domino:<id>`, normalización idempotente en lectura (sin flag), `ensureEquippedOwned()` otorga solo lo equipado, `buySkin(board, id)` atómico y con guarda `unknown` en el repo, check de propiedad añadido a `setDominoSkin`.
+- [x] **K03 — UI Tienda:** `store` (STORE/TIENDA), badge FREE, compra de fichas end-to-end, diálogo de compra con categoría (corrige el `boardSkins.first` que lanzaba `NoSuchElementException` con fichas), textos EN/ES generalizados; borrado de `purchasableSkins`/`affordableSkins`.
+- [x] **K04 — Tests y docs:** `ProgressionUiTest` +3 (compra de ficha, otorgamiento del equipado, idempotencia) → 13/13; suite instrumentada 31/31 (1 flake de entorno en `ImmersiveWindowUiTest`, 2/2 en retry aislado); GDD/ESTADO/README raíz sincronizados (las filas de `assets/skins/README.md` quedan para un commit posterior); `REVISION` sin cambios. Evidencia: `./gradlew test` 58/58 dominio + 11/11 app, lint 0 errores (2026-10-03).
+
 ## 5. Criterios de éxito
 
 - Ningún cambio de regla sin test y sin actualizar GDD.
