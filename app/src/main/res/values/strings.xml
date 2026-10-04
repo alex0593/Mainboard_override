@@ -200,6 +200,10 @@
     <string name="skin_ice">Cryogenic ice</string>
     <string name="skin_graphite">Graphite relay</string>
     <string name="skin_signal">Signal amber</string>
+    <string name="skin_biolum">Biolum circuit</string>
+    <string name="skin_prisma">Prisma circuit</string>
+    <string name="skin_quantum">Quantum circuit</string>
+    <string name="skin_animated">ANIMATED</string>
     <string name="skin_price">Price: %1$d credits</string>
     <string name="skin_free">FREE</string>
     <string name="context_help">Contextual help buttons</string>

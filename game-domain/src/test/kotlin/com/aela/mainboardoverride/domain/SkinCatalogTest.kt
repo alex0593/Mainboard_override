@@ -26,7 +26,7 @@ class SkinCatalogTest {
     }
 
     @Test fun `premium skins cost 200 and the rest of the paid catalog costs 80`() {
-        for (skin in listOf("copper", "aurora", "titanium", "jade", "ruby", "sapphire", "amber", "amethyst")) {
+        for (skin in listOf("copper", "aurora", "titanium", "jade", "ruby", "sapphire", "amber", "amethyst", "biolum", "prisma", "quantum")) {
             assertTrue(skin in Rewards.premiumSkins)
             assertEquals(Rewards.SKIN_PRICE, Rewards.skinPrice(skin))
         }

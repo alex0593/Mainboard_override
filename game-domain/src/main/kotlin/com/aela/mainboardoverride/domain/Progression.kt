@@ -40,7 +40,7 @@ object Rewards {
     const val DAILY_GOAL = 10
     const val SKIN_PRICE = 200
     const val ENTRY_SKIN_PRICE = 80
-    val premiumSkins = setOf("copper", "aurora", "titanium", "jade", "ruby", "sapphire", "amber", "amethyst")
+    val premiumSkins = setOf("copper", "aurora", "titanium", "jade", "ruby", "sapphire", "amber", "amethyst", "biolum", "prisma", "quantum")
 
     /** Per-category catalogs: the store sells exactly these ids, board and domino separately. */
     val freeBoardSkins = setOf("pcb", "blueprint", "industrial")
@@ -48,10 +48,12 @@ object Rewards {
     val boardSkinIds = setOf(
         "pcb", "blueprint", "industrial", "rust", "ice", "graphite", "signal", "copper",
         "aurora", "obsidian", "ceramic", "titanium", "jade", "ruby", "sapphire", "amber", "amethyst",
+        "biolum", "prisma", "quantum",
     )
     val dominoSkinIds = setOf(
         "kenney", "dark", "gingerbread", "hearts", "stars", "circuit", "blueprint", "copper",
         "ice", "aurora", "obsidian", "ceramic", "titanium", "jade", "ruby", "sapphire", "amber", "amethyst",
+        "biolum", "prisma", "quantum",
     )
 
     /** True when [id] belongs to the [board] category and is not one of its free skins; unknown ids are never paid. */

@@ -83,4 +83,21 @@ class DominoResourcesTest {
         assertEquals(3, pips.toSet().size)
         assertTrue(pips.none { it == dominoPipColor("ice") || it == dominoPipColor("aurora") })
     }
+
+    @Test fun technoPackShellsResolveSpritesAndDistinctPipColors() {
+        val pack = listOf("biolum", "prisma", "quantum")
+        for (skin in pack) {
+            assertNotEquals(null, dominoShellResource(skin))
+            assertNotEquals(null, dominoShellResource(skin, previewOnly = true))
+            assertNotEquals(null, boardSkinResource(skin))
+            assertNotEquals(null, boardSkinResource(skin, previewOnly = true))
+        }
+        assertEquals(Color(0xFF6FFFE0), dominoPipColor("biolum"))
+    assertEquals(Color(0xFFFF00FF), dominoPipColor("prisma"))
+        assertEquals(Color(0xFF9EB5FF), dominoPipColor("quantum"))
+        val pips = pack.map(::dominoPipColor)
+        assertEquals(3, pips.toSet().size)
+        val materials = listOf("titanium", "jade", "ruby", "ice", "aurora").map(::dominoPipColor)
+        assertTrue(pips.none { it in materials })
+    }
 }

@@ -104,6 +104,9 @@ internal fun dominoPipColor(skin: String): Color = when (skin) {
     // Golden yellow remains visibly distinct from the aurora's white face and violet rim.
     "aurora" -> Color(0xFFFFC107)
     "nebula" -> Color(0xFFFFF3E0)
+    "biolum" -> Color(0xFF6FFFE0)
+    "prisma" -> Color(0xFFFF00FF)
+    "quantum" -> Color(0xFF9EB5FF)
     else -> Terminal
 }
 
@@ -122,6 +125,9 @@ internal fun dominoShellResource(skin: String, previewOnly: Boolean = false): In
     "ice" -> if (previewOnly) R.drawable.domino_ice_preview else R.drawable.domino_ice
     "aurora" -> if (previewOnly) R.drawable.domino_aurora_preview else R.drawable.domino_aurora
     "nebula" -> if (previewOnly) R.drawable.domino_nebula_preview else R.drawable.domino_nebula
+    "biolum" -> if (previewOnly) R.drawable.domino_biolum_preview else R.drawable.domino_biolum
+    "prisma" -> if (previewOnly) R.drawable.domino_prisma_preview else R.drawable.domino_prisma
+    "quantum" -> if (previewOnly) R.drawable.domino_quantum_preview else R.drawable.domino_quantum
     else -> null
 }
 

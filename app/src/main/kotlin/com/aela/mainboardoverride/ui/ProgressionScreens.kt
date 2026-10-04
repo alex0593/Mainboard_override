@@ -34,7 +34,7 @@ internal val dominoSkins = listOf(
     SkinOption("copper", R.string.skin_copper), SkinOption("ice", R.string.skin_ice), SkinOption("aurora", R.string.skin_aurora),
     SkinOption("obsidian", R.string.skin_obsidian), SkinOption("ceramic", R.string.skin_ceramic),
     SkinOption("titanium", R.string.skin_titanium), SkinOption("jade", R.string.skin_jade), SkinOption("ruby", R.string.skin_ruby),
-    SkinOption("sapphire", R.string.skin_sapphire), SkinOption("amber", R.string.skin_amber), SkinOption("amethyst", R.string.skin_amethyst),
+    SkinOption("sapphire", R.string.skin_sapphire), SkinOption("amber", R.string.skin_amber), SkinOption("amethyst", R.string.skin_amethyst), SkinOption("biolum", R.string.skin_biolum), SkinOption("prisma", R.string.skin_prisma), SkinOption("quantum", R.string.skin_quantum),
 )
 internal val boardSkins = listOf(
     SkinOption("pcb", R.string.skin_pcb), SkinOption("blueprint", R.string.skin_blueprint),
@@ -43,7 +43,7 @@ internal val boardSkins = listOf(
     SkinOption("copper", R.string.skin_copper), SkinOption("aurora", R.string.skin_aurora),
     SkinOption("obsidian", R.string.skin_obsidian), SkinOption("ceramic", R.string.skin_ceramic),
     SkinOption("titanium", R.string.skin_titanium), SkinOption("jade", R.string.skin_jade), SkinOption("ruby", R.string.skin_ruby),
-    SkinOption("sapphire", R.string.skin_sapphire), SkinOption("amber", R.string.skin_amber), SkinOption("amethyst", R.string.skin_amethyst),
+    SkinOption("sapphire", R.string.skin_sapphire), SkinOption("amber", R.string.skin_amber), SkinOption("amethyst", R.string.skin_amethyst), SkinOption("biolum", R.string.skin_biolum), SkinOption("prisma", R.string.skin_prisma), SkinOption("quantum", R.string.skin_quantum),
 )
 
 internal fun scenarioLabel(id: String) = when (id) {
@@ -115,7 +115,8 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                     val equipped = skin.id == if (pcb) prefs.boardSkin else prefs.dominoSkin
                     Box(
                         Modifier.fillMaxWidth().heightIn(min = 240.dp).clip(RoundedCornerShape(14.dp))
-                            .border(1.dp, Cyan.copy(alpha = if (equipped) .72f else .28f), RoundedCornerShape(14.dp)),
+                            .border(1.dp, Cyan.copy(alpha = if (equipped) .72f else .28f), RoundedCornerShape(14.dp))
+                            .premiumCardBorder(skin.id),
                     ) {
                         androidx.compose.foundation.Image(
                             painter = androidx.compose.ui.res.painterResource(R.drawable.menu_skin_card_v1),
@@ -124,13 +125,22 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                             contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
                         )
                         Column(Modifier.fillMaxWidth().heightIn(min = 240.dp).padding(18.dp), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp, androidx.compose.ui.Alignment.CenterVertically)) {
-                            if (pcb) Board(BoardState(placed = listOf(PlacedDomino(Domino("sample", 0, 3), Position(1, 3), Orientation.HORIZONTAL))), skin.id, prefs.dominoSkin, emptySet(), modifier = Modifier.fillMaxWidth().height(88.dp), onCell = {}, previewOnly = true)
-                            else Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                DominoImage(Domino("preview1", 2, 5), Modifier.width(64.dp), skin = skin.id, previewOnly = true, artMax = 32.dp)
-                                DominoImage(Domino("preview2", 0, 6), Modifier.width(64.dp), skin = skin.id, previewOnly = true, artMax = 32.dp)
+                            if (pcb) Box(Modifier.fillMaxWidth().height(88.dp)) {
+                                Board(BoardState(placed = listOf(PlacedDomino(Domino("sample", 0, 3), Position(1, 3), Orientation.HORIZONTAL))), skin.id, prefs.dominoSkin, emptySet(), modifier = Modifier.fillMaxSize(), onCell = {}, previewOnly = true)
+                                PremiumGlowCanvas(skin.id, Modifier.matchParentSize())
+                            } else Box(Modifier.fillMaxWidth()) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    DominoImage(Domino("preview1", 2, 5), Modifier.width(64.dp), skin = skin.id, previewOnly = true, artMax = 32.dp)
+                                    DominoImage(Domino("preview2", 0, 6), Modifier.width(64.dp), skin = skin.id, previewOnly = true, artMax = 32.dp)
+                                }
+                                PremiumGlowCanvas(skin.id, Modifier.matchParentSize())
                             }
                             Text(stringResource(skin.label), Modifier.fillMaxWidth(), color = Cyan, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                            if (paid) Text(stringResource(R.string.skin_price, price), color = Warning, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 10.sp)
+                            if (paid) {
+    val priceText = stringResource(R.string.skin_price, price)
+    val animatedBadge = stringResource(R.string.skin_animated)
+    Text("$priceText $animatedBadge", color = Warning, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 10.sp)
+}
                             else Text(stringResource(R.string.skin_free), color = Cyan, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 10.sp)
                             MenuArtworkButton(
                                 label = if (equipped) stringResource(R.string.equipped) else if (owned) stringResource(R.string.equip) else stringResource(R.string.buy_credits, price),

@@ -21,5 +21,8 @@ internal fun boardSkinResource(skin: String, previewOnly: Boolean = false): Int?
     "copper" -> if (previewOnly) R.drawable.board_copper_preview else R.drawable.board_copper
     "aurora" -> if (previewOnly) R.drawable.board_aurora_preview else R.drawable.board_aurora
     "nebula" -> if (previewOnly) R.drawable.board_nebula_preview else R.drawable.board_nebula
+    "biolum" -> if (previewOnly) R.drawable.board_biolum_preview else R.drawable.board_biolum
+    "prisma" -> if (previewOnly) R.drawable.board_prisma_preview else R.drawable.board_prisma
+    "quantum" -> if (previewOnly) R.drawable.board_quantum_preview else R.drawable.board_quantum
     else -> null
 }
