@@ -139,15 +139,16 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                                 )
                                 AnimatedSkinFxWebp(skin.id, Modifier.matchParentSize())
                             } else Box(Modifier.fillMaxWidth()) {
-                                val preview = dominoShellResource(skin.id, previewOnly = true)
-                                // Single centered preview tile kept cheap for rapid recycled cards.
-                                val shell = if (preview != null) preview else R.drawable.domino_0_0
+                                // DominoImage stamps the pips over the blank themed shells; a plain
+                                // Image of the shell asset would look like a blank tile.
                                 Box(Modifier.fillMaxWidth().padding(4.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                                    androidx.compose.foundation.Image(
-                                        painter = androidx.compose.ui.res.painterResource(shell),
-                                        contentDescription = null,
+                                    DominoImage(
+                                        tile = Domino("preview", 6, 6),
                                         modifier = Modifier.width(64.dp).height(128.dp),
-                                        contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                                        orientation = Orientation.VERTICAL,
+                                        describe = false,
+                                        skin = skin.id,
+                                        previewOnly = true,
                                     )
                                     AnimatedSkinFxWebp(skin.id, Modifier.width(64.dp).height(128.dp))
                                 }
