@@ -21,7 +21,7 @@ from PIL import Image, ImageDraw
 
 FRAMES = 14
 DURATION_MS = 80
-SIZE = 512
+SIZE = 256
 
 HERE = Path(__file__).resolve().parent
 ORIGINALS = HERE / "originals"

@@ -3,20 +3,31 @@ package com.aela.mainboardoverride.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.withTransform
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.annotation.DrawableRes
+import androidx.compose.ui.res.stringResource
 import com.aela.mainboardoverride.R
 import com.aela.mainboardoverride.domain.Domino
 import com.aela.mainboardoverride.domain.Orientation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+
+import android.graphics.Bitmap
+import android.graphics.Paint
 
 private val kenneyDominoResources = arrayOf(
     intArrayOf(R.drawable.domino_0_0, R.drawable.domino_0_1, R.drawable.domino_0_2, R.drawable.domino_0_3, R.drawable.domino_0_4, R.drawable.domino_0_5, R.drawable.domino_0_6),
@@ -156,35 +167,69 @@ internal fun DominoImage(
     val customCircuit = skin == "circuit"
     val shell = dominoShellResource(skin, previewOnly)
     val resource = shell ?: dominoResource(tile.first, tile.second, skin)
-    val painter = if (artMax != null) smoothArtworkPainter(resource, artMax, artMax * 2) else painterResource(resource)
     val label = stringResource(R.string.domino_description, tile.first, tile.second)
     val horizontal = orientation == Orientation.HORIZONTAL
+    val density = LocalDensity.current
+    val context = LocalContext.current
+    // Per-instance cache: the shell/sprite decode plus pip stamping happens once per
+    // (skin, tile, size) instead of redrawing pip circles on every frame.
+    val cache = remember { HashMap<String, ImageBitmap>() }
     Canvas(modifier.aspectRatio(if (horizontal) 2f else .5f)
         .then(if (describe) Modifier.semantics { contentDescription = label } else Modifier)) {
         if (shell == null) drawRoundRect(Color.White, cornerRadius = androidx.compose.ui.geometry.CornerRadius(5.dp.toPx()))
         val shortSide = if (horizontal) minOf(size.height, size.width / 2) else minOf(size.width, size.height / 2)
         val spriteSize = Size(shortSide, shortSide * 2)
+        val artPx = artMax?.let { with(density) { it.roundToPx() } } ?: 0
+        val targetPx = maxOf(shortSide.toInt(), artPx)
+        val key = "$skin|${tile.first}|${tile.second}|$targetPx"
+        val stamped = cache.getOrPut(key) {
+            renderTile(context.resources, resource, targetPx, stampPips = shell != null, skin = skin, customCircuit = customCircuit, tile = tile)
+        }
         withTransform({
             translate(size.width / 2, size.height / 2)
             rotate(dominoAngle(tile.first, tile.second, orientation), pivot = androidx.compose.ui.geometry.Offset.Zero)
             translate(-spriteSize.width / 2, -spriteSize.height / 2)
         }) {
-            with(painter) { draw(spriteSize) }
-            if (shell != null) {
-                val pipRadius = spriteSize.width * .072f
-                val pipColor = dominoPipColor(skin)
-                fun drawPips(value: Int, half: Int) {
-                    cachedPips[value].forEach { (x, y) ->
-                        val center = Offset(spriteSize.width * x, spriteSize.height * (half * .5f + y * .5f))
-                        if (customCircuit) drawCircle(Cyan, pipRadius * 1.18f, center)
-                        if (skin == "aurora") drawCircle(Color(0xFF704500), pipRadius * 1.16f, center)
-                        drawCircle(pipColor, pipRadius, center)
-                    }
-                }
-                // dominoAngle already swaps the ports for descending pairs.
-                drawPips(minOf(tile.first, tile.second), 0)
-                drawPips(maxOf(tile.first, tile.second), 1)
-            }
+            with(BitmapPainter(stamped)) { draw(spriteSize) }
         }
     }
+}
+
+/** Decodes the sprite once and stamps the pips with the same rules as the old
+ * Canvas path (cachedPips positions, dominoPipColor, customCircuit/aurora halos). */
+private fun renderTile(
+    resources: android.content.res.Resources,
+    @DrawableRes resource: Int,
+    targetPx: Int,
+    stampPips: Boolean,
+    skin: String,
+    customCircuit: Boolean,
+    tile: Domino,
+): ImageBitmap {
+    val raw = android.graphics.BitmapFactory.decodeResource(resources, resource)
+    val w = targetPx.coerceAtLeast(1)
+    val h = w * 2
+    val scaled = if (raw.width == w && raw.height == h) raw else Bitmap.createScaledBitmap(raw, w, h, true)
+    // copy(..., mutable = true) gives a bitmap we can stamp pips on regardless of how
+    // BitmapFactory/ createScaledBitmap left the source.
+    val mutable = scaled.copy(Bitmap.Config.ARGB_8888, true)
+    if (stampPips) {
+        val pipRadius = w * .072f
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        android.graphics.Canvas(mutable).apply {
+            fun stamp(value: Int, half: Int) {
+                cachedPips[value].forEach { (x, y) ->
+                    val cx = w * x
+                    val cy = h * (half * .5f + y * .5f)
+                    if (customCircuit) { paint.color = Cyan.toArgb(); drawCircle(cx, cy, pipRadius * 1.18f, paint) }
+                    if (skin == "aurora") { paint.color = Color(0xFF704500).toArgb(); drawCircle(cx, cy, pipRadius * 1.16f, paint) }
+                    paint.color = dominoPipColor(skin).toArgb()
+                    drawCircle(cx, cy, pipRadius, paint)
+                }
+            }
+            stamp(minOf(tile.first, tile.second), 0)
+            stamp(maxOf(tile.first, tile.second), 1)
+        }
+    }
+    return mutable.asImageBitmap()
 }
