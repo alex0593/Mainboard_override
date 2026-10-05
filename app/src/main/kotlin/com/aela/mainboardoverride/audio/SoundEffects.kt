@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.PI
 import kotlin.math.exp
 import kotlin.math.sin
+import kotlin.math.tanh
 
 /** One-shot feedback sounds; every cue is synthesized, no assets. */
 enum class SoundCue(val durationMs: Long) {
@@ -262,12 +263,14 @@ class SoundEffects {
         return track
     }
 
+    // Soft saturates instead of a hard clamp: keeps the transient "pings" from
+    // crackling and gives the whole set a slightly warmer, analog feel.
     private fun render(cue: SoundCue): ShortArray {
         val count = (SAMPLE_RATE * cue.durationMs / 1_000).toInt().coerceAtLeast(1)
         val out = ShortArray(count)
         val wave = renderWave(cue, count)
         for (i in wave.indices) {
-            out[i] = (wave[i].coerceIn(-.9, .9) * Short.MAX_VALUE).toInt().toShort()
+            out[i] = (tanh(wave[i] * 1.15) * Short.MAX_VALUE * .92).toInt().toShort()
         }
         return out
     }
@@ -277,13 +280,16 @@ class SoundEffects {
     private fun renderWave(cue: SoundCue, count: Int): DoubleArray = when (cue) {
         SoundCue.Tick -> DoubleArray(count) { i ->
             val t = i.toDouble() / SAMPLE_RATE
-            ((noise(i.toLong()) - noise(i.toLong() - 1)) * exp(-t * 220.0) +
-                sin(TAU * 2400.0 * t) * exp(-t * 180.0) * .5) * .14
+            // Softer, more digital: a short filtered blip instead of a loud 2.4 kHz ring.
+            (sin(TAU * 1700.0 * t) * exp(-t * 260.0) * .7 +
+                noise(i.toLong()) * exp(-t * 400.0) * .10) * .06
         }
         SoundCue.Place -> DoubleArray(count) { i ->
             val t = i.toDouble() / SAMPLE_RATE
-            (sin(TAU * 180.0 * t) * exp(-t * 38.0) +
-                noise(i.toLong()) * exp(-t * 55.0) * .35) *
+            // FM pitch-drop reads as a digital lock click, not a physical knock.
+            val phase = (220.0 / 9.0) * (1.0 - exp(-t * 9.0)) + 70.0 * t
+            (sin(TAU * phase) * exp(-t * 42.0) * .8 +
+                noise(i.toLong()) * exp(-t * 90.0) * .15) *
                 attack(t, 1.0) * .5
         }
         SoundCue.Ping -> DoubleArray(count) { i ->
@@ -303,8 +309,10 @@ class SoundEffects {
         )
         SoundCue.Kill -> DoubleArray(count) { i ->
             val t = i.toDouble() / SAMPLE_RATE
-            (noise(i.toLong()) * exp(-t * 11.0) +
-                sin(TAU * (60.0 * t + 360.0 * (1.0 - exp(-t * 7.0)) / 7.0)) * exp(-t * 9.0)) *
+            // Descending FM + quick filtered noise: a sterile "zap", not a body hit.
+            val phase = (360.0 / 6.0) * (1.0 - exp(-t * 6.0)) + 55.0 * t
+            (sin(TAU * phase) * exp(-t * 12.0) +
+                noise(i.toLong()) * exp(-t * 14.0) * .25) *
                 attack(t, 1.0) * .5
         }
         SoundCue.Bridge -> notes(
@@ -342,8 +350,9 @@ class SoundEffects {
         }
         SoundCue.Turn -> DoubleArray(count) { i ->
             val t = i.toDouble() / SAMPLE_RATE
-            (noise(i.toLong()) * exp(-t * 70.0) * .6 +
-                sin(TAU * 120.0 * t) * exp(-t * 45.0)) * attack(t, 1.0) * .45
+            (tanh(sin(TAU * 120.0 * t) * 2.2) * .6 +
+                sin(TAU * 60.0 * t) * .5 +
+                noise(i.toLong()) * exp(-t * 120.0) * .3) * attack(t, 1.0) * exp(-t * 40.0) * .45
         }
         SoundCue.TraceWarning -> blips(
             count,
@@ -365,7 +374,8 @@ class SoundEffects {
         )
         SoundCue.Boot -> DoubleArray(count) { i ->
             val t = i.toDouble() / SAMPLE_RATE
-            (sin(TAU * (120.0 * t + 720.0 * (1.0 - exp(-t * 5.0)) / 5.0)) * exp(-t * 3.2) +
+            // Ascending square sweep: a chip "power up" ramp.
+            (tanh(sin(TAU * (180.0 * t + 310.0 * t * t)) * 2.0) * exp(-t * 4.0) +
                 noise(i.toLong()) * exp(-t * 120.0) * .3) * attack(t, 2.0) * .38
         }
         SoundCue.Coin -> notes(
@@ -396,7 +406,7 @@ class SoundEffects {
             for ((start, frequency) in sequence) {
                 val local = t - start
                 if (local >= 0.0) {
-                    voice += (sin(TAU * frequency * local) + .3 * sin(TAU * frequency * 2.0 * local)) *
+                    voice += tanh(sin(TAU * frequency * local) * 1.6) *
                         (local * 250.0).coerceIn(0.0, 1.0) * exp(-local * decay)
                 }
             }
@@ -411,7 +421,7 @@ class SoundEffects {
             for ((start, frequency) in sequence) {
                 val local = t - start
                 if (local in 0.0..blipLength) {
-                    voice += (sin(TAU * frequency * local) + .3 * sin(TAU * frequency * 3.0 * local)) *
+                    voice += tanh(sin(TAU * frequency * local) * 2.0) *
                         (local * 500.0).coerceIn(0.0, 1.0) * exp(-local * 30.0)
                 }
             }
