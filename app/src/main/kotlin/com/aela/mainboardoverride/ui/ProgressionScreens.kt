@@ -94,18 +94,21 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
     val prefs = state.preferences
     CircuitBackground {
         Column(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            val dominoChip = remember { MutableInteractionSource() }
+            val boardChip = remember { MutableInteractionSource() }
             ProgressionHeader(stringResource(R.string.store), onBack) {
-                Text(stringResource(R.string.credit_balance, animatedCount(prefs.credits)), color = Warning, fontSize = 12.sp)
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                val dominoChip = remember { MutableInteractionSource() }
-                val boardChip = remember { MutableInteractionSource() }
-                FilterChip(selected = !pcb, onClick = { pcb = false }, interactionSource = dominoChip,
-                    modifier = Modifier.pressFeedback(dominoChip, label = "skin filter", pressedScale = .96f),
-                    label = { Text(stringResource(R.string.domino_skin)) })
-                FilterChip(selected = pcb, onClick = { pcb = true }, interactionSource = boardChip,
-                    modifier = Modifier.pressFeedback(boardChip, label = "skin filter", pressedScale = .96f),
-                    label = { Text(stringResource(R.string.board_skin)) })
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                ) {
+                    Text(stringResource(R.string.credit_balance, animatedCount(prefs.credits)), color = Warning, fontSize = 12.sp)
+                    FilterChip(selected = !pcb, onClick = { pcb = false }, interactionSource = dominoChip,
+                        modifier = Modifier.pressFeedback(dominoChip, label = "skin filter", pressedScale = .96f),
+                        label = { Text(stringResource(R.string.domino_skin)) })
+                    FilterChip(selected = pcb, onClick = { pcb = true }, interactionSource = boardChip,
+                        modifier = Modifier.pressFeedback(boardChip, label = "skin filter", pressedScale = .96f),
+                        label = { Text(stringResource(R.string.board_skin)) })
+                }
             }
             LazyVerticalGrid(columns = GridCells.Adaptive(220.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(if (pcb) boardSkins else dominoSkins, key = { it.id }) { skin ->
