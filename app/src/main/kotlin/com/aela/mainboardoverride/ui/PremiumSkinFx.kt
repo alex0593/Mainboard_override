@@ -59,7 +59,7 @@ internal fun premiumSkinFx(id: String): SkinFx? {
     val style = premiumFx[id] ?: return null
     if (id !in Rewards.premiumSkins) return null
     val period = when (style) {
-        SkinFxStyle.SWEEP -> 2600
+        SkinFxStyle.SWEEP -> 3400
         SkinFxStyle.PULSE -> 3200
         SkinFxStyle.DRIFT -> 4600
         SkinFxStyle.TWINKLE -> 2400
@@ -96,15 +96,15 @@ private fun PremiumGlowLayer(fx: SkinFx, modifier: Modifier = Modifier) {
     }
 }
 
-/** A diagonal sheen band sweeping across the field; frozen mid-crossing under reduced motion. */
+/** A soft diagonal sheen drifting across the field; frozen mid-crossing under reduced motion. */
 private fun DrawScope.drawSweep(accent: Color, t: Float) {
-    val band = size.width * .35f
+    val band = size.width * .24f
     val x0 = -band + (size.width + band * 2f) * t
-    rotate(16f, Offset(size.width / 2f, size.height / 2f)) {
+    rotate(10f, Offset(size.width / 2f, size.height / 2f)) {
         drawRect(
             Brush.linearGradient(
                 0f to accent.copy(alpha = 0f),
-                .5f to accent.copy(alpha = .22f),
+                .5f to accent.copy(alpha = .10f),
                 1f to accent.copy(alpha = 0f),
                 start = Offset(x0, 0f),
                 end = Offset(x0 + band, 0f),

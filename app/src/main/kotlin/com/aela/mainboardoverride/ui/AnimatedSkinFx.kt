@@ -49,7 +49,7 @@ internal fun AnimatedSkinFxWebp(skin: String?, modifier: Modifier = Modifier) {
         PremiumGlowCanvas(skin, modifier)
         return
     }
-    AnimatedWebpView(res, modifier)
+    AnimatedWebpView(res, modifier, opacity = 0.55f)
 }
 
 /**
@@ -66,7 +66,7 @@ internal fun AnimatedAmbientWebp(tint: Color, modifier: Modifier = Modifier) {
 /** Hosts one looping AnimatedImageDrawable; starts and stops with the lifecycle. */
 @androidx.annotation.RequiresApi(28)
 @Composable
-private fun AnimatedWebpView(@DrawableRes source: Int, modifier: Modifier = Modifier, tint: Color? = null) {
+private fun AnimatedWebpView(@DrawableRes source: Int, modifier: Modifier = Modifier, tint: Color? = null, opacity: Float = 1f) {
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val running = lifecycleState == Lifecycle.State.RESUMED
     AndroidView(
@@ -76,6 +76,7 @@ private fun AnimatedWebpView(@DrawableRes source: Int, modifier: Modifier = Modi
                 isClickable = false
                 isFocusable = false
                 scaleType = ImageView.ScaleType.FIT_XY
+                this.alpha = opacity
                 val decoded = ImageDecoder.decodeDrawable(
                     ImageDecoder.createSource(context.resources, source)
                 )
