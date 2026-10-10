@@ -164,7 +164,7 @@ class PuzzleTutorialUiTest {
 
     /**
      * Previews are now baked PNGs layered over the equipped board skin; this
-     * pins their contract (every scenario resolves, 640 x 400 with alpha) and
+     * pins their contract (every scenario resolves, 1280 x 800 with alpha) and
      * the classic fallback. The artwork contains no honeypots or solutions:
      * [PreviewOverlayGeometryTest] guards the geometry dump that omits them.
      */
@@ -172,8 +172,8 @@ class PuzzleTutorialUiTest {
         for (scenario in ScenarioCatalog.all) {
             val bitmap = BitmapFactory.decodeResource(app.resources, scenarioOverlayResource(scenario.id))
             assertNotNull(bitmap)
-            assertEquals(640, bitmap!!.width)
-            assertEquals(400, bitmap.height)
+            assertEquals(1280, bitmap!!.width)
+            assertEquals(800, bitmap.height)
             assertTrue(bitmap.hasAlpha())
         }
         assertEquals(scenarioOverlayResource("classic"), scenarioOverlayResource("unknown-id"))

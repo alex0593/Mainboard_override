@@ -61,8 +61,8 @@ class ScenarioArtworkUiTest {
             assertEquals(scenarioOverlayResource("classic"), scenarioOverlayResource("unknown"))
             overlays.forEach { resource ->
                 val bitmap = BitmapFactory.decodeResource(app.resources, resource)
-                assertEquals(640, bitmap.width)
-                assertEquals(400, bitmap.height)
+                assertEquals(1280, bitmap.width)
+                assertEquals(800, bitmap.height)
                 assertTrue(bitmap.hasAlpha())
                 bitmap.recycle()
             }
