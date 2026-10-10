@@ -96,13 +96,17 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                     val price = Rewards.skinPrice(skin.id)
                     val owned = !paid || Rewards.ownedKey(pcb, skin.id) in prefs.ownedSkins
                     val equipped = skin.id == if (pcb) prefs.boardSkin else prefs.dominoSkin
+                    // Motion on premium cards only where it means something: equipped or already
+                    // owned. Locked/for-sale cards stay static so scrolling the gallery stays cheap.
+                    val animate = owned || equipped
                     // Fixed anatomy keeps every card the same size: content keeps a 5dp inset from the
-                    // card edges, preview 100dp, label, status line, reserved line and button at the
-                    // bottom. 240dp (20% smaller than before) still fits the action on screen.
+                    // card edges, a 100dp preview frame holding a 40×80 tile, label, status line,
+                    // reserved line and button at the bottom. 240dp (20% smaller than before) still
+                    // fits the action on screen.
                     Box(
                         Modifier.fillMaxWidth().height(240.dp).clip(RoundedCornerShape(14.dp))
                             .border(1.dp, Cyan.copy(alpha = if (equipped) .72f else .28f), RoundedCornerShape(14.dp))
-                            .premiumCardBorder(skin.id),
+                            .premiumCardBorder(if (animate) skin.id else null),
                     ) {
                         androidx.compose.foundation.Image(
                             painter = androidx.compose.ui.res.painterResource(R.drawable.menu_skin_card_v1),
@@ -125,19 +129,19 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                                         modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
                                         contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
                                     )
-                                    AnimatedSkinFxWebp(skin.id, Modifier.matchParentSize())
+                                    AnimatedSkinFxWebp(if (animate) skin.id else null, Modifier.matchParentSize())
                                 } else {
                                     // DominoImage stamps the pips over the blank themed shells; a plain
                                     // Image of the shell asset would look like a blank tile.
                                     DominoImage(
                                         tile = Domino("preview", 6, 6),
-                                        modifier = Modifier.width(50.dp).height(100.dp),
+                                        modifier = Modifier.width(40.dp).height(80.dp),
                                         orientation = Orientation.VERTICAL,
                                         describe = false,
                                         skin = skin.id,
                                         previewOnly = true,
                                     )
-                                    AnimatedSkinFxWebp(skin.id, Modifier.width(50.dp).height(100.dp))
+                                    AnimatedSkinFxWebp(if (animate) skin.id else null, Modifier.width(40.dp).height(80.dp))
                                 }
                             }
                             Text(stringResource(skin.label), Modifier.fillMaxWidth(), color = Cyan, textAlign = androidx.compose.ui.text.style.TextAlign.Center, maxLines = 1)

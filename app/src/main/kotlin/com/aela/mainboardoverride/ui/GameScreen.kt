@@ -165,19 +165,31 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                 Box(Modifier.fillMaxSize()) {
                   Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Box(Modifier.weight(1f).fillMaxHeight()) {
-                            Board(
-                                board = game.board,
-                                skin = state.preferences.boardSkin,
-                                dominoSkin = state.preferences.dominoSkin,
-                                legalOrigins = state.selectedScriptId?.let {
+                            // The engine search (legalPlacements walks every canPlace candidate)
+                            // depends only on the snapshot and the current selection, so it runs on
+                            // selection/orientation changes instead of on every recomposition
+                            // driven by the board glow animation.
+                            val legalOrigins = remember(
+                                game, state.selectedScriptId, state.bridgeHorizontal,
+                                state.selectedDominoId, state.rotationSteps,
+                            ) {
+                                state.selectedScriptId?.let {
                                     GameEngine.scriptTargets(game, it, state.bridgeHorizontal)
-                                } ?: state.selectedDominoId?.takeIf { !game.tilePlacedThisTurn && state.selectedScriptId == null && game.result == null }?.let { id ->
+                                } ?: state.selectedDominoId?.takeIf {
+                                    !game.tilePlacedThisTurn && state.selectedScriptId == null && game.result == null
+                                }?.let { id ->
                                     GameEngine.legalPlacements(game).filter {
                                         it.dominoId == id &&
                                             it.orientation == (if (state.rotationSteps % 2 == 0) Orientation.HORIZONTAL else Orientation.VERTICAL) &&
                                             (it.rotated == (state.rotationSteps >= 2) || game.dominoHand.any { tile -> tile.id == id && tile.first == tile.second })
                                     }.map { it.origin }.toSet()
-                                }.orEmpty(),
+                                }.orEmpty()
+                            }
+                            Board(
+                                board = game.board,
+                                skin = state.preferences.boardSkin,
+                                dominoSkin = state.preferences.dominoSkin,
+                                legalOrigins = legalOrigins,
                                 target = null,
                                 modifier = Modifier.fillMaxSize(),
                                 onCell = actions::placeAt,

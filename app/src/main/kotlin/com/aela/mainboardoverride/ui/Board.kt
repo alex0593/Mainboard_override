@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -72,6 +74,14 @@ internal fun Board(
     // destruction feedback that nothing was killed.
     sessionKey: Any? = null,
 ) {
+    // One shared breathing clock for every legal/target/pending cell: each cell reads the
+    // alpha in its draw phase, so the glow animates without recomposing every board cell.
+    val glowPhase = if (LocalReducedMotion.current) null else rememberInfiniteTransition(label = "board-glow")
+        .animateFloat(
+            .55f, 1f,
+            infiniteRepeatable(tween(700, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "board-glow-alpha",
+        )
     val boardArtwork = boardSkinResource(skin, previewOnly)
     // Data nodes are only swept when the connected network covers them, so one BFS per
     // snapshot (not per cell) decides which nodes read as secured.
@@ -306,7 +316,7 @@ internal fun Board(
                 }
             } else for (y in 0 until board.height) for (x in 0 until board.width) {
                 val position = Position(x, y)
-                BoardCell(board, position, cell, position in legalOrigins, position == target, position in coveredNodes, onCell)
+                BoardCell(board, position, cell, position in legalOrigins, position == target, position in coveredNodes, glowPhase, onCell)
             }
             // Bursts cover the destroyed footprint, which is two cells for a removed domino.
             // Pickups reuse the same effect in cyan over the single collected cell.
@@ -384,7 +394,10 @@ private fun PortSprite(resource: Int, label: String, row: Int, size: Dp, start: 
 }
 
 @Composable
-private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Boolean, target: Boolean, nodeCovered: Boolean, onCell: (Position) -> Unit) {
+private fun BoardCell(
+    board: BoardState, position: Position, size: Dp, legal: Boolean, target: Boolean,
+    nodeCovered: Boolean, glowPhase: State<Float>?, onCell: (Position) -> Unit,
+) {
     val value = board.valueAt(position)
     val isPlaced = board.placed.any { it.valueAt(position) != null }
     val isStart = position == board.start
@@ -422,18 +435,6 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
         legal -> Terminal.copy(alpha = .16f)
         else -> Color.Transparent
     }
-    val reducedMotion = LocalReducedMotion.current
-    // Legal, target and pending data nodes breathe so the next action reads at a glance;
-    // reduced motion keeps the border steady instead of moving it.
-    val glowAlpha = if (legal || target || (waypoint && !nodeCovered)) {
-        if (reducedMotion) 1f else {
-            rememberInfiniteTransition(label = "cell-glow").animateFloat(
-                .55f, 1f,
-                infiniteRepeatable(tween(700, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-                label = "cell-glow-alpha",
-            ).value
-        }
-    } else 1f
     Box(
         Modifier
             .offset(x = size * position.x, y = size * position.y)
@@ -441,7 +442,30 @@ private fun BoardCell(board: BoardState, position: Position, size: Dp, legal: Bo
             .testTag("board-cell-${position.x}-${position.y}")
             .padding(2.dp)
             .background(if (isPlaced) Color.Transparent else placedColor.copy(alpha = if (value != null || firewall || trap || lock != null || buff != null || waypoint) .22f else placedColor.alpha))
-            .then(if (target) Modifier.border(3.dp, Warning.copy(alpha = glowAlpha)) else if (lock != null) Modifier.border(2.dp, Warning) else if (legal) Modifier.border(1.dp, Terminal.copy(alpha = glowAlpha)) else if (waypoint && !nodeCovered) Modifier.border(1.dp, Warning.copy(alpha = glowAlpha)) else Modifier)
+            // The breathing border reads the shared glow only in the draw phase, so the
+            // animation invalidates the draw and never recomposes the board cells. Drawing
+            // after the content mirrors Modifier.border, which paints over the cell chips.
+            .drawWithContent {
+                drawContent()
+                val stroke: Dp
+                val color: Color
+                if (target) {
+                    stroke = 3.dp; color = Warning.copy(alpha = glowPhase?.value ?: 1f)
+                } else if (lock != null) {
+                    stroke = 2.dp; color = Warning
+                } else if (legal) {
+                    stroke = 1.dp; color = Terminal.copy(alpha = glowPhase?.value ?: 1f)
+                } else if (waypoint && !nodeCovered) {
+                    stroke = 1.dp; color = Warning.copy(alpha = glowPhase?.value ?: 1f)
+                } else {
+                    stroke = 0.dp; color = Color.Transparent
+                }
+                if (stroke > 0.dp) {
+                    val w = stroke.toPx()
+                    val bounds = this.size
+                    drawRect(color, topLeft = Offset(w / 2f, w / 2f), size = Size(bounds.width - w, bounds.height - w), style = Stroke(w))
+                }
+            }
             .clickable(role = Role.Button) { onCell(position) }
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,

@@ -3,6 +3,11 @@ package com.aela.mainboardoverride.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +24,13 @@ import com.aela.mainboardoverride.domain.Domino
 internal fun HardwareHand(tiles: List<Domino>, selected: String?, skin: String,
     modifier: Modifier = Modifier, highlighted: String? = null, tagPrefix: String = "game-tile",
     onSelect: (String) -> Unit) {
+    // One idle clock for the whole hand: each tile offsets itself by its index, so the panel
+    // runs off a single animation instead of one frame clock per tile.
+    val handPhase = rememberInfiniteTransition(label = "hand-idle").animateFloat(
+        0f, 2f * Math.PI.toFloat(),
+        infiniteRepeatable(tween(2200, easing = LinearEasing)),
+        label = "hand-idle-phase",
+    )
     Surface(modifier.height(IntrinsicSize.Min).testTag("hardware-panel"), shape = RoundedCornerShape(8.dp),
         color = Panel, border = BorderStroke(1.dp, Cyan.copy(alpha = .4f))) {
         Column(Modifier.padding(2.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -26,7 +38,7 @@ internal fun HardwareHand(tiles: List<Domino>, selected: String?, skin: String,
             Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                 tiles.forEachIndexed { index, tile ->
                     DominoView(tile, selected == tile.id, skin, highlighted == tile.id,
-                        Modifier.width(48.dp).testTag("$tagPrefix-${tile.id}"), onClick = { onSelect(tile.id) }, index = index)
+                        Modifier.width(48.dp).testTag("$tagPrefix-${tile.id}"), onClick = { onSelect(tile.id) }, index = index, phase = handPhase)
                 }
             }
         }

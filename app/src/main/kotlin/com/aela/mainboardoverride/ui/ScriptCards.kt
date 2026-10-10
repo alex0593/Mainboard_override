@@ -33,7 +33,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.State
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.graphicsLayer
 import kotlin.math.sin
@@ -90,29 +90,34 @@ private fun scriptArtwork(type: ScriptType): Int? = when (type) {
 }
 
 @Composable
-internal fun DominoView(tile: Domino, selected: Boolean, skin: String = "kenney", highlighted: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit, index: Int = 0) {
+internal fun DominoView(tile: Domino, selected: Boolean, skin: String = "kenney", highlighted: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit, index: Int = 0, phase: State<Float>? = null) {
     val label = stringResource(R.string.domino_description, tile.first, tile.second)
     val reducedMotion = LocalReducedMotion.current
-    // One idle clock per tile, read only in the draw phase: every hand tile drifts on its own
-    // staggered phase, and the selected tile's background breathes at the same rate.
-    val transition = rememberInfiniteTransition(label = "tile-idle")
-    val phase = transition.animateFloat(
-        0f, 2f * Math.PI.toFloat(),
-        infiniteRepeatable(tween(2200, easing = LinearEasing)),
-        label = "tile-idle-phase",
-    )
+    // The idle clock is read only in the draw phase: every hand tile drifts on its own staggered
+    // phase and the selected tile's background breathes at the same rate. The hand passes one
+    // shared [phase] so the panel runs off a single animation; standalone callers get their own.
+    val idlePhase = phase ?: rememberIdlePhase()
     Row(
         modifier.widthIn(min = 42.dp).heightIn(min = 64.dp).semantics { contentDescription = label; this.selected = selected }.background(Void)
             .drawBehind {
                 if (selected) drawRect(
-                    Terminal.copy(alpha = if (reducedMotion) .24f else .16f + .14f * (0.5f + 0.5f * sin(phase.value + index * 1.3f)))
+                    Terminal.copy(alpha = if (reducedMotion) .24f else .16f + .14f * (0.5f + 0.5f * sin(idlePhase.value + index * 1.3f)))
                 )
             }
             .border(1.dp, if (highlighted) Warning else if (selected) Terminal else Muted).pressable(role = Role.Button, label = "hand tile", onClick = onClick).padding(3.dp)
-            .graphicsLayer { translationY = if (reducedMotion) 0f else sin(phase.value + index * 1.3f) * 3.dp.toPx() },
+            .graphicsLayer { translationY = if (reducedMotion) 0f else sin(idlePhase.value + index * 1.3f) * 3.dp.toPx() },
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
             DominoImage(tile, Modifier.height(64.dp).width(32.dp), Orientation.VERTICAL, describe = false, skin = skin, artMax = 32.dp)
     }
 }
+
+/** A tile's own idle clock, only used by callers that do not share the hand's phase. */
+@Composable
+private fun rememberIdlePhase(): State<Float> = rememberInfiniteTransition(label = "tile-idle")
+    .animateFloat(
+        0f, 2f * Math.PI.toFloat(),
+        infiniteRepeatable(tween(2200, easing = LinearEasing)),
+        label = "tile-idle-phase",
+    )
