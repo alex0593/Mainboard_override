@@ -231,4 +231,8 @@
     <string name="challenge_rules_banned">Rule: no %1$s this challenge</string>
     <string name="challenge_rules_both">Rule: max %1$d turns and %2$d trace</string>
     <string name="challenge_rules_nodes">Rule: sweep %1$d data nodes before extraction</string>
+    <string name="settings_game">GAME SETTINGS</string>
+    <string name="settings_volume">VOLUME / SYSTEM</string>
+    <string name="about_decor">&gt; SYSTEM ONLINE // ALL SYSTEMS NOMINAL</string>
+    <string name="record_empty">NO RECORD YET</string>
 </resources>

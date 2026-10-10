@@ -2,34 +2,32 @@ package com.aela.mainboardoverride.ui
 
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.material3.Slider
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.aela.mainboardoverride.MainViewModel
 import com.aela.mainboardoverride.GameUiState
+import com.aela.mainboardoverride.MainViewModel
 import com.aela.mainboardoverride.R
 
 @Composable
@@ -48,47 +46,70 @@ internal fun SettingsScreen(state: GameUiState, actions: MainViewModel, onBack: 
         }.getOrNull()
     }
     CircuitBackground {
-        Column(Modifier.fillMaxSize().padding(36.dp).verticalScroll(rememberScrollState())) {
-            Text(stringResource(R.string.settings), color = Terminal, fontSize = 32.sp, fontWeight = FontWeight.Black)
-            Spacer(Modifier.height(20.dp))
-            Text(stringResource(R.string.language), color = Cyan)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TerminalButton(stringResource(R.string.spanish), { actions.setLanguage("es") }, Modifier.weight(1f), state.preferences.language == "es")
-                TerminalButton(stringResource(R.string.english), { actions.setLanguage("en") }, Modifier.weight(1f), state.preferences.language == "en")
-            }
-            SettingSwitch(stringResource(R.string.audio), state.preferences.audioEnabled, actions::setAudio)
-            VolumeSlider(stringResource(R.string.music_volume), state.preferences.musicVolume, actions::setMusicVolume)
-            VolumeSlider(stringResource(R.string.sfx_volume), state.preferences.sfxVolume, actions::setSfxVolume)
-            SettingSwitch(stringResource(R.string.vibration), state.preferences.vibrationEnabled, actions::setVibration)
-            SettingSwitch(stringResource(R.string.reduced_motion), state.preferences.reducedMotion, actions::setReducedMotion)
-            SettingSwitch(stringResource(R.string.context_help), state.preferences.contextHelpEnabled, actions::setContextHelpEnabled)
-            Spacer(Modifier.height(20.dp))
-            SmallButton(stringResource(R.string.back), onBack)
-            versionName?.let {
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    stringResource(R.string.app_version, it),
-                    color = Muted,
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 12.sp,
-                )
+        AppWindow(header = { ArtHeader(stringResource(R.string.settings), onBack) }) {
+            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SettingsPanel(stringResource(R.string.settings_game), Modifier.weight(1f)) {
+                        Text(stringResource(R.string.language), color = Cyan, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TerminalButton(
+                                stringResource(R.string.spanish), { actions.setLanguage("es") },
+                                Modifier.weight(1f), primary = state.preferences.language == "es",
+                            )
+                            TerminalButton(
+                                stringResource(R.string.english), { actions.setLanguage("en") },
+                                Modifier.weight(1f), primary = state.preferences.language == "en",
+                            )
+                        }
+                        Row(Modifier.fillMaxWidth()) {
+                            CompactSwitch(stringResource(R.string.audio), state.preferences.audioEnabled, actions::setAudio, Modifier.weight(1f))
+                            CompactSwitch(stringResource(R.string.vibration), state.preferences.vibrationEnabled, actions::setVibration, Modifier.weight(1f))
+                        }
+                        Row(Modifier.fillMaxWidth()) {
+                            CompactSwitch(stringResource(R.string.reduced_motion), state.preferences.reducedMotion, actions::setReducedMotion, Modifier.weight(1f))
+                            CompactSwitch(stringResource(R.string.context_help), state.preferences.contextHelpEnabled, actions::setContextHelpEnabled, Modifier.weight(1f))
+                        }
+                    }
+                    SettingsPanel(stringResource(R.string.settings_volume), Modifier.weight(1f)) {
+                        VolumeSlider(stringResource(R.string.music_volume), state.preferences.musicVolume, actions::setMusicVolume)
+                        VolumeSlider(stringResource(R.string.sfx_volume), state.preferences.sfxVolume, actions::setSfxVolume)
+                    }
+                }
+                AboutStrip(versionName, state)
             }
         }
     }
 }
 
+/** Terminal-styled panel with a cyan border, used to split settings content into bounded panes. */
 @Composable
-private fun SettingSwitch(label: String, value: Boolean, onChange: (Boolean) -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, Modifier.weight(1f), color = Color.White)
+private fun SettingsPanel(title: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = Panel,
+        border = BorderStroke(1.dp, Cyan.copy(alpha = .35f)),
+    ) {
+        Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(title, color = Cyan, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+            HorizontalDivider(color = Muted.copy(alpha = .3f))
+            content()
+        }
+    }
+}
+
+/** Half-width switch row so the four toggles fit a two-column grid without overflow. */
+@Composable
+private fun CompactSwitch(label: String, value: Boolean, onChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+    Row(modifier.padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, Modifier.weight(1f), color = Color.White, fontSize = 11.sp)
         Switch(checked = value, onCheckedChange = onChange)
     }
-    HorizontalDivider(color = Muted.copy(alpha = .3f))
 }
 
 @Composable
 private fun VolumeSlider(label: String, value: Float, onChange: (Float) -> Unit) {
-    Column(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+    Column(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(label, Modifier.weight(1f), color = Color.White)
             Text(
@@ -100,5 +121,36 @@ private fun VolumeSlider(label: String, value: Float, onChange: (Float) -> Unit)
         }
         Slider(value = value, onValueChange = onChange, valueRange = 0f..1f)
     }
-    HorizontalDivider(color = Muted.copy(alpha = .3f))
+}
+
+/** Full-width bottom strip with version, credit balance and the decorative system line. */
+@Composable
+private fun AboutStrip(versionName: String?, state: GameUiState) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        color = Panel,
+        border = BorderStroke(1.dp, Cyan.copy(alpha = .25f)),
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+        ) {
+            versionName?.let {
+                Text(
+                    stringResource(R.string.app_version, it),
+                    color = Muted, fontFamily = FontFamily.Monospace, fontSize = 12.sp,
+                )
+            }
+            Text(
+                stringResource(R.string.credit_balance, state.preferences.credits),
+                color = Warning, fontFamily = FontFamily.Monospace, fontSize = 12.sp,
+            )
+            Text(
+                stringResource(R.string.about_decor),
+                color = Cyan, fontFamily = FontFamily.Monospace, fontSize = 12.sp,
+            )
+        }
+    }
 }

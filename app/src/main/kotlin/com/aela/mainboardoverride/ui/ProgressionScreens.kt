@@ -63,27 +63,7 @@ internal fun ProgressionHeader(
     counter: String? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
-    Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))) {
-        androidx.compose.foundation.Image(
-            painter = androidx.compose.ui.res.painterResource(R.drawable.menu_header_v1),
-            contentDescription = null,
-            modifier = Modifier.matchParentSize(),
-            contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
-        )
-        Row(
-            Modifier.fillMaxWidth().heightIn(min = 72.dp).padding(horizontal = 24.dp, vertical = 12.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            MetalTitle(title, Modifier.weight(1f), fontSize = 20.sp)
-            counter?.let { Text(it, color = Warning, fontSize = 12.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace) }
-            trailing?.invoke()
-            MenuArtworkButton(
-                stringResource(R.string.back), onBack, compact = true, fillWidth = false,
-                modifier = Modifier.widthIn(min = 92.dp).heightIn(min = 48.dp),
-            )
-        }
-    }
+    ArtHeader(title = title, onBack = onBack, counter = counter, trailing = trailing)
 }
 
 @Composable
@@ -116,8 +96,11 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                     val price = Rewards.skinPrice(skin.id)
                     val owned = !paid || Rewards.ownedKey(pcb, skin.id) in prefs.ownedSkins
                     val equipped = skin.id == if (pcb) prefs.boardSkin else prefs.dominoSkin
+                    // Fixed anatomy keeps every card the same size: content keeps a 5dp inset from the
+                    // card edges, preview 100dp, label, status line, reserved line and button at the
+                    // bottom. 240dp (20% smaller than before) still fits the action on screen.
                     Box(
-                        Modifier.fillMaxWidth().heightIn(min = 240.dp).clip(RoundedCornerShape(14.dp))
+                        Modifier.fillMaxWidth().height(240.dp).clip(RoundedCornerShape(14.dp))
                             .border(1.dp, Cyan.copy(alpha = if (equipped) .72f else .28f), RoundedCornerShape(14.dp))
                             .premiumCardBorder(skin.id),
                     ) {
@@ -127,39 +110,47 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                             modifier = Modifier.matchParentSize(),
                             contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
                         )
-                        Column(Modifier.fillMaxWidth().heightIn(min = 240.dp).padding(18.dp), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp, androidx.compose.ui.Alignment.CenterVertically)) {
-                            if (pcb) Box(Modifier.fillMaxWidth().height(88.dp)) {
-                                // Lightweight preview: render the baked skin preview directly instead of composing a full Board.
-                                androidx.compose.foundation.Image(
-                                    painter = androidx.compose.ui.res.painterResource(
-                                        boardSkinResource(skin.id, previewOnly = true)!!),
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
-                                    contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
-                                )
-                                AnimatedSkinFxWebp(skin.id, Modifier.matchParentSize())
-                            } else Box(Modifier.fillMaxWidth()) {
-                                // DominoImage stamps the pips over the blank themed shells; a plain
-                                // Image of the shell asset would look like a blank tile.
-                                Box(Modifier.fillMaxWidth().padding(4.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                        Column(
+                            Modifier.fillMaxSize().padding(5.dp),
+                            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp, androidx.compose.ui.Alignment.CenterVertically),
+                        ) {
+                            Box(Modifier.fillMaxWidth().height(100.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                                if (pcb) {
+                                    // Lightweight preview: render the baked skin preview directly instead of composing a full Board.
+                                    androidx.compose.foundation.Image(
+                                        painter = androidx.compose.ui.res.painterResource(
+                                            boardSkinResource(skin.id, previewOnly = true)!!),
+                                        contentDescription = null,
+                                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
+                                        contentScale = androidx.compose.ui.layout.ContentScale.FillBounds,
+                                    )
+                                    AnimatedSkinFxWebp(skin.id, Modifier.matchParentSize())
+                                } else {
+                                    // DominoImage stamps the pips over the blank themed shells; a plain
+                                    // Image of the shell asset would look like a blank tile.
                                     DominoImage(
                                         tile = Domino("preview", 6, 6),
-                                        modifier = Modifier.width(64.dp).height(128.dp),
+                                        modifier = Modifier.width(50.dp).height(100.dp),
                                         orientation = Orientation.VERTICAL,
                                         describe = false,
                                         skin = skin.id,
                                         previewOnly = true,
                                     )
-                                    AnimatedSkinFxWebp(skin.id, Modifier.width(64.dp).height(128.dp))
+                                    AnimatedSkinFxWebp(skin.id, Modifier.width(50.dp).height(100.dp))
                                 }
                             }
-                            Text(stringResource(skin.label), Modifier.fillMaxWidth(), color = Cyan, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                            Text(stringResource(skin.label), Modifier.fillMaxWidth(), color = Cyan, textAlign = androidx.compose.ui.text.style.TextAlign.Center, maxLines = 1)
                             if (paid) {
-    val priceText = stringResource(R.string.skin_price, price)
-    val animatedBadge = stringResource(R.string.skin_animated)
-    Text("$priceText $animatedBadge", color = Warning, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 10.sp)
-}
-                            else Text(stringResource(R.string.skin_free), color = Cyan, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 10.sp)
+                                val priceText = stringResource(R.string.skin_price, price)
+                                val animatedBadge = stringResource(R.string.skin_animated)
+                                Text("$priceText $animatedBadge", color = Warning, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 10.sp, maxLines = 1)
+                            } else Text(stringResource(R.string.skin_free), color = Cyan, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, fontSize = 10.sp)
+                            Box(Modifier.height(14.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                                if (!owned && prefs.credits < price) {
+                                    Text(stringResource(R.string.missing_credits, price - prefs.credits), color = Muted, fontSize = 10.sp, maxLines = 1)
+                                }
+                            }
                             MenuArtworkButton(
                                 label = if (equipped) stringResource(R.string.equipped) else if (owned) stringResource(R.string.equip) else stringResource(R.string.buy_credits, price),
                                 primary = equipped || owned,
@@ -170,7 +161,6 @@ internal fun SkinGallery(state: GameUiState, actions: MainViewModel, onBack: () 
                                 }, modifier = Modifier.fillMaxWidth().testTag("skin-action-${skin.id}"),
                                 compact = true,
                             )
-                            if (!owned && prefs.credits < price) Text(stringResource(R.string.missing_credits, price - prefs.credits), Modifier.fillMaxWidth(), color = Muted, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                         }
                     }
                 }
