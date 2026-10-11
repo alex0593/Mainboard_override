@@ -11,6 +11,7 @@ captures/
 .kotlin/
 .agents/
 .codex/
+.superpowers/
 
 # Artwork drafts kept at the repository root while they are being edited.
 /*.jpg
@@ -29,6 +30,9 @@ keystore.properties
 .DS_Store
 *.hprof
 *.log
+
+# MCP server local audit database (generated, never source).
+mcp_audit.db
 # Butler binary for itch.io publishes (fetched by tools/publish-itch.sh).
 tools/.butler/
 
