@@ -168,6 +168,20 @@ class ScriptRulesTest {
         assertEquals(0, next.trace)   // frozen base + no pending noise
     }
 
+    @Test fun `cloak counter does not decrease when the turn ends the game by trace`() {
+        val base = GameState(
+            seed = 1,
+            board = BoardState(width = 6, height = 1, start = Position(0, 0), extraction = Position(6, 0),
+                placed = listOf(PlacedDomino(Domino("a", 0, 1), Position(1, 0), Orientation.HORIZONTAL))),
+            dominoHand = listOf(Domino("x", 1, 2)), dominoBag = emptyList(),
+            scriptHand = emptyList(), scriptDeck = emptyList(),
+            tilePlacedThisTurn = true, pendingNoise = 99, trace = 1, cloakTurns = 2,
+        )
+        val result = GameEngine.reduce(base, GameAction.EndTurn)
+        assertEquals(GameResult.TRACE_INTERCEPTED, result.state.result)
+        assertEquals(2, result.state.cloakTurns)
+    }
+
     @Test fun pingRevealsOneNewHiddenTrapAndOneTileWithoutDrawing() {
         val traps = setOf(Position(2, 2), Position(3, 2), Position(4, 2), Position(5, 2))
         val initial = state(BoardState(honeypots = traps, revealedHoneypots = setOf(Position(2, 2)),
