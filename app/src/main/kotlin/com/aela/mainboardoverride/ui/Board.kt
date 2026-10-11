@@ -74,18 +74,20 @@ internal fun Board(
     // destruction feedback that nothing was killed.
     sessionKey: Any? = null,
 ) {
+    val boardArtwork = boardSkinResource(skin, previewOnly)
+    // Data nodes are only swept when the connected network covers them, so one BFS per
+    // snapshot (not per cell) decides which nodes read as secured.
+    val coveredNodes = remember(board) { GameEngine.waypointsCovered(board) }
     // One shared breathing clock for every legal/target/pending cell: each cell reads the
     // alpha in its draw phase, so the glow animates without recomposing every board cell.
-    val glowPhase = if (LocalReducedMotion.current) null else rememberInfiniteTransition(label = "board-glow")
+    // Only created while some cell can actually glow, so an idle turn leaves no frame clock.
+    val canGlow = legalOrigins.isNotEmpty() || target != null || board.waypoints.any { it !in coveredNodes }
+    val glowPhase = if (!canGlow || LocalReducedMotion.current) null else rememberInfiniteTransition(label = "board-glow")
         .animateFloat(
             .55f, 1f,
             infiniteRepeatable(tween(700, easing = FastOutSlowInEasing), RepeatMode.Reverse),
             label = "board-glow-alpha",
         )
-    val boardArtwork = boardSkinResource(skin, previewOnly)
-    // Data nodes are only swept when the connected network covers them, so one BFS per
-    // snapshot (not per cell) decides which nodes read as secured.
-    val coveredNodes = remember(board) { GameEngine.waypointsCovered(board) }
     val placementKeys = remember(board.placed) {
         board.placed.map { placed ->
             "${placed.domino.id}:${placed.origin.x}:${placed.origin.y}:${placed.orientation}"
