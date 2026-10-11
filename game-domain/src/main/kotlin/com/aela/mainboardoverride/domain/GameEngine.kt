@@ -27,6 +27,9 @@ object GameEngine {
             is GameAction.PlayStealth -> playCard(state, action.cardId, ScriptType.STEALTH) { current ->
                 current.copy(pendingNoise = 0)
             }
+            is GameAction.PlayCloak -> playCard(state, action.cardId, ScriptType.CLOAK) { current ->
+                current.copy(cloakTurns = 2)
+            }
             is GameAction.PlaySpoof -> playSpoof(state, action)
             is GameAction.PlayKillProcess -> playKill(state, action)
             is GameAction.PlayBridge -> playBridge(state, action)
@@ -295,6 +298,9 @@ object GameEngine {
         if (expectedType == ScriptType.STEALTH && state.pendingNoise == 0) {
             return rejected(state, RejectReason.NO_PENDING_NOISE)
         }
+        if (expectedType == ScriptType.CLOAK && state.cloakTurns > 0) {
+            return rejected(state, RejectReason.EFFECT_ALREADY_ACTIVE)
+        }
         val paid = state.copy(
             scriptHand = state.scriptHand.filterNot { it.id == card.id },
             ram = state.ram - card.type.ramCost,
@@ -305,7 +311,8 @@ object GameEngine {
 
     private fun endTurn(state: GameState): Transition {
         if (!state.tilePlacedThisTurn) return rejected(state, RejectReason.MUST_PLACE_DOMINO)
-        val traced = (state.trace + 8 + state.pendingNoise).coerceAtMost(MAX_TRACE)
+        val base = if (state.cloakTurns > 0) 0 else 8
+        val traced = (state.trace + base + state.pendingNoise).coerceAtMost(MAX_TRACE)
         val movedBoard = moveDaemon(state.board)
         val result = when {
             traced >= MAX_TRACE -> GameResult.TRACE_INTERCEPTED
@@ -339,6 +346,7 @@ object GameEngine {
             turn = nextTurn,
             tilePlacedThisTurn = false,
             pingPreview = emptyList(),
+            cloakTurns = (state.cloakTurns - 1).coerceAtLeast(0),
         )
         return resolveForcedResult(next)
     }

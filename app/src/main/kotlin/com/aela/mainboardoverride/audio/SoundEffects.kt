@@ -44,6 +44,7 @@ enum class SoundCue(val durationMs: Long) {
     Coin(260),
     /** Equipping a premium skin: a short crystal arpeggio. */
     Shimmer(520),
+    Cloak(520),
 }
 
 /**
@@ -342,6 +343,11 @@ class SoundEffects {
             val t = i.toDouble() / SAMPLE_RATE
             sin(TAU * (520.0 * t + 260.0 * (1.0 - exp(-t * 8.0)) / 8.0)) *
                 exp(-t * 10.0) * attack(t, 2.0) * .34
+        }
+        SoundCue.Cloak -> DoubleArray(count) { i ->
+            val t = i.toDouble() / SAMPLE_RATE
+            sin(TAU * (520.0 * t + 260.0 * (1.0 - exp(-t * 6.0)) / 6.0)) *
+                exp(-t * 8.0) * attack(t, 2.0) * .28
         }
         SoundCue.Error -> DoubleArray(count) { i ->
             val t = i.toDouble() / SAMPLE_RATE

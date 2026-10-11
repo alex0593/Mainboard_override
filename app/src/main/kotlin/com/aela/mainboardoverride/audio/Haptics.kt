@@ -40,6 +40,7 @@ fun hapticPattern(cue: SoundCue): HapticPattern? = when (cue) {
     SoundCue.Boot -> null
     SoundCue.Coin -> null
     SoundCue.Shimmer -> HapticPattern(longArrayOf(0, 30, 40, 60), intArrayOf(0, 90, 0, 140))
+    SoundCue.Cloak -> HapticPattern(longArrayOf(0, 40), intArrayOf(0, 90))
 }
 
 /**

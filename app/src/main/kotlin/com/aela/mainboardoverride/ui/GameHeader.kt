@@ -59,6 +59,7 @@ internal fun GameHeader(
                 Text(stringResource(R.string.ram, ram, MAX_RAM), color = Terminal, fontSize = 11.sp, lineHeight = 13.sp)
                 TraceIndicator(game.trace)
                 NodesIndicator(game)
+                if (game.cloakTurns > 0) Text(stringResource(R.string.cloak_active, game.cloakTurns), color = Terminal, fontSize = 11.sp, lineHeight = 13.sp, modifier = Modifier.testTag("cloak-counter"))
             }
             Box(
                 Modifier.width(1.dp).height(44.dp)

@@ -144,6 +144,10 @@
     <string name="error_invalid_target">Elige un objetivo válido: un puerto de la mano para SPOOF, un firewall, honeypot visible o ficha colocada para KILL, o un firewall junto a una ficha con salida compatible para BRIDGE.</string>
     <string name="error_must_place_domino">Coloca una ficha antes de ejecutar el turno.</string>
     <string name="error_no_pending_noise">STEALTH no puede ejecutarse: no hay ruido pendiente que borrar en este turno.</string>
+    <string name="error_effect_already_active">Ese script ya está activo.</string>
+    <string name="cloak_active">CLOAK %1$d</string>
+    <string name="help_cloak_title">CLOAK</string>
+    <string name="help_cloak_body">Selecciona la carta para congelar el rastreo base durante dos turnos: al ejecutar el turno solo se suma el ruido pendiente, no la base de 8. El ruido pendiente sigue contando, así que STEALTH sigue siendo útil. Cuesta 3 RAM y no añade ruido. No puede ejecutarse de nuevo mientras esté activo.</string>
     <string name="result_victory">Extracción conectada correctamente.</string>
     <string name="result_trace_intercepted">El rastreo llegó a 100. Usa menos scripts ruidosos.</string>
     <string name="result_daemon_breach">El daemon alcanzó inicio.</string>

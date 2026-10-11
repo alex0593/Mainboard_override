@@ -40,6 +40,7 @@ internal enum class HelpTopic(val title: Int, val body: Int, val script: ScriptT
     KILL(R.string.help_kill_title, R.string.help_kill_body, ScriptType.KILL_PROCESS),
     BRIDGE(R.string.help_bridge_title, R.string.help_bridge_body, ScriptType.BRIDGE),
     STEALTH(R.string.help_stealth_title, R.string.help_stealth_body, ScriptType.STEALTH),
+    CLOAK(R.string.help_cloak_title, R.string.help_cloak_body, ScriptType.CLOAK),
 }
 
 internal fun ScriptType.helpTopic(): HelpTopic = when (this) {
@@ -48,6 +49,7 @@ internal fun ScriptType.helpTopic(): HelpTopic = when (this) {
     ScriptType.KILL_PROCESS -> HelpTopic.KILL
     ScriptType.BRIDGE -> HelpTopic.BRIDGE
     ScriptType.STEALTH -> HelpTopic.STEALTH
+    ScriptType.CLOAK -> HelpTopic.CLOAK
 }
 
 @Composable
@@ -93,7 +95,7 @@ internal fun GeneralGameHelp(onClose: () -> Unit) {
         R.string.help_board_title to listOf(HelpTopic.BOARD),
         R.string.help_resources to listOf(HelpTopic.TURN, HelpTopic.RAM, HelpTopic.TRACE, HelpTopic.NOISE),
         R.string.dominoes to listOf(HelpTopic.HARDWARE, HelpTopic.ROTATE, HelpTopic.END_TURN),
-        R.string.scripts to listOf(HelpTopic.SCRIPTS, HelpTopic.PING, HelpTopic.SPOOF, HelpTopic.KILL, HelpTopic.BRIDGE),
+        R.string.scripts to listOf(HelpTopic.SCRIPTS, HelpTopic.PING, HelpTopic.SPOOF, HelpTopic.KILL, HelpTopic.BRIDGE, HelpTopic.STEALTH, HelpTopic.CLOAK),
     )
     var expanded by rememberSaveable { mutableStateOf<Int?>(null) }
     // Resolve content in the game's locale before entering the dialog window.

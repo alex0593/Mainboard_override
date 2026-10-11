@@ -120,6 +120,54 @@ class ScriptRulesTest {
         assertTrue(ScriptCard("stealth", ScriptType.STEALTH) in killed.scriptHand)
     }
 
+    @Test fun `cloak freezes the base trace for two turns and keeps pending noise`() {
+        fun cloaked(turns: Int) = GameState(
+            seed = 1,
+            board = BoardState(width = 6, height = 1, start = Position(0, 0), extraction = Position(6, 0),
+                placed = listOf(PlacedDomino(Domino("a", 0, 1), Position(1, 0), Orientation.HORIZONTAL))),
+            dominoHand = listOf(Domino("x", 1, 2)), dominoBag = emptyList(),
+            scriptHand = emptyList(), scriptDeck = emptyList(),
+            tilePlacedThisTurn = true, pendingNoise = 5, cloakTurns = turns,
+        )
+        assertEquals(5, GameEngine.reduce(cloaked(2), GameAction.EndTurn).state.trace)
+        assertEquals(1, GameEngine.reduce(cloaked(2), GameAction.EndTurn).state.cloakTurns)
+        assertEquals(5, GameEngine.reduce(cloaked(1), GameAction.EndTurn).state.trace)
+        assertEquals(0, GameEngine.reduce(cloaked(1), GameAction.EndTurn).state.cloakTurns)
+        assertEquals(13, GameEngine.reduce(cloaked(0), GameAction.EndTurn).state.trace)
+    }
+
+    @Test fun `cloak spends three ram, adds no noise and is rejected while active`() {
+        val initial = state(BoardState()).copy(
+            scriptHand = listOf(ScriptCard("cloak", ScriptType.CLOAK)),
+        )
+        val cloaked = GameEngine.reduce(initial, GameAction.PlayCloak("cloak"))
+        assertEquals(listOf(GameEvent.ScriptExecuted(ScriptType.CLOAK)), cloaked.events)
+        assertEquals(2, cloaked.state.cloakTurns)
+        assertEquals(0, cloaked.state.ram)
+        assertEquals(0, cloaked.state.pendingNoise)
+        assertTrue(cloaked.state.scriptHand.isEmpty())
+
+        val active = initial.copy(cloakTurns = 2)
+        val rejected = GameEngine.reduce(active, GameAction.PlayCloak("cloak"))
+        assertEquals(active, rejected.state)
+        assertEquals(listOf(GameEvent.Rejected(RejectReason.EFFECT_ALREADY_ACTIVE)), rejected.events)
+    }
+
+    @Test fun `stealth still erases pending noise while cloak is active`() {
+        val base = GameState(
+            seed = 1,
+            board = BoardState(width = 6, height = 1, start = Position(0, 0), extraction = Position(6, 0),
+                placed = listOf(PlacedDomino(Domino("a", 0, 1), Position(1, 0), Orientation.HORIZONTAL))),
+            dominoHand = listOf(Domino("x", 1, 2)), dominoBag = emptyList(),
+            scriptHand = listOf(ScriptCard("stealth", ScriptType.STEALTH)), scriptDeck = emptyList(),
+            tilePlacedThisTurn = false, pendingNoise = 20, cloakTurns = 2,
+        )
+        val masked = GameEngine.reduce(base, GameAction.PlayStealth("stealth")).state
+        assertEquals(0, masked.pendingNoise)
+        val next = GameEngine.reduce(masked.copy(tilePlacedThisTurn = true), GameAction.EndTurn).state
+        assertEquals(0, next.trace)   // frozen base + no pending noise
+    }
+
     @Test fun pingRevealsOneNewHiddenTrapAndOneTileWithoutDrawing() {
         val traps = setOf(Position(2, 2), Position(3, 2), Position(4, 2), Position(5, 2))
         val initial = state(BoardState(honeypots = traps, revealedHoneypots = setOf(Position(2, 2)),

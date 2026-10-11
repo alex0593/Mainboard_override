@@ -106,6 +106,7 @@ internal fun rejectionText(reason: RejectReason): Int = when (reason) {
     RejectReason.INVALID_TARGET -> R.string.error_invalid_target
     RejectReason.MUST_PLACE_DOMINO -> R.string.error_must_place_domino
     RejectReason.NO_PENDING_NOISE -> R.string.error_no_pending_noise
+    RejectReason.EFFECT_ALREADY_ACTIVE -> R.string.error_effect_already_active
 }
 
 internal fun resultText(result: GameResult): Int = when (result) {
