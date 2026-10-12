@@ -17,7 +17,7 @@ Estado verificado (2026-10-03): bloques A–F cerrados (A01–A10, B01–B06,
 C01–C06, D01–D04, E01–E06, F01–F03) y salida de alfa completada: build de
 release firmado (APK + AAB, etiqueta `v0.1.0`), ficha de tienda en
 `docs/PLAY.md` y sitio publicado con **HTTPS** en sus tres nombres.
-Suite de dominio **58/58** y `:app:testDebugUnitTest` **11/11** en verde, lint
+Suite de dominio **66/66** y `:app:testDebugUnitTest` **21/21** en verde, lint
 sin errores, suite instrumental **31/31** (1 flake de entorno, 2/2 en retry
 aislado) y smoke test de la APK release (R8) sin excepciones en emulador API
 35. Pendiente externo:
@@ -39,12 +39,15 @@ Play Console — detallado en el [Roadmap](docs/ROADMAP.md).
   Ámbar y Amatista, placa o ficha) cuestan 200 y el resto de pago 80, con
   posesión por categoría. No hay créditos retroactivos.
 - **Tutorial:** diez lecciones jugables sobre conexiones, rotación, turnos,
-  peligros y los cuatro scripts (PING, SPOOF, KILL y BRIDGE). Guarda la última
+  peligros y los siete scripts (PING, SPOOF, KILL, BRIDGE, STEALTH, CLOAK y
+  STUN). Guarda la última
   lección para continuar o reiniciar, sin alterar créditos, récords ni partidas.
 - **Scripts:** PING (revela honeypots y amplía la vista de la próxima ficha),
   SPOOF (reescribe un puerto de una ficha en mano), KILL (elimina firewall,
   honeypot visible o ficha completa), BRIDGE (copia un puerto a través de un
-  firewall) y STEALTH (descarta el ruido pendiente del turno por 1 RAM). Los
+  firewall), STEALTH (descarta el ruido pendiente del turno por 1 RAM), CLOAK
+  (congela el rastreo base de 8 durante dos turnos) y STUN (detiene el avance
+  del daemon una fase). Los
   botones «?» explican indicadores, scripts y controles.
 - **Detalles:** las tarjetas de desafíos y escenarios abren un detalle con
   previsualización (ejemplo con semilla fija en modo libre) antes de jugar.
