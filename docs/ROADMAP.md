@@ -4,7 +4,7 @@
 
 Este documento recoge, estructura y prioriza las ideas de mejora para el juego, a partir del banco de ideas en `docs/IMPROVEMENTS.md`. No es un plan definitivo, sino una propuesta de ruta para decidir qué hacer primero y qué dejar para después.
 
-**Revisión:** 2026-10-02. Único plan operativo del proyecto: orden,
+**Revisión:** 2026-10-12. Único plan operativo del proyecto: orden,
 dependencias, tareas y criterios de cierre. El estado comprobable y las
 decisiones viven en [ESTADO.md](ESTADO.md). El 2026-09-20 se cerraron
 A01–A09 con causas raíz registradas y B06 con reapertura limpia verificada.
@@ -15,6 +15,7 @@ en 28/28. El 2026-09-22 se cerró F03 (skins Zafiro/Ámbar/Amatista). Hoy
 (2026-10-02) se abren los bloques G (salida de alfa, versión 0.1.0) y H
 (servidor propio y descarga directa en DuckDNS).
 El 2026-10-04 se cerró F04 (animaciones de skins premium en tienda y partida).
+El 2026-10-12 se cerraron los scripts de estado CLOAK y STUN (3.2).
 Los hilos temáticos son propuestas; no representan funciones aprobadas
 ni tareas terminadas. `[ ]` significa pendiente; marcar `[x]` solo con evidencia
 de cierre. Las decisiones de producto se registran antes de implementar sus ramas.
@@ -22,10 +23,10 @@ de cierre. Las decisiones de producto se registran antes de implementar sus rama
 ## 2. Estado actual como punto de partida
 
 - Vertical slice con motor puro, generación determinista y validación de ruta.
-- Scripts actuales: PING, SPOOF, KILL_PROCESS, BRIDGE.
+- Scripts actuales: PING, SPOOF, KILL_PROCESS, BRIDGE, STEALTH, CLOAK y STUN.
 - Progresión de desafíos desbloqueables y escenarios de modo libre.
 - Persistencia con DataStore; compras y recompensas implementadas en el repositorio concreto.
-- Última ejecución de `:game-domain:test`: 52 pruebas, 0 fallos (2026-09-22).
+- Última ejecución de `:game-domain:test`: 66 pruebas, 0 fallos (2026-10-12).
 - Tutorial con 10 lecciones deterministas, textos EN/ES en paridad (47 instrucciones), progreso visible y avance explícito; `TutorialTest` 5/5 y `PuzzleTutorialUiTest` 6/6 en CLK-LX3 por USB.
 - Audio procedural completo: soundtrack synthwave adaptativo, 16 cues de SFX, volúmenes de música/EFX en ajustes, silencio, vibración cableada (`HapticsHost`) y movimiento reducido (E04).
 - Localización por-app con AppCompat (ES/EN aplican en todos los API), icono adaptativo con foreground exportado del logo (`logo_foreground.png`), capa monocroma y splash propio.
@@ -44,7 +45,7 @@ de cierre. Las decisiones de producto se registran antes de implementar sus rama
 - Permitir partidas con restricciones de reglas combinadas para crear tensión distinta.
 
 ### 3.2 Scripts y descarte
-- Añadir scripts complementarios: ocultar rastreo temporalmente, dañar daemon, duplicar puerto, alterar puentes, etc. (Hecho parcial: STEALTH descarta el ruido pendiente del turno; el resto queda pendiente.)
+- Añadir scripts complementarios: ocultar rastreo temporalmente, dañar daemon, duplicar puerto, alterar puentes, etc. (Hecho: STEALTH descarta el ruido pendiente del turno; CLOAK congela el rastreo base de 8 durante dos turnos; STUN detiene el avance del daemon una fase. Quedan duplicar puerto y alterar puentes.)
 - Permitir descarte o reorganización de mazo en algunas partidas.
 - Ofrecer mejoras de script desbloqueables: menor coste, menor ruido, carta extra, efecto secundario controlado.
 - Mejorar feedback de KILL para dejar claro qué celda o ficha se va a eliminar. (Hecho: objetivos resaltados vía `scriptTargets` + burst de destrucción con prueba.)

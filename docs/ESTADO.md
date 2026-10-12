@@ -4,7 +4,7 @@
 y conserva las decisiones que afectan al trabajo siguiente. El plan de trabajo
 vive únicamente en [ROADMAP.md](ROADMAP.md).
 
-**Revisión:** 2026-10-04.
+**Revisión:** 2026-10-12.
 
 ## Fuentes de verdad
 
@@ -22,8 +22,21 @@ vive únicamente en [ROADMAP.md](ROADMAP.md).
 Los contratos técnicos viven en el código; los cambios de reglas deben
 reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus detalles.
 
-## Dónde quedamos (última revisión 2026-10-03)
+## Dónde quedamos (última revisión 2026-10-12)
 
+- **Scripts de estado CLOAK y STUN (2026-10-12, cerrado):** dos entradas nuevas
+  de `ScriptType` con estado dedicado en `GameState` (`cloakTurns`, `stunTurns`)
+  que se resuelve al final del turno, sin RNG nuevo. `CLOAK(3, 0)` congela la
+  base de 8 del rastreo durante dos fases de sistema (el ruido pendiente sigue
+  sumando, así que STEALTH conserva su papel); `STUN(3, 0)` impide que el daemon
+  avance una fase. Rechazos `EFFECT_ALREADY_ACTIVE` mientras el efecto siga
+  activo y `INVALID_TARGET` para STUN sin daemon en el tablero, todos sin gastar
+  carta ni RAM; el HUD muestra contadores `CLOAK n` y `STUN n`. El mazo pasa a
+  tres ciclos de cada tipo (21 cartas: 1 en mano, 20 en mazo). Textos EN/ES,
+  cue y vibración por script. Validado: `./gradlew test` verde (**66 dominio +
+  21 app**), `:app:lintDebug` y `:app:assembleDebug` correctos (2026-10-12).
+  Commits `feat:` de CLOAK y STUN + `docs:`. Detalle en el
+  [Roadmap](ROADMAP.md) (3.2).
 - **Bloque J — campaña a 100 y nodos de datos (2026-10-03, cerrado):**
   `ChallengeCatalog.COUNT` 30 → 100 en cinco fases de 20 (Firewall y
   Singularity como fases nuevas, EN/ES) con reglas por banda (31–60 y
@@ -111,9 +124,9 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 | Área | Estado actual | Fuente principal |
 | --- | --- | --- |
 | Motor | Estado inmutable, acciones explícitas y `GameEngine.reduce`. | [Arquitectura](ARCHITECTURE.md) |
-| Generación | Semillas reproducibles; niveles libres, escenarios y catálogo de 100 desafíos (5 fases, tableros anchos desde el 31 y nodos desde el 41); suite de dominio 58/58 verde. | [Arquitectura](ARCHITECTURE.md) |
+| Generación | Semillas reproducibles; niveles libres, escenarios y catálogo de 100 desafíos (5 fases, tableros anchos desde el 31 y nodos desde el 41); suite de dominio 66/66 verde. | [Arquitectura](ARCHITECTURE.md) |
 | Skins | 18 fichas y 17 PCB en Tienda; gratis las tres primeras de cada catálogo (`pcb`/`blueprint`/`industrial` y `kenney`/`dark`/`gingerbread`) y 29 de pago a 80/200 según `Rewards.premiumSkins`; posesión por categoría `board:<id>`/`domino:<id>`. | [README de skins](../assets/skins/README.md) |
-| Scripts | `PING`, `SPOOF`, `KILL` (`KILL_PROCESS` internamente), `BRIDGE` y `STEALTH` (F02, descarta el ruido pendiente). | [GDD](GDD.md) |
+| Scripts | `PING`, `SPOOF`, `KILL` (`KILL_PROCESS` internamente), `BRIDGE`, `STEALTH` (F02, descarta el ruido pendiente), `CLOAK` (congela el rastreo base dos turnos) y `STUN` (detiene el daemon una fase). | [GDD](GDD.md) |
 | Progresión | 100 desafíos en 5 fases con nodos de datos obligatorios desde el 41; los desafíos desbloquean escenarios por victorias distintas; récords y créditos persisten. | `PlayerPreferencesRepository` |
 | Economía | Compras y recompensas con transacciones DataStore e idempotencia; reapertura limpia sin pagos duplicados. | `PlayerPreferencesRepository` |
 | Escenarios | Siete fondos generados, empaquetados y usados en tarjetas, partidas y menú. | [README de escenarios](../assets/scenarios/README.md) |
@@ -170,6 +183,15 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
   la configuración por id (acento de `dominoPipColor`, estilo y período) y todo
   fallback queda estático con `LocalReducedMotion`. `nebula`, 80-credit y gratis
   no animan; ningún string ni testTag cambió.
+- **CLOAK y STUN (scripts de estado):** ambos cuestan 3 RAM y 0 de ruido.
+  `CLOAK` congela la base de 8 del rastreo durante dos fases de sistema (la del
+  turno en que se juega incluida) sin tocar el ruido pendiente, que sigue
+  sumando; `STUN` impide que el daemon avance una fase. Se rechazan con
+  `EFFECT_ALREADY_ACTIVE` si su efecto sigue activo y STUN con `INVALID_TARGET`
+  si no hay daemon en el tablero; ningún rechazo gasta carta ni RAM. El mazo
+  pasa a tres ciclos de cada tipo (21 cartas: 1 en mano, 20 en el mazo; 17 en
+  los desafíos que vetan SPOOF) y el HUD añade los contadores `CLOAK n`/`STUN n`.
+  Sin arte de carta ni lección de tutorial (incremento aparte).
 - **K — Tienda:** la galería es ahora Tienda (`store`/«TIENDA» en menú y
   cabecera) con badge GRATIS. Reparto 3+3 (placas `pcb/blueprint/industrial`,
   fichas `kenney/dark/gingerbread` gratis) y 29 de pago a 80/200 según

@@ -36,10 +36,12 @@ El modo libre tiene 6 filas: Red original 8 columnas, Laboratorio y Centro de da
 | `KILL_PROCESS` | 3 | 15 | Elimina un firewall, un honeypot visible, un lock o una ficha colocada completa al seleccionar cualquiera de sus dos celdas. Puede eliminarlo en el mismo turno de PING si alcanza la RAM. |
 | `BRIDGE` | 2 | 10 | Copia un puerto de una ficha adyacente a través del firewall; la salida queda libre para colocar una ficha compatible. |
 | `STEALTH` | 1 | 0 | Descarta todo el ruido pendiente del turno antes de que se sume al rastreo; sin ruido pendiente se rechaza sin gastar carta ni RAM. |
+| `CLOAK` | 3 | 0 | Congela el rastreo base de 8 durante dos turnos; el ruido pendiente sigue sumando. Rechaza si ya está activo. |
+| `STUN` | 3 | 0 | El daemon no avanza en la siguiente fase de sistema. Sin daemon en el tablero se rechaza. Rechaza si ya está activo. |
 
 Las derrotas posibles son rastreo al 100 %, daemon en el inicio, lock contactado con valor erróneo, kernel panic sin acciones habilitables o bolsa de hardware agotada. BRIDGE y KILL_PROCESS pueden evitar kernel panic si abren una colocación legal. La victoria requiere una ruta continua hasta extracción que además cubra todos los nodos de datos del nivel (desafíos 41 en adelante) después de resolver la fase del sistema.
 
-La mano de scripts arranca con un único cupo y abre uno más cada dos turnos: los turnos 1-2 sostienen un script, los turnos 3-4 dos, los turnos 5-6 tres, y así sucesivamente. Al ejecutar el turno se roba la primera carta del mazo solo si la mano está por debajo del cupo del turno nuevo y queda existencias, de modo que el tope crece lento pero nunca te quedas sin script por haber gastado el tuyo.
+La mano de scripts arranca con un único cupo y abre uno más cada dos turnos: los turnos 1-2 sostienen un script, los turnos 3-4 dos, los turnos 5-6 tres, y así sucesivamente. Al ejecutar el turno se roba la primera carta del mazo solo si la mano está por debajo del cupo del turno nuevo y queda existencias, de modo que el tope crece lento pero nunca te quedas sin script por haber gastado el tuyo. El mazo estándar baraja tres ciclos de cada tipo de script (21 cartas: una en mano y 20 en el mazo); en los desafíos que vetan SPOOF baja a 17.
 
 PING conserva descubrimientos anteriores y selecciona entre trampas ocultas sin activar con azar reproducible por semilla y carta. La vista de la siguiente ficha se limpia al terminar el turno. Cada uso amplía la vista previa en una ficha y revela otra trampa disponible. Si no queda información nueva, rechaza el uso sin gastar carta ni RAM. No hay límite de scripts por turno aparte de las cartas disponibles, sus objetivos válidos y la RAM.
 
@@ -47,13 +49,15 @@ BRIDGE requiere al menos una ficha junto al firewall en el eje seleccionado. Si 
 
 STEALTH se juega sin objetivo, como PING: descarta el ruido pendiente completo del turno, de modo que al ejecutar el turno el rastreo solo suma su base de 8. Cuesta 1 RAM y no añade ruido propio. Su jugada natural es combinarse en el mismo turno con SPOOF (+5), BRIDGE (+10) o una trampa de honeypot (+20) dentro del tope de 3 RAM; KILL ya gasta las 3 RAM, así que su ruido de 15 no admite combinación. Si no hay ruido pendiente se rechaza con mensaje propio sin consumir carta ni RAM. No abre colocaciones, así que no puede evitar kernel panic.
 
+CLOAK y STUN se juegan sin objetivo, como PING y STEALTH: actúan sobre un reloj del sistema y no abren colocaciones, así que tampoco evitan kernel panic. CLOAK cuesta 3 RAM y 0 de ruido y congela la base de 8 del rastreo durante dos fases de sistema —la del turno en que se juega incluida—, de modo que al ejecutar el turno solo se suma el ruido pendiente; como ese ruido sigue contando, CLOAK combina con STEALTH. STUN cuesta 3 RAM y 0 de ruido y detiene el avance del daemon durante una fase de sistema: el daemon no se reubica al ejecutar el turno y vuelve a moverse en el siguiente. Ninguno de los dos puede volver a ejecutarse mientras su efecto siga activo (`EFFECT_ALREADY_ACTIVE`), y STUN exige un daemon en el tablero (`INVALID_TARGET` en tableros sin él, como la base del tutorial). Ningún rechazo gasta carta ni RAM. Mientras están activos, el HUD muestra contadores `CLOAK n` y `STUN n`.
+
 ## Qué se lleva implementado
 
 - [x] Proyecto Android modular con Kotlin y Jetpack Compose.
 - [x] Motor puro con estado inmutable y acciones/rechazos explícitos.
 - [x] Colocación, cuatro rotaciones, ramificación y búsqueda de conectividad.
 - [x] Semillas reproducibles con ruta garantizada.
-- [x] Cinco scripts (PING, SPOOF, KILL, BRIDGE, STEALTH), RAM renovable, ruido, rastreo y amenazas.
+- [x] Siete scripts (PING, SPOOF, KILL, BRIDGE, STEALTH, CLOAK, STUN), RAM renovable, ruido, rastreo y amenazas.
 - [x] Menú, ayuda, ajustes, tablero, mano y resultado en horizontal.
 - [x] Textos en español e inglés.
 - [x] Persistencia de ajustes, última semilla y mejor resultado.
@@ -80,6 +84,7 @@ STEALTH se juega sin objetivo, como PING: descarta el ruido pendiente completo d
 - [ ] Campaña con contenido propio: las fases Red local, Enrutamiento y Sobreescritura ya existen como etiquetas (E05); falta contenido diferenciado por fase.
 - [ ] Fragmentos de datos, inventario, deckbuilding y mejoras de scripts.
 - [x] Script STEALTH (F02): descarta el ruido pendiente del turno por 1 RAM. Quedan VPN y mayor variedad de amenazas y objetivos.
+- [x] Scripts CLOAK y STUN: CLOAK congela el rastreo base de 8 durante dos turnos y STUN detiene el avance del daemon durante una fase (3 RAM y 0 de ruido los dos).
 - [ ] Room para campaña e inventario y guardado de partida activa.
 - [ ] Temas Kali-Strike, Ubun-Core, Deb-Server, Arch-Elite y Retro-DOS.
 
@@ -100,7 +105,7 @@ El tablero respira con animaciones sutiles —glow pulsante en celdas legales y 
 
 ## Verificación técnica
 
-- `:game-domain:test`: correcto (58 pruebas, 0 fallos); pruebas del motor, los 100 desafíos con su solución de referencia, los nodos de datos, barrido de 1000 semillas libres y 700 combinaciones de escenario/semilla.
+- `:game-domain:test`: correcto (66 pruebas, 0 fallos); pruebas del motor, los 100 desafíos con su solución de referencia, los nodos de datos, barrido de 1000 semillas libres y 700 combinaciones de escenario/semilla.
 - `:app:assembleDebug`: correcto; APK generado en `app/build/outputs/apk/debug/`.
 - `:app:connectedDebugAndroidTest`: correcto en `emulator-5554` (640×360) con 31 pruebas en 8 clases —un flake de entorno en `ImmersiveWindowUiTest` pasó 2/2 en retry aislado—; cubre progresión, compras (incluidas las skins premium nuevas), revisión del tablero, ayuda, tutorial, accesibilidad, recogidas y movimiento reducido.
 - `:app:lintDebug`: correcto; 0 errores, 73 advertencias y 3 notas (versiones y dependencias, orientación, candidatos a plurales, recursos sin uso, tipografía y APIs disuadidas). Sin baselines ni supresiones nuevas.

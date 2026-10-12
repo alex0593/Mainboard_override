@@ -62,8 +62,9 @@ ruido, así que planifica, rota y descarta con cuidado.
 CÓMO SE JUEGA
 • Coloca y rota dominós para trazar el camino del paquete.
 • Cada movimiento alimenta el rastreo: el tablero se pone tenso.
-• Cinco scripts con tope de 3 de RAM: PING (sondea), SPOOF (engaña al rastreo),
-  KILL (rompe enlaces), BRIDGE (une tramos) y STEALTH (disipa el ruido).
+• Siete scripts con tope de 3 de RAM: PING (sondea), SPOOF (engaña al rastreo),
+  KILL (rompe enlaces), BRIDGE (une tramos), STEALTH (disipa el ruido),
+  CLOAK (congela el rastreo) y STUN (frena al daemon).
 • Cartas, guías en pista y un sistema de ruido legible: el tablero nunca miente.
 
 CONTENIDO
@@ -97,8 +98,9 @@ discard with intent.
 HOW IT PLAYS
 • Place and rotate dominoes to trace the packet's path.
 • Each move feeds the trace: the board keeps the pressure up.
-• Five scripts on a 3-RAM cap: PING (scout), SPOOF (spoof the trace),
-  KILL (break links), BRIDGE (join segments) and STEALTH (clear the noise).
+• Seven scripts on a 3-RAM cap: PING (scout), SPOOF (spoof the trace),
+  KILL (break links), BRIDGE (join segments), STEALTH (clear the noise),
+  CLOAK (freeze the trace) and STUN (stall the daemon).
 • Cards, hint guides and a readable noise system: the board never lies.
 
 WHAT'S INSIDE

@@ -5,12 +5,14 @@ perderse. Nada de aquí está aprobado para implementación: cada punto debe
 pasar por spec acordado antes de codificarse, como los incrementos E.
 El banco original de ideas vive en [IMPROVEMENTS.md](IMPROVEMENTS.md).
 
-**Revisión:** 2026-09-21.
+**Revisión:** 2026-10-12.
 
 ## Scripts y amenazas (tras E01-lock)
 
-- Scripts nuevos: stealth/VPN, ocultar rastreo temporalmente, dañar o mover el
-  daemon, duplicar puerto temporalmente, eliminar o alterar puentes.
+- Scripts nuevos: VPN, duplicar puerto temporalmente, eliminar o alterar puentes.
+  (Ya implementados: STEALTH descarta el ruido pendiente del turno, CLOAK
+  congela el rastreo base de 8 durante dos turnos y STUN detiene una fase el
+  avance del daemon.)
 - Descarte o reorganización del mazo de scripts en algunas partidas.
 - Mejoras de script desbloqueables: menor coste, menor ruido, carta extra,
   efecto secundario controlado.
