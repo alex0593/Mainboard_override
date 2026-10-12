@@ -3,6 +3,8 @@ package com.aela.mainboardoverride.ui
 import android.app.Application
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -11,6 +13,7 @@ import com.aela.mainboardoverride.MainViewModel
 import com.aela.mainboardoverride.data.PlayerPreferences
 import com.aela.mainboardoverride.data.PlayerPreferencesRepository
 import com.aela.mainboardoverride.domain.GameEngine
+import com.aela.mainboardoverride.domain.GameState
 import com.aela.mainboardoverride.domain.LevelGenerator
 import com.aela.mainboardoverride.domain.Orientation
 import com.aela.mainboardoverride.domain.ScriptType
@@ -63,6 +66,44 @@ class GameHeaderUiTest {
         compose.waitForIdle()
         compose.onNodeWithTag("game-header").assertExists()
         compose.onNodeWithTag("ping-header").assertDoesNotExist()
+    }
+
+    /** CLOAK and STUN announce themselves in the HUD with their remaining turns. */
+    @Test fun cloakAndStunCountersShowTheirRemainingTurns() {
+        val base = LevelGenerator.generate(42L)
+        compose.setContent {
+            MainboardTheme {
+                GameHeader(
+                    game = base.copy(cloakTurns = 2, stunTurns = 1),
+                    modifier = Modifier,
+                    scripts = {},
+                )
+            }
+        }
+        compose.waitForIdle()
+        // The counter Texts are merged into the game-header semantics node, so their
+        // testTags only surface in the unmerged tree.
+        compose.onNodeWithTag("cloak-counter", useUnmergedTree = true)
+            .assertTextEquals("CLOAK 2")
+        compose.onNodeWithTag("stun-counter", useUnmergedTree = true)
+            .assertTextEquals("STUN 1")
+    }
+
+    /** With neither effect running the HUD carries no CLOAK or STUN indicator at all. */
+    @Test fun cloakAndStunCountersAreAbsentWhenNoEffectIsActive() {
+        val base = LevelGenerator.generate(42L)
+        compose.setContent {
+            MainboardTheme {
+                GameHeader(
+                    game = base.copy(cloakTurns = 0, stunTurns = 0),
+                    modifier = Modifier,
+                    scripts = {},
+                )
+            }
+        }
+        compose.waitForIdle()
+        compose.onNodeWithTag("cloak-counter", useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithTag("stun-counter", useUnmergedTree = true).assertDoesNotExist()
     }
 
     @Test fun pendingNoiseLineDoesNotPushThePcbDown() {
