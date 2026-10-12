@@ -182,6 +182,20 @@ class ScriptRulesTest {
         assertEquals(2, result.state.cloakTurns)
     }
 
+    @Test fun `stun counter does not decrease when the turn ends the game by trace`() {
+        val base = GameState(
+            seed = 1,
+            board = BoardState(width = 6, height = 1, start = Position(0, 0), extraction = Position(6, 0),
+                placed = listOf(PlacedDomino(Domino("a", 0, 1), Position(1, 0), Orientation.HORIZONTAL))),
+            dominoHand = listOf(Domino("x", 1, 2)), dominoBag = emptyList(),
+            scriptHand = emptyList(), scriptDeck = emptyList(),
+            tilePlacedThisTurn = true, pendingNoise = 99, trace = 1, stunTurns = 1,
+        )
+        val result = GameEngine.reduce(base, GameAction.EndTurn)
+        assertEquals(GameResult.TRACE_INTERCEPTED, result.state.result)
+        assertEquals(1, result.state.stunTurns)
+    }
+
     @Test fun `stun pauses the daemon for one system phase then releases it`() {
         val board = BoardState(width = 6, height = 1, start = Position(0, 0), extraction = Position(6, 0),
             placed = listOf(

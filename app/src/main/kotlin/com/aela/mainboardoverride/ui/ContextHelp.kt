@@ -97,7 +97,7 @@ internal fun GeneralGameHelp(onClose: () -> Unit) {
         R.string.help_board_title to listOf(HelpTopic.BOARD),
         R.string.help_resources to listOf(HelpTopic.TURN, HelpTopic.RAM, HelpTopic.TRACE, HelpTopic.NOISE),
         R.string.dominoes to listOf(HelpTopic.HARDWARE, HelpTopic.ROTATE, HelpTopic.END_TURN),
-        R.string.scripts to listOf(HelpTopic.SCRIPTS, HelpTopic.PING, HelpTopic.SPOOF, HelpTopic.KILL, HelpTopic.BRIDGE, HelpTopic.STEALTH, HelpTopic.CLOAK, HelpTopic.STUN),
+        R.string.scripts to listOf(HelpTopic.SCRIPTS, HelpTopic.PING, HelpTopic.SPOOF, HelpTopic.KILL, HelpTopic.BRIDGE, HelpTopic.CLOAK, HelpTopic.STUN),
     )
     var expanded by rememberSaveable { mutableStateOf<Int?>(null) }
     // Resolve content in the game's locale before entering the dialog window.
