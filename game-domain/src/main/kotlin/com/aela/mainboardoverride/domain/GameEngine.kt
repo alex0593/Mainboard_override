@@ -30,6 +30,9 @@ object GameEngine {
             is GameAction.PlayCloak -> playCard(state, action.cardId, ScriptType.CLOAK) { current ->
                 current.copy(cloakTurns = 2)
             }
+            is GameAction.PlayStun -> playCard(state, action.cardId, ScriptType.STUN) { current ->
+                current.copy(stunTurns = 1)
+            }
             is GameAction.PlaySpoof -> playSpoof(state, action)
             is GameAction.PlayKillProcess -> playKill(state, action)
             is GameAction.PlayBridge -> playBridge(state, action)
@@ -301,6 +304,12 @@ object GameEngine {
         if (expectedType == ScriptType.CLOAK && state.cloakTurns > 0) {
             return rejected(state, RejectReason.EFFECT_ALREADY_ACTIVE)
         }
+        if (expectedType == ScriptType.STUN && state.stunTurns > 0) {
+            return rejected(state, RejectReason.EFFECT_ALREADY_ACTIVE)
+        }
+        if (expectedType == ScriptType.STUN && state.board.daemon == null) {
+            return rejected(state, RejectReason.INVALID_TARGET)
+        }
         val paid = state.copy(
             scriptHand = state.scriptHand.filterNot { it.id == card.id },
             ram = state.ram - card.type.ramCost,
@@ -313,7 +322,7 @@ object GameEngine {
         if (!state.tilePlacedThisTurn) return rejected(state, RejectReason.MUST_PLACE_DOMINO)
         val base = if (state.cloakTurns > 0) 0 else 8
         val traced = (state.trace + base + state.pendingNoise).coerceAtMost(MAX_TRACE)
-        val movedBoard = moveDaemon(state.board)
+        val movedBoard = if (state.stunTurns > 0) state.board else moveDaemon(state.board)
         val result = when {
             traced >= MAX_TRACE -> GameResult.TRACE_INTERCEPTED
             movedBoard.daemon?.position == movedBoard.start -> GameResult.DAEMON_BREACH
@@ -347,6 +356,7 @@ object GameEngine {
             tilePlacedThisTurn = false,
             pingPreview = emptyList(),
             cloakTurns = (state.cloakTurns - 1).coerceAtLeast(0),
+            stunTurns = (state.stunTurns - 1).coerceAtLeast(0),
         )
         return resolveForcedResult(next)
     }

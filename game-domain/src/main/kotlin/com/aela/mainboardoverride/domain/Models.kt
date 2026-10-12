@@ -73,6 +73,8 @@ enum class ScriptType(
     STEALTH(1, 0),
     /** Freezes the base 8 of the trace clock for two system phases; pending noise still counts. */
     CLOAK(3, 0),
+    /** Stops the daemon from advancing for one system phase. */
+    STUN(3, 0),
 }
 
 data class ScriptCard(val id: String, val type: ScriptType)
@@ -158,6 +160,7 @@ data class GameState(
     val phase: TurnPhase = TurnPhase.ACTION,
     val result: GameResult? = null,
     val cloakTurns: Int = 0,
+    val stunTurns: Int = 0,
 )
 
 /** Commands accepted by [GameEngine]; UI code must never mutate [GameState] directly. */
@@ -175,6 +178,7 @@ sealed interface GameAction {
     data class PlaySpoof(val cardId: String, val dominoId: String, val half: Int, val value: Int) : GameAction
     data class PlayKillProcess(val cardId: String, val target: Position) : GameAction
     data class PlayBridge(val cardId: String, val center: Position, val horizontal: Boolean) : GameAction
+    data class PlayStun(val cardId: String) : GameAction
     data object EndTurn : GameAction
 }
 

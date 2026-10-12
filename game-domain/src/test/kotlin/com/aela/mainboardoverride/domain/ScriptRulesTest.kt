@@ -182,6 +182,46 @@ class ScriptRulesTest {
         assertEquals(2, result.state.cloakTurns)
     }
 
+    @Test fun `stun pauses the daemon for one system phase then releases it`() {
+        val board = BoardState(width = 6, height = 1, start = Position(0, 0), extraction = Position(6, 0),
+            placed = listOf(
+                PlacedDomino(Domino("a", 0, 1), Position(1, 0), Orientation.HORIZONTAL),
+                PlacedDomino(Domino("b", 1, 2), Position(3, 0), Orientation.HORIZONTAL),
+            ), daemon = Daemon(Position(4, 0)))
+        val initial = state(board).copy(
+            dominoHand = listOf(Domino("next", 2, 6)),
+            dominoBag = listOf(Domino("extra", 0, 5)),
+            scriptHand = listOf(ScriptCard("stun", ScriptType.STUN), ScriptCard("spoof", ScriptType.SPOOF)),
+        )
+        // Without stun the daemon walks one connected cell toward start.
+        val plain = GameEngine.reduce(initial.copy(scriptHand = emptyList(), tilePlacedThisTurn = true), GameAction.EndTurn).state
+        assertEquals(Position(3, 0), plain.board.daemon!!.position)
+        // With stun the system phase holds this turn, then advances next turn.
+        val stunned = GameEngine.reduce(initial, GameAction.PlayStun("stun")).state
+        assertEquals(1, stunned.stunTurns)
+        val held = GameEngine.reduce(stunned.copy(tilePlacedThisTurn = true), GameAction.EndTurn).state
+        assertEquals(Position(4, 0), held.board.daemon!!.position)
+        assertEquals(0, held.stunTurns)
+        val released = GameEngine.reduce(held.copy(tilePlacedThisTurn = true), GameAction.EndTurn).state
+        assertEquals(Position(3, 0), released.board.daemon!!.position)
+    }
+
+    @Test fun `stun without a daemon is rejected untouched`() {
+        val noDaemon = state(BoardState(width = 6, height = 1, start = Position(0, 0), extraction = Position(6, 0)))
+            .copy(scriptHand = listOf(ScriptCard("stun", ScriptType.STUN)))
+        assertEquals(noDaemon, GameEngine.reduce(noDaemon, GameAction.PlayStun("stun")).state)
+        assertEquals(listOf(GameEvent.Rejected(RejectReason.INVALID_TARGET)), GameEngine.reduce(noDaemon, GameAction.PlayStun("stun")).events)
+    }
+
+    @Test fun `stun is rejected while active without spending`() {
+        val active = state(BoardState(width = 6, height = 1, start = Position(0, 0), extraction = Position(6, 0),
+            daemon = Daemon(Position(4, 0)))).copy(
+            scriptHand = listOf(ScriptCard("stun", ScriptType.STUN)), stunTurns = 1,
+        )
+        assertEquals(active, GameEngine.reduce(active, GameAction.PlayStun("stun")).state)
+        assertEquals(listOf(GameEvent.Rejected(RejectReason.EFFECT_ALREADY_ACTIVE)), GameEngine.reduce(active, GameAction.PlayStun("stun")).events)
+    }
+
     @Test fun pingRevealsOneNewHiddenTrapAndOneTileWithoutDrawing() {
         val traps = setOf(Position(2, 2), Position(3, 2), Position(4, 2), Position(5, 2))
         val initial = state(BoardState(honeypots = traps, revealedHoneypots = setOf(Position(2, 2)),

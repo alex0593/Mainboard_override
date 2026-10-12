@@ -60,6 +60,7 @@ internal fun GameHeader(
                 TraceIndicator(game.trace)
                 NodesIndicator(game)
                 if (game.cloakTurns > 0) Text(stringResource(R.string.cloak_active, game.cloakTurns), color = Terminal, fontSize = 11.sp, lineHeight = 13.sp, modifier = Modifier.testTag("cloak-counter"))
+                if (game.stunTurns > 0) Text(stringResource(R.string.stun_active, game.stunTurns), color = Terminal, fontSize = 11.sp, lineHeight = 13.sp, modifier = Modifier.testTag("stun-counter"))
             }
             Box(
                 Modifier.width(1.dp).height(44.dp)

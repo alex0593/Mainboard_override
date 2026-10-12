@@ -148,8 +148,11 @@
     <string name="error_no_pending_noise">STEALTH cannot run: there is no pending noise to erase this turn.</string>
     <string name="error_effect_already_active">That script is already active.</string>
     <string name="cloak_active">CLOAK %1$d</string>
+    <string name="stun_active">STUN %1$d</string>
     <string name="help_cloak_title">CLOAK</string>
     <string name="help_cloak_body">Select the card to freeze the base trace for two turns: executing the turn adds only pending noise, not the base 8. Pending noise still applies, so STEALTH remains useful. It costs 3 RAM and adds no noise. It cannot run again while active.</string>
+    <string name="help_stun_title">STUN</string>
+    <string name="help_stun_body">Select the card to pause the Daemon\'s movement for one system phase: while active, the daemon does not move at the start of the turn (it will move again on the next turn). It costs 3 RAM and adds no noise. It cannot run again while active and only works if the daemon is on the board.</string>
     <string name="result_victory">Extraction connected successfully.</string>
     <string name="result_trace_intercepted">Trace reached 100. Use fewer noisy scripts.</string>
     <string name="result_daemon_breach">The daemon reached start.</string>
