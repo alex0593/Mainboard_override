@@ -229,7 +229,7 @@ internal fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart
                         key = { it.number },
                     ) { challenge ->
                         ChallengeCard(challenge,
-                            challenge.number <= state.preferences.challengeUnlocked,
+                            challenge.number <= state.preferences.challengeUnlocked || state.unlockAll,
                             challenge.number in state.preferences.challengeBest,
                             state.preferences.challengeBest[challenge.number],
                             Modifier.testTag("challenge-${challenge.number}")) { selected = challenge.number }
@@ -241,7 +241,7 @@ internal fun ChallengeScreen(state: GameUiState, actions: MainViewModel, onStart
     selected?.let { level ->
         val challenge = ChallengeCatalog.level(level) ?: return@let
         val record = state.preferences.challengeBest[level]
-        if (level <= state.preferences.challengeUnlocked) GameDialog(
+        if (level <= state.preferences.challengeUnlocked || state.unlockAll) GameDialog(
             stringResource(R.string.challenge_level, level), { selected = null },
             modifier = Modifier.testTag("challenge-dialog"),
             actions = {

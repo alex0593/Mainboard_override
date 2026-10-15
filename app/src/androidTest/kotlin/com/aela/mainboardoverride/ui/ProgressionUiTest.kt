@@ -294,6 +294,50 @@ class ProgressionUiTest {
         assertNotEquals(firstSeed, vm.uiState.value.game!!.seed)
     }
 
+    // Debug flag `unlockAll` (3rd ViewModel argument): opens the whole challenge
+    // catalog and the whole store without touching the saved progress. Scenarios
+    // are untouched; only challenges and the skin catalog can be bypassed.
+
+    @Test fun debugUnlockAllStartsChallengesBeyondTheProgressLock() {
+        val vm = MainViewModel(app, repository, unlockAll = true)
+        compose.setContent {
+            val state by vm.uiState.collectAsState()
+            MainboardTheme { GameScreen(state, vm) {} }
+        }
+        compose.runOnIdle { vm.startChallenge(50) }
+        compose.waitUntil(5000) { vm.uiState.value.game != null }
+        assertEquals(50, vm.uiState.value.challengeLevel)
+        // The flag reaches the domain: the 1-30 band is ignored and all 7 scripts are dealt.
+        val game = vm.uiState.value.game!!
+        assertEquals(ScriptType.entries.toSet(), (game.scriptHand + game.scriptDeck).map { it.type }.toSet())
+    }
+
+    @Test fun theLockStillHoldsWithoutTheFlag() {
+        val vm = MainViewModel(app, repository) // default unlockAll = false
+        compose.setContent {
+            val state by vm.uiState.collectAsState()
+            MainboardTheme { GameScreen(state, vm) {} }
+        }
+        compose.runOnIdle { vm.startChallenge(50) }
+        compose.waitForIdle()
+        assertNull(vm.uiState.value.game)
+    }
+
+    @Test fun debugUnlockAllGrantsEverySkinWithoutTouchingCredits() = runBlocking {
+        val repositoryRef = repository
+        val creditsBefore = repositoryRef.preferences.first().credits
+        val vm = MainViewModel(app, repositoryRef, unlockAll = true)
+        compose.waitUntil(5000) {
+            val owned = runBlocking { repositoryRef.preferences.first().ownedSkins }
+            Rewards.boardSkinIds.all { Rewards.ownedKey(true, it) in owned } &&
+                Rewards.dominoSkinIds.all { Rewards.ownedKey(false, it) in owned }
+        }
+        assertEquals(creditsBefore, repositoryRef.preferences.first().credits)
+        val snapshot = repositoryRef.preferences.first().ownedSkins
+        repositoryRef.unlockAllSkins() // idempotent
+        assertEquals(snapshot, repositoryRef.preferences.first().ownedSkins)
+    }
+
     @Test fun menuPulsesStopWithReducedMotion() {
         val reduced = mutableStateOf(false)
         compose.mainClock.autoAdvance = false

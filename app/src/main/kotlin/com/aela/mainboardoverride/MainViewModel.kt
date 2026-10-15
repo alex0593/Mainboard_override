@@ -52,11 +52,17 @@ data class GameUiState(
     val reviewingBoard: Boolean = false,
     val endTurnHint: Boolean = false,
     val lastBuff: BoardBuff? = null,
+    val unlockAll: Boolean = false,
 )
 
 /** Coordinates navigation-facing selection state, the pure engine and player preferences. */
-class MainViewModel(application: Application, private val repository: PlayerPreferencesRepository) : AndroidViewModel(application) {
-    constructor(application: Application) : this(application, DataStorePlayerPreferencesRepository(application))
+class MainViewModel(
+    application: Application,
+    private val repository: PlayerPreferencesRepository,
+    private val unlockAll: Boolean = false,
+) : AndroidViewModel(application) {
+    /** Application entry point: debug builds carry the unlock-all debugging flag. */
+    constructor(application: Application) : this(application, DataStorePlayerPreferencesRepository(application), BuildConfig.DEBUG)
     val tutorial = com.aela.mainboardoverride.ui.TutorialController(repository, viewModelScope) { _cues.tryEmit(it) }
     private val session = MutableStateFlow(GameUiState())
 
@@ -74,7 +80,7 @@ class MainViewModel(application: Application, private val repository: PlayerPref
     }
 
     val uiState: StateFlow<GameUiState> = combine(session, repository.preferences) { game, preferences ->
-        game.copy(preferences = preferences)
+        game.copy(preferences = preferences, unlockAll = unlockAll)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GameUiState())
 
     fun start(seed: Long = Random.nextLong()) {
@@ -89,8 +95,8 @@ class MainViewModel(application: Application, private val repository: PlayerPref
     }
 
     fun startChallenge(level: Int, seed: Long) {
-        if (level !in 1..com.aela.mainboardoverride.domain.ChallengeCatalog.COUNT || level > uiState.value.preferences.challengeUnlocked) return
-        session.value = GameUiState(game = GameEngine.resolveForcedResult(LevelGenerator.generateChallenge(level, seed)).state, challengeLevel = level)
+        if (level !in 1..com.aela.mainboardoverride.domain.ChallengeCatalog.COUNT || (level > uiState.value.preferences.challengeUnlocked && !unlockAll)) return
+        session.value = GameUiState(game = GameEngine.resolveForcedResult(LevelGenerator.generateChallenge(level, seed, unlockAll)).state, challengeLevel = level)
         emitCue(SoundCue.Boot)
     }
 
@@ -111,7 +117,10 @@ class MainViewModel(application: Application, private val repository: PlayerPref
     }
 
     /** Grants the currently equipped skins if any became paid since they were equipped. */
-    init { viewModelScope.launch { repository.ensureEquippedOwned() } }
+    init {
+        viewModelScope.launch { repository.ensureEquippedOwned() }
+        if (unlockAll) viewModelScope.launch { repository.unlockAllSkins() }
+    }
 
     /** Plays again in the same mode, generating a new seed for free play. */
     fun retry() = restartNetwork()

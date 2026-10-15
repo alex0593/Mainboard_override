@@ -69,6 +69,7 @@ interface PlayerPreferencesRepository {
     }
     suspend fun buySkin(board: Boolean, id: String): Boolean = false
     suspend fun ensureEquippedOwned() {}
+    suspend fun unlockAllSkins() {}
     suspend fun setLastScenario(id: String) {}
     suspend fun setTutorialProgress(lesson: Int, completed: Boolean) {}
 }
@@ -163,6 +164,15 @@ class DataStorePlayerPreferencesRepository(
             if (Rewards.isPaid(true, board)) next += Rewards.ownedKey(true, board)
             if (Rewards.isPaid(false, domino)) next += Rewards.ownedKey(false, domino)
             values[OWNED_SKINS] = next
+        }
+    }
+    /** Debug convenience: grants the full store catalog without spending credits. */
+    override suspend fun unlockAllSkins() {
+        store.edit { values ->
+            val owned = normalizeOwnedSkins(values[OWNED_SKINS] ?: emptySet())
+            values[OWNED_SKINS] = owned +
+                Rewards.boardSkinIds.map { Rewards.ownedKey(true, it) } +
+                Rewards.dominoSkinIds.map { Rewards.ownedKey(false, it) }
         }
     }
     override suspend fun finishMatch(id: String, level: Int?, turns: Int, trace: Int, scenarioId: String?): MatchReward {
