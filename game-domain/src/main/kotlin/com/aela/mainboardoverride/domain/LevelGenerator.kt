@@ -8,19 +8,19 @@ object LevelGenerator {
 
     fun generate(seed: Long): GameState = generateVerified(seed).state
     fun generateScenario(seed: Long, scenarioId: String): GameState = generateVerified(seed, scenarioId = scenarioId).state
-    fun generateChallenge(level: Int, seed: Long = ChallengeCatalog.level(level)?.seed ?: error("Unknown challenge level $level")): GameState {
+    fun generateChallenge(level: Int, seed: Long = ChallengeCatalog.level(level)?.seed ?: error("Unknown challenge level $level"), unlockAll: Boolean = false): GameState {
         val fallback = ChallengeCatalog.level(level)?.seed ?: error("Unknown challenge level $level")
         var candidate = seed
         // A challenge keeps its rules and level, while a fresh seed may need a few
         // deterministic retries to find a verified witness in the generated geometry.
         repeat(64) {
-            runCatching { generateVerified(candidate, level) }.getOrNull()?.let { return it.state }
+            runCatching { generateVerified(candidate, level, unlockAll = unlockAll) }.getOrNull()?.let { return it.state }
             candidate += 7919L
         }
-        return generateVerified(fallback, level).state
+        return generateVerified(fallback, level, unlockAll = unlockAll).state
     }
 
-    internal fun generateVerified(seed: Long, challengeLevel: Int? = null, scenarioId: String = "classic"): GeneratedLevel {
+    internal fun generateVerified(seed: Long, challengeLevel: Int? = null, scenarioId: String = "classic", unlockAll: Boolean = false): GeneratedLevel {
         val scenario = ScenarioCatalog.get(scenarioId).takeIf { challengeLevel == null }
         val random = Random(seed)
         if (scenario != null) {
@@ -28,7 +28,7 @@ object LevelGenerator {
                 val start = Position(-1, random.nextInt(1, scenario.height))
                 val extraction = Position(scenario.width, random.nextInt(1, scenario.height))
                 val path = findPath(random, scenario.route, start, extraction, scenario.width, scenario.height)
-                if (path != null) buildLevel(seed, random, path, start, extraction, boardWidth = scenario.width, scenario = scenario)?.let { return it }
+                if (path != null) buildLevel(seed, random, path, start, extraction, boardWidth = scenario.width, scenario = scenario, unlockAll = unlockAll)?.let { return it }
             }
             error("Unable to generate scenario ${scenario.id} for $seed")
         }
@@ -53,13 +53,13 @@ object LevelGenerator {
             val base = challengeLevel?.let { (4 + it / 2).coerceIn(5, maxDominoes(it)) } ?: random.nextInt(5, 8)
             val count = maxOf(base, minChallengeCount)
             val path = findPath(random, count, start, extraction, boardWidth)
-            if (path != null) buildLevel(seed, random, path, start, extraction, challengeLevel, boardWidth = boardWidth)?.let { return it }
+            if (path != null) buildLevel(seed, random, path, start, extraction, challengeLevel, boardWidth = boardWidth, unlockAll = unlockAll)?.let { return it }
         }
         // Deterministic detour built from the actual endpoints, so the first cell
         // always neighbors start and the last always neighbors extraction.
         val fallbackCount = maxOf((4 + (challengeLevel ?: 4) / 2).coerceIn(5, maxDominoes(challengeLevel ?: 4)), minChallengeCount)
         val fallback = fallbackPath(random, fallbackCount, start, extraction, boardWidth)
-        return checkNotNull(fallback?.let { buildLevel(seed, random, it, start, extraction, challengeLevel, boardWidth = boardWidth) })
+        return checkNotNull(fallback?.let { buildLevel(seed, random, it, start, extraction, challengeLevel, boardWidth = boardWidth, unlockAll = unlockAll) })
     }
 
     private fun findPath(random: Random, count: Int, start: Position, extraction: Position, width: Int = MAX_GENERATED_BOARD_WIDTH, height: Int = BOARD_HEIGHT): List<Position>? {
@@ -84,7 +84,7 @@ object LevelGenerator {
         return if (visit(board.start)) path.toList() else null
     }
 
-    private fun buildLevel(seed: Long, random: Random, path: List<Position>, start: Position = Position(-1, BOARD_HEIGHT / 2), extraction: Position = Position(BOARD_WIDTH, BOARD_HEIGHT / 2), challengeLevel: Int? = null, boardWidth: Int? = null, scenario: Scenario? = null): GeneratedLevel? {
+    private fun buildLevel(seed: Long, random: Random, path: List<Position>, start: Position = Position(-1, BOARD_HEIGHT / 2), extraction: Position = Position(BOARD_WIDTH, BOARD_HEIGHT / 2), challengeLevel: Int? = null, boardWidth: Int? = null, scenario: Scenario? = null, unlockAll: Boolean = false): GeneratedLevel? {
         // Fit the generated witness while varying the playable footprint per seed.
         val width = boardWidth ?: scenario?.width ?: MAX_GENERATED_BOARD_WIDTH
         val height = scenario?.height ?: if (path.all { it.y < 6 } && extraction.y < 6) 6 else 7
@@ -160,9 +160,12 @@ object LevelGenerator {
         val flipped = route.map { if (random.nextBoolean()) it.domino.rotated() else it.domino }
         val bag = (listOf(flipped.first()) + decoys.take(2)).shuffled(random) + flipped.drop(1) + decoys.drop(2)
         val banned = challengeLevel?.let { ChallengeCatalog.level(it)?.rules?.bannedScripts } ?: emptySet()
+        // Band filter AFTER the shuffle: filtering must consume no randomness, so every
+        // seed keeps the exact board it has today (banned rules stay pre-shuffle as before).
+        val allowed = if (unlockAll) ScriptType.entries.toSet() else unlockedScripts(challengeLevel)
         val scripts = (0..2).flatMap { cycle ->
             ScriptType.entries.filter { it !in banned }.map { ScriptCard("$cycle-${it.name}", it) }
-        }.shuffled(random)
+        }.shuffled(random).filter { it.type in allowed }
         val state = GameState(
             seed = seed,
             board = board,

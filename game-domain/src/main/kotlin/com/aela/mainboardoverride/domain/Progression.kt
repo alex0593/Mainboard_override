@@ -18,6 +18,18 @@ object ScenarioCatalog {
 /** Campaign phases over the 100 challenge levels (five phases of 20); labels only, rules untouched. */
 fun challengePhase(number: Int): Int = ((number - 1) / 20).coerceIn(0, 4)
 
+/**
+ * Scripts a campaign tier may play (approved band table 1-30 / 31-60 / 61-100).
+ * Free play, scenarios and the fixed tutorial deck keep every script.
+ */
+fun unlockedScripts(challengeLevel: Int?): Set<ScriptType> = when {
+    challengeLevel == null -> ScriptType.entries.toSet()
+    challengeLevel <= 30 -> setOf(ScriptType.PING, ScriptType.BRIDGE)
+    challengeLevel <= 60 -> setOf(ScriptType.PING, ScriptType.BRIDGE, ScriptType.SPOOF, ScriptType.CLOAK)
+    else -> setOf(ScriptType.PING, ScriptType.SPOOF, ScriptType.KILL_PROCESS,
+        ScriptType.BRIDGE, ScriptType.STEALTH, ScriptType.CLOAK, ScriptType.STUN)
+}
+
 /** Additive achievement ids; grants never pay twice because storage is a set. */
 enum class Achievement(val id: String) {
     FIRST_VICTORY("first_victory"),

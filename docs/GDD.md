@@ -39,9 +39,20 @@ El modo libre tiene 6 filas: Red original 8 columnas, Laboratorio y Centro de da
 | `CLOAK` | 3 | 0 | Congela el rastreo base de 8 durante dos turnos; el ruido pendiente sigue sumando. Rechaza si ya está activo. |
 | `STUN` | 3 | 0 | El daemon no avanza en la siguiente fase de sistema. Sin daemon en el tablero se rechaza. Rechaza si ya está activo. |
 
+Los scripts no están todos disponibles desde el principio: la campaña los reparte por bandas de nivel. El modo libre, los escenarios y el tutorial usan siempre los siete.
+
+| Banda de campaña | Scripts jugables | Cartas en juego (tres ciclos por tipo, sin vetos) |
+|---|---|---:|
+| Desafíos 1–30 | `PING`, `BRIDGE` | 6 |
+| Desafíos 31–60 | `PING`, `BRIDGE`, `SPOOF`, `CLOAK` | 12 |
+| Desafíos 61–100 | los siete | 21 |
+| Modo libre, escenarios y tutorial | los siete | 21 |
+
+Las reglas `bannedScripts` de un desafío (los niveles terminados en 7 vetan `SPOOF`) se aplican **encima** de la banda, así que un script vetado nunca se reparte aunque su banda lo incluya. El filtro se aplica después del barajado, de modo que no consume aleatoriedad: cada semilla genera exactamente el mismo tablero de siempre. Las compilaciones de depuración disponen de un modo con todos los scripts (`unlockAll`) que ignora las bandas pero respeta los vetos.
+
 Las derrotas posibles son rastreo al 100 %, daemon en el inicio, lock contactado con valor erróneo, kernel panic sin acciones habilitables o bolsa de hardware agotada. BRIDGE y KILL_PROCESS pueden evitar kernel panic si abren una colocación legal. La victoria requiere una ruta continua hasta extracción que además cubra todos los nodos de datos del nivel (desafíos 41 en adelante) después de resolver la fase del sistema.
 
-La mano de scripts arranca con un único cupo y abre uno más cada dos turnos: los turnos 1-2 sostienen un script, los turnos 3-4 dos, los turnos 5-6 tres, y así sucesivamente. Al ejecutar el turno se roba la primera carta del mazo solo si la mano está por debajo del cupo del turno nuevo y queda existencias, de modo que el tope crece lento pero nunca te quedas sin script por haber gastado el tuyo. El mazo estándar baraja tres ciclos de cada tipo de script (21 cartas: una en mano y 20 en el mazo); en los desafíos que vetan SPOOF baja a 17.
+La mano de scripts arranca con un único cupo y abre uno más cada dos turnos: los turnos 1-2 sostienen un script, los turnos 3-4 dos, los turnos 5-6 tres, y así sucesivamente. Al ejecutar el turno se roba la primera carta del mazo solo si la mano está por debajo del cupo del turno nuevo y queda existencias, de modo que el tope crece lento pero nunca te quedas sin script por haber gastado el tuyo. El mazo estándar baraja tres ciclos de cada tipo de script (21 cartas: una en mano y 20 en el mazo); en campaña el mazo se reduce a los tipos de su banda (12 cartas en 31–60 y 6 en 1–30) y los desafíos que vetan `SPOOF` lo recortan aún más.
 
 PING conserva descubrimientos anteriores y selecciona entre trampas ocultas sin activar con azar reproducible por semilla y carta. La vista de la siguiente ficha se limpia al terminar el turno. Cada uso amplía la vista previa en una ficha y revela otra trampa disponible. Si no queda información nueva, rechaza el uso sin gastar carta ni RAM. No hay límite de scripts por turno aparte de las cartas disponibles, sus objetivos válidos y la RAM.
 
