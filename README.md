@@ -13,14 +13,17 @@ Vertical slice jugable: motor Kotlin puro, app Jetpack Compose, generación
 determinista por semillas, persistencia local de ajustes y récords, y pruebas
 unitarias del bucle principal.
 
-Estado verificado (2026-10-03): bloques A–F cerrados (A01–A10, B01–B06,
-C01–C06, D01–D04, E01–E06, F01–F03) y salida de alfa completada: build de
-release firmado (APK + AAB, etiqueta `v0.1.0`), ficha de tienda en
-`docs/PLAY.md` y sitio publicado con **HTTPS** en sus tres nombres.
-Suite de dominio **66/66** y `:app:testDebugUnitTest` **21/21** en verde, lint
-sin errores, suite instrumental **31/31** (1 flake de entorno, 2/2 en retry
-aislado) y smoke test de la APK release (R8) sin excepciones en emulador API
-35. Pendiente externo:
+Estado verificado (2026-10-15): bloques A–F cerrados (A01–A10, B01–B06,
+C01–C06, D01–D04, E01–E06, F01–F03), bloques J (campaña a 100) y K (tienda)
+cerrados, y salida de alfa completada: build de release firmado (APK + AAB,
+etiqueta `v0.1.0`), ficha de tienda en `docs/PLAY.md` y sitio publicado con
+**HTTPS** en sus tres nombres. Los siete scripts de campaña se desbloquean por
+bandas de nivel (1–30 / 31–60 / 61–100) y el flag debug `unlockAll` abre todo en
+depuración sin tocar el release. Suite de dominio **72/72** y
+`:app:testDebugUnitTest` **21/21** en verde, lint sin errores (66 avisos,
+ninguno nuevo) y suite instrumental **38/38** en 8 clases sobre el Huawei
+CLK-LX3 por USB (leído del XML, 0 fallos). Smoke test de la APK release (R8)
+sin excepciones en emulador API 35. Pendiente externo:
 Play Console — detallado en el [Roadmap](docs/ROADMAP.md).
 
 ## Cómo se juega

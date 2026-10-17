@@ -16,6 +16,11 @@ en 28/28. El 2026-09-22 se cerró F03 (skins Zafiro/Ámbar/Amatista). Hoy
 (servidor propio y descarga directa en DuckDNS).
 El 2026-10-04 se cerró F04 (animaciones de skins premium en tienda y partida).
 El 2026-10-12 se cerraron los scripts de estado CLOAK y STUN (3.2).
+El 2026-10-15 se implementó el desbloqueo progresivo de scripts por bandas de
+campaña (1–30 PING+BRIDGE · 31–60 +SPOOF+CLOAK · 61–100 los siete), el flag
+debug `unlockAll` y el pulido de la ventana SPOOF y del panel de controles
+(PCB más ancho), con el hook `GameUiState.unlockedScripts` listo para el
+futuro hub del tutorial (3.2, 3.4, 3.6).
 Los hilos temáticos son propuestas; no representan funciones aprobadas
 ni tareas terminadas. `[ ]` significa pendiente; marcar `[x]` solo con evidencia
 de cierre. Las decisiones de producto se registran antes de implementar sus ramas.
@@ -26,7 +31,8 @@ de cierre. Las decisiones de producto se registran antes de implementar sus rama
 - Scripts actuales: PING, SPOOF, KILL_PROCESS, BRIDGE, STEALTH, CLOAK y STUN.
 - Progresión de desafíos desbloqueables y escenarios de modo libre.
 - Persistencia con DataStore; compras y recompensas implementadas en el repositorio concreto.
-- Última ejecución de `:game-domain:test`: 66 pruebas, 0 fallos (2026-10-12).
+- Última ejecución de `:game-domain:test`: 72 pruebas, 0 fallos (2026-10-15;
+  +6 de `ScriptUnlockTest` con las bandas de campaña).
 - Tutorial con 10 lecciones deterministas, textos EN/ES en paridad (47 instrucciones), progreso visible y avance explícito; `TutorialTest` 5/5 y `PuzzleTutorialUiTest` 6/6 en CLK-LX3 por USB.
 - Audio procedural completo: soundtrack synthwave adaptativo, 16 cues de SFX, volúmenes de música/EFX en ajustes, silencio, vibración cableada (`HapticsHost`) y movimiento reducido (E04).
 - Localización por-app con AppCompat (ES/EN aplican en todos los API), icono adaptativo con foreground exportado del logo (`logo_foreground.png`), capa monocroma y splash propio.
@@ -46,6 +52,7 @@ de cierre. Las decisiones de producto se registran antes de implementar sus rama
 
 ### 3.2 Scripts y descarte
 - Añadir scripts complementarios: ocultar rastreo temporalmente, dañar daemon, duplicar puerto, alterar puentes, etc. (Hecho: STEALTH descarta el ruido pendiente del turno; CLOAK congela el rastreo base de 8 durante dos turnos; STUN detiene el avance del daemon una fase. Quedan duplicar puerto y alterar puentes.)
+- Desbloqueo progresivo de scripts por bandas de campaña. (Hecho 2026-10-15: `unlockedScripts(challengeLevel)` en `game-domain` —1–30 `PING`+`BRIDGE` · 31–60 +`SPOOF`+`CLOAK` · 61–100 los siete— aplicado **después** del barajado para no consumir RNG, así que los tableros por semilla son idénticos; los `bannedScripts` del reto aplican encima; libre, escenarios y tutorial conservan los siete. El flag debug `unlockAll` ignora las bandas sin saltarse los vetos.)
 - Permitir descarte o reorganización de mazo en algunas partidas.
 - Ofrecer mejoras de script desbloqueables: menor coste, menor ruido, carta extra, efecto secundario controlado.
 - Mejorar feedback de KILL para dejar claro qué celda o ficha se va a eliminar. (Hecho: objetivos resaltados vía `scriptTargets` + burst de destrucción con prueba.)
@@ -65,7 +72,7 @@ de cierre. Las decisiones de producto se registran antes de implementar sus rama
 - Mejorar feedback visual de colocación, ruido, rastreo, daemon y scripts.
 - Añadir vista de cambios pendientes antes de ejecutar turno. (Hecho: banda de ruido pendiente + pista de fin de turno.)
 - Actualizar previsualización de puzzles cuando cambian las skins equipadas.
-- Unificar coherencia visual entre menú y partida.
+- Unificar coherencia visual entre menú y partida. (Hecho 2026-10-15: la ventana SPOOF se alinea con `ConfirmGameDialog` —sin título, `RoundedCornerShape(20.dp)`, borde cian y textura `menu_card_v1`— con chevrons ▴/▾ en los bordes de la lista de valores en lugar del texto `spoof_scroll_hint`; el panel de controles pasa a `.25f` (`coerceIn(170.dp, 230.dp)`) y agranda la PCB.)
 
 ### 3.5 Progresión y economía
 - Validar la economía implementada: compras, saldo, recompensas e idempotencia. (Hecho y cubierto por `ProgressionUiTest`: atomicidad, migración sin retroactivos, compra/equipo, idempotencia de recompensa.)
@@ -76,7 +83,7 @@ de cierre. Las decisiones de producto se registran antes de implementar sus rama
 
 ### 3.6 Tutorial y onboarding
 - Aumentar cobertura del tutorial: scripts avanzados, errores comunes, lectura de tablero. (Hecho: lecciones de KILL y BRIDGE, ruta de entrada incorrecta, 47 instrucciones EN/ES en paridad.)
-- Añadir lecciones extra o puntos de referencia desbloqueables.
+- Añadir lecciones extra o puntos de referencia desbloqueables. (Parcial 2026-10-15: `GameUiState.unlockedScripts` expone el conjunto de scripts desbloqueados como hook persistente —sin eventos— para que el futuro hub de tutoriales lo consuma; el hub y las lecciones extra siguen pendientes.)
 - Permitir práctica sandbox dentro del tutorial. (Alcance acordado en D04: práctica guiada rejugable; sin sandbox libre.)
 - Mejorar flujo entre lecciones y saltar al tema elegido. (Flujo explícito con continuar/reiniciar/siguiente; sin selector directo de lección.)
 

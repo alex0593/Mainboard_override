@@ -4,7 +4,7 @@
 y conserva las decisiones que afectan al trabajo siguiente. El plan de trabajo
 vive únicamente en [ROADMAP.md](ROADMAP.md).
 
-**Revisión:** 2026-10-12.
+**Revisión:** 2026-10-15.
 
 ## Fuentes de verdad
 
@@ -22,7 +22,27 @@ vive únicamente en [ROADMAP.md](ROADMAP.md).
 Los contratos técnicos viven en el código; los cambios de reglas deben
 reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus detalles.
 
-## Dónde quedamos (última revisión 2026-10-12)
+## Dónde quedamos (última revisión 2026-10-15)
+
+- **Scripts progresivos, debug unlock-all y pulido UI (2026-10-15, cerrado):**
+  los scripts de campaña se reparten por bandas de nivel —desafíos 1–30
+  `PING`+`BRIDGE`, 31–60 +`SPOOF`+`CLOAK`, 61–100 los siete— mediante la función
+  pura `unlockedScripts(challengeLevel)` de `game-domain`, aplicada **después**
+  del barajado para no consumir RNG (los tableros por semilla siguen siendo
+  idénticos); los `bannedScripts` del reto aplican encima y libre, escenarios y
+  tutorial conservan siempre los siete. El flag debug `unlockAll`
+  (`BuildConfig.DEBUG`; release intacta y R8 elimina la rama) ignora las bandas y
+  desbloquea el catálogo de desafíos y toda la tienda sin tocar créditos.
+  `GameUiState.unlockedScripts` expone el conjunto desbloqueado como hook del
+  futuro hub del tutorial (sin eventos). Pulido: la ventana SPOOF se alinea con
+  `ConfirmGameDialog` —sin título, `RoundedCornerShape(20.dp)`, borde cian,
+  textura `menu_card_v1`— y sustituye el texto de scroll por chevrons ▴/▾ en los
+  bordes (estáticos con movimiento reducido y sin tapar los taps); el panel de
+  controles baja a `.25f` (`coerceIn(170.dp, 230.dp)`) y agranda la PCB.
+  Validado: `./gradlew test` verde (**72 dominio + 21 app**), `:app:lintDebug`
+  sin errores y `:app:assembleDebug` correcto; suite instrumental **38/38** en el
+  Huawei CLK-LX3 por USB (última corrida 2026-10-17; 8 clases, 0 fallos, leído
+  del XML). Detalle en el [Roadmap](ROADMAP.md) (3.2/3.4/3.6).
 
 - **Scripts de estado CLOAK y STUN (2026-10-12, cerrado):** dos entradas nuevas
   de `ScriptType` con estado dedicado en `GameState` (`cloakTurns`, `stunTurns`)
@@ -117,14 +137,16 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 - Organización y icono (2026-09-21): arte de la raíz movido a `assets/reference`
   y `assets/kenney`, `assets/logo/` versionado, y el foreground del icono
   adaptativo pasa a ser la exportación del logo (`logo_foreground.png`).
-- No hay cambios locales sin commitear.
+- Sin cambios locales pendientes más allá de los artefactos ajenos de siempre
+  (`AGENTS.md` del inbox del coordinador, `docs/PLAY.md` de release y
+  `web/index.html` de deploy), que no se commitean.
 
 ## Estado comprobado
 
 | Área | Estado actual | Fuente principal |
 | --- | --- | --- |
 | Motor | Estado inmutable, acciones explícitas y `GameEngine.reduce`. | [Arquitectura](ARCHITECTURE.md) |
-| Generación | Semillas reproducibles; niveles libres, escenarios y catálogo de 100 desafíos (5 fases, tableros anchos desde el 31 y nodos desde el 41); suite de dominio 66/66 verde. | [Arquitectura](ARCHITECTURE.md) |
+| Generación | Semillas reproducibles; niveles libres, escenarios y catálogo de 100 desafíos (5 fases, tableros anchos desde el 31 y nodos desde el 41); scripts de campaña por bandas de nivel (1–30, 31–60, 61–100) sin consumir RNG; suite de dominio 72/72 verde. | [Arquitectura](ARCHITECTURE.md) |
 | Skins | 18 fichas y 17 PCB en Tienda; gratis las tres primeras de cada catálogo (`pcb`/`blueprint`/`industrial` y `kenney`/`dark`/`gingerbread`) y 29 de pago a 80/200 según `Rewards.premiumSkins`; posesión por categoría `board:<id>`/`domino:<id>`. | [README de skins](../assets/skins/README.md) |
 | Scripts | `PING`, `SPOOF`, `KILL` (`KILL_PROCESS` internamente), `BRIDGE`, `STEALTH` (F02, descarta el ruido pendiente), `CLOAK` (congela el rastreo base dos turnos) y `STUN` (detiene el daemon una fase). | [GDD](GDD.md) |
 | Progresión | 100 desafíos en 5 fases con nodos de datos obligatorios desde el 41; los desafíos desbloquean escenarios por victorias distintas; récords y créditos persisten. | `PlayerPreferencesRepository` |
@@ -154,6 +176,14 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
   Perfiles existentes reciben el conjunto vacío, sin créditos retroactivos.
 - **B05/B06:** no se reanuda la partida tras cerrar el proceso; al reabrir se
   parte del menú limpio, sin recompensas duplicadas.
+- **Bandas de scripts (2026-10-15):** el desbloqueo de scripts es por **nivel de
+  campaña** (1–30 `PING`+`BRIDGE`, 31–60 +`SPOOF`+`CLOAK`, 61–100 los siete) con
+  la función pura `unlockedScripts(challengeLevel)`; el filtro se aplica **después**
+  del barajado (no consume RNG) y los `bannedScripts` del reto aplican encima.
+  Libre, escenarios y tutorial conservan los siete scripts. El flag debug
+  `unlockAll` ignora las bandas pero nunca los vetos; escenarios y `startScenario`
+  quedan fuera de su alcance. `GameUiState.unlockedScripts` es el hook persistente
+  que consumirá el futuro hub del tutorial.
 - **D04:** práctica del tutorial = lecciones guiadas rejugables
   (continuar/reiniciar/siguiente); sin sandbox libre.
 - Los fondos `classic`, `lab`, `data`, `industry`, `archive`, `core` y `ghost`
@@ -237,6 +267,13 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
   actual es automatizada (roles, targets ≥48dp, fuente 1.3x, contraste AA).
 - **Pantallas pequeñas e horizontal invertido** sin verificación física;
   validación masiva de semillas pendiente en dispositivos reales (GDD).
+- **PCB — extremos del clamp `controlsWidth` (2026-10-15):** el suelo de 170dp
+  exige un ancho de contenido <680dp y el techo de 230dp uno >920dp, sin
+  dispositivo ni AVD disponible; verificado el caso intermedio (`.25f`, panel de
+  188dp) en el Huawei CLK-LX3 con volcado `uiautomator`.
+- **Smoke de la APK release en dispositivo físico:** `assembleRelease` compila
+  con firma, pero la instalación de la release en hardware queda pendiente de
+  decisión (instalar release exige desinstalar la debug y borrar sus datos).
 - **Atmósfera (E04):** glitch visual sostenido al 80 % de rastreo y estática
   ambiental diferidos a `FUTURO.md`.
 
