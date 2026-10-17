@@ -65,7 +65,6 @@
     <string name="confirm_app_exit_message">La partida actual no se guarda. ¿Seguro que quieres cerrar la aplicación?</string>
     <string name="confirm_app_exit">Salir de la app</string>
     <string name="review_board">Revisar tablero</string>
-    <string name="spoof_scroll_hint">Desliza para elegir el valor nuevo</string>
     <string name="node_trace_cooler">disipador: −8 rastreo</string>
     <string name="node_ram_reserve">reserva RAM: +1 RAM</string>
     <string name="buff_trace_collected">Rastreo reducido en 8</string>
@@ -86,7 +85,6 @@
     <string name="seed">SEMILLA %1$d</string>
     <string name="scripts">SCRIPTS</string>
     <string name="dominoes">HARDWARE</string>
-    <string name="spoof_value">SPOOF: revisa y modifica un puerto</string>
     <string name="victory">ACCESO CONCEDIDO</string>
     <string name="defeat">CONEXIÓN TERMINADA</string>
     <string name="play_again">JUGAR DE NUEVO</string>

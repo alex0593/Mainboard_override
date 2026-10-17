@@ -65,7 +65,6 @@
     <string name="confirm_app_exit_message">Your current match is not saved. Are you sure you want to close the application?</string>
     <string name="confirm_app_exit">Exit app</string>
     <string name="review_board">Review board</string>
-    <string name="spoof_scroll_hint">Scroll to choose the replacement value</string>
     <string name="node_trace_cooler">trace cooler: −8 trace</string>
     <string name="node_ram_reserve">RAM reserve: +1 RAM</string>
     <string name="buff_trace_collected">Trace cooled by 8</string>
@@ -88,7 +87,6 @@
     <string name="seed">SEED %1$d</string>
     <string name="scripts">SCRIPTS</string>
     <string name="dominoes">HARDWARE</string>
-    <string name="spoof_value">SPOOF: preview and edit a port</string>
     <string name="victory">ACCESS GRANTED</string>
     <string name="defeat">CONNECTION TERMINATED</string>
     <string name="play_again">PLAY AGAIN</string>

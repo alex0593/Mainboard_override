@@ -138,6 +138,44 @@ class PuzzleTutorialUiTest {
         compose.onNodeWithText(app.getString(R.string.tutorial_complete)).assertIsDisplayed()
     }
 
+    /**
+     * The SPOOF window is a decorative panel: its up/down chevrons report where the value
+     * list can still scroll (only the down one at the top, only the up one at the bottom)
+     * and they must never swallow the taps of the value rows underneath them.
+     */
+    @Test fun spoofChevronsSignalTheScrollEdges() {
+        val vm = MainViewModel(app, repository)
+        compose.setContent {
+            val state by vm.uiState.collectAsState()
+            MainboardTheme { TutorialScreen(state.preferences, vm.tutorial, {}) }
+        }
+        compose.onNodeWithTag("tutorial-start").performClick()
+        compose.runOnIdle { vm.tutorial.start(6) }
+        compose.waitUntil(5000) { vm.tutorial.state.value.lesson == 6 }
+        // Lesson 6 opens on the SPOOF instruction; closing that panel keeps the step.
+        compose.onNodeWithTag("tutorial-action-Next").performClick()
+        compose.runOnIdle {
+            vm.tutorial.dispatch(TutorialInput.SelectScript("SPOOF"))
+            vm.tutorial.dispatch(TutorialInput.SelectTile("a"))
+            vm.tutorial.dispatch(TutorialInput.Half(1))
+        }
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("spoof-values").fetchSemanticsNodes().isNotEmpty() }
+        // Resting on the first value: the list can only go forward, so only the down chevron exists.
+        compose.onNodeWithTag("spoof-chevron-down").assertExists()
+        compose.onNodeWithTag("spoof-chevron-up").assertDoesNotExist()
+        // On the last value they swap; the fade-out needs a few frames to land.
+        compose.onNodeWithTag("spoof-values").performScrollToIndex(6)
+        compose.waitUntil(1000) { compose.onAllNodesWithTag("spoof-chevron-up").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("spoof-chevron-up").assertExists()
+        compose.waitUntil(1000) { compose.onAllNodesWithTag("spoof-chevron-down").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithTag("spoof-chevron-down").assertDoesNotExist()
+        // Back to a middle row (below the down chevron) and still clickable.
+        compose.onNodeWithTag("spoof-values").performScrollToIndex(3)
+        compose.onNodeWithTag("tutorial-value-3").assertIsDisplayed().performClick()
+        compose.waitUntil(5000) { vm.tutorial.state.value.value == 3 }
+        compose.onNodeWithTag("tutorial-value-3").assertIsSelected()
+    }
+
     @Test fun completingTutorialPersistsOnlyTutorialProgress() {
         val vm = MainViewModel(app, repository)
         compose.setContent {
