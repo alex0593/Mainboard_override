@@ -338,6 +338,21 @@ class ProgressionUiTest {
         assertEquals(snapshot, repositoryRef.preferences.first().ownedSkins)
     }
 
+    @Test fun uiStateExposesTheUnlockedScriptSet() {
+        val locked = MainViewModel(app, repository) // challengeUnlocked = 1
+        val unlocked = MainViewModel(app, repository, unlockAll = true)
+        compose.setContent {
+            locked.uiState.collectAsState(); unlocked.uiState.collectAsState()
+        }
+        compose.waitUntil(5000) {
+            locked.uiState.value.unlockedScripts == setOf(ScriptType.PING, ScriptType.BRIDGE) &&
+                unlocked.uiState.value.unlockedScripts == ScriptType.entries.toSet()
+        }
+        // Explicit assertions so a passing wait is readable in the report.
+        assertEquals(setOf(ScriptType.PING, ScriptType.BRIDGE), locked.uiState.value.unlockedScripts)
+        assertEquals(ScriptType.entries.toSet(), unlocked.uiState.value.unlockedScripts)
+    }
+
     @Test fun menuPulsesStopWithReducedMotion() {
         val reduced = mutableStateOf(false)
         compose.mainClock.autoAdvance = false

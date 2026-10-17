@@ -17,6 +17,7 @@ import com.aela.mainboardoverride.domain.Position
 import com.aela.mainboardoverride.domain.RejectReason
 import com.aela.mainboardoverride.domain.Rewards
 import com.aela.mainboardoverride.domain.ScriptType
+import com.aela.mainboardoverride.domain.unlockedScripts
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -53,6 +54,8 @@ data class GameUiState(
     val endTurnHint: Boolean = false,
     val lastBuff: BoardBuff? = null,
     val unlockAll: Boolean = false,
+    /** Script types the player may use under current progress; hook for the future tutorial hub. */
+    val unlockedScripts: Set<ScriptType> = ScriptType.entries.toSet(),
 )
 
 /** Coordinates navigation-facing selection state, the pure engine and player preferences. */
@@ -80,7 +83,11 @@ class MainViewModel(
     }
 
     val uiState: StateFlow<GameUiState> = combine(session, repository.preferences) { game, preferences ->
-        game.copy(preferences = preferences, unlockAll = unlockAll)
+        game.copy(
+            preferences = preferences,
+            unlockAll = unlockAll,
+            unlockedScripts = if (unlockAll) ScriptType.entries.toSet() else unlockedScripts(preferences.challengeUnlocked),
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GameUiState())
 
     fun start(seed: Long = Random.nextLong()) {
