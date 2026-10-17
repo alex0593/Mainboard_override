@@ -116,7 +116,7 @@ El tablero respira con animaciones sutiles —glow pulsante en celdas legales y 
 
 ## Verificación técnica
 
-- `:game-domain:test`: correcto (66 pruebas, 0 fallos); pruebas del motor, los 100 desafíos con su solución de referencia, los nodos de datos, barrido de 1000 semillas libres y 700 combinaciones de escenario/semilla.
+- `:game-domain:test`: correcto (72 pruebas, 0 fallos; 2026-10-15, +6 de `ScriptUnlockTest`); pruebas del motor, los 100 desafíos con su solución de referencia, los nodos de datos, barrido de 1000 semillas libres y 700 combinaciones de escenario/semilla.
 - `:app:assembleDebug`: correcto; APK generado en `app/build/outputs/apk/debug/`.
 - `:app:connectedDebugAndroidTest`: correcto en `emulator-5554` (640×360) con 31 pruebas en 8 clases —un flake de entorno en `ImmersiveWindowUiTest` pasó 2/2 en retry aislado—; cubre progresión, compras (incluidas las skins premium nuevas), revisión del tablero, ayuda, tutorial, accesibilidad, recogidas y movimiento reducido.
 - `:app:lintDebug`: correcto; 0 errores, 73 advertencias y 3 notas (versiones y dependencias, orientación, candidatos a plurales, recursos sin uso, tipografía y APIs disuadidas). Sin baselines ni supresiones nuevas.
