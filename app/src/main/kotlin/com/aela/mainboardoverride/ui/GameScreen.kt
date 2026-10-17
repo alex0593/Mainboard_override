@@ -161,7 +161,7 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                 }
             }
             BoxWithConstraints(Modifier.weight(1f)) {
-                val controlsWidth = (maxWidth * .29f).coerceIn(190.dp, 260.dp)
+                val controlsWidth = (maxWidth * .25f).coerceIn(170.dp, 230.dp)
                 Box(Modifier.fillMaxSize()) {
                   Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Box(Modifier.weight(1f).fillMaxHeight()) {
