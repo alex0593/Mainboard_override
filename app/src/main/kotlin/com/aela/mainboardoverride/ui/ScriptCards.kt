@@ -86,7 +86,8 @@ private fun scriptArtwork(type: ScriptType): Int? = when (type) {
     ScriptType.KILL_PROCESS -> R.drawable.script_card_kill
     ScriptType.BRIDGE -> R.drawable.script_card_bridge
     ScriptType.STEALTH -> R.drawable.script_card_stealth
-    else -> null
+    ScriptType.CLOAK -> R.drawable.script_card_cloak
+    ScriptType.STUN -> R.drawable.script_card_stun
 }
 
 @Composable
