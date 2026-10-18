@@ -37,9 +37,13 @@ Prompt: `A cyber terminal script card illustration for STEALTH, a signal mask er
 
 Prompt: `A cyber terminal script card illustration for CLOAK, a square microchip node shrouded by a camouflage veil of thin terminal lime scan lines, the chip glowing dimmer behind the veil, deflected diagonal cyan scan beams sliding off the veil, dark PCB traces, terminal lime and cyan neon accents, crisp tactical game UI concept art, landscape 3:2, no text, no letters, no numbers, no logo, clear center silhouette, safe empty top and bottom margins.`
 
+Shipped art (2026-10-17): fusion pipeline — FLUX base render from endpoint `flux.2-klein-4b` (Apache 2.0), seed 101, plus a Pillow depth post-process; final candidate judged by Nemotron 3.5 super-vl-120b. Exported as `script_card_cloak.png`, 1254 × 1254 RGBA (full recipe in `assets/cards/cloak-prompt.md`).
+
 ### STUN
 
 Prompt: `A cyber terminal script card illustration for STUN, a square daemon process node frozen by a jagged amber lightning bolt, a bright spark burst at the impact point, broken motion trail stubs short-circuiting into stillness, dark PCB traces, warning amber with danger red highlights, crisp tactical game UI concept art, landscape 3:2, no text, no letters, no numbers, no logo, clear center silhouette, safe empty top and bottom margins.`
+
+Shipped art (2026-10-17): fusion pipeline — FLUX base render from endpoint `flux.2-klein-4b` (Apache 2.0), seed 1202, plus a Pillow depth post-process; final candidate judged by Nemotron 3.5 super-vl-120b. Exported as `script_card_stun.png`, 1254 × 1254 RGBA (full recipe in `assets/cards/stun-prompt.md`).
 
 ## Board buff icons
 
@@ -53,4 +57,4 @@ Prompt: `A small cyber PCB pickup icon for a RAM reserve, a glowing memory chip 
 
 ## Export and review
 
-Export one PNG per prompt using the names `card_ping.png`, `card_spoof.png`, `card_kill_process.png`, `card_bridge.png`, `card_stealth.png`, `card_cloak.png`, `card_stun.png`, `buff_trace_cooler.png`, and `buff_ram_reserve.png`. The packaged runtime names are `script_card_*.png` at 1254 × 1254 (square canvas, illustration centered, transparent background); the STEALTH, CLOAK and STUN originals live at `assets/cards/originals/` and match their shipped exports (process notes in `assets/cards/stealth-prompt.md`, `cloak-prompt.md` and `stun-prompt.md`). Before importing, verify that the illustration remains legible at 128 × 85 px, that all safe margins are empty, and that no accidental text was generated.
+Export one PNG per prompt using the names `card_ping.png`, `card_spoof.png`, `card_kill_process.png`, `card_bridge.png`, `card_stealth.png`, `card_cloak.png`, `card_stun.png`, `buff_trace_cooler.png`, and `buff_ram_reserve.png`. The packaged runtime names are `script_card_*.png` at 1254 × 1254 (square canvas, illustration centered, transparent background); the STEALTH original lives at `assets/cards/originals/` and matches its shipped export, while the CLOAK and STUN files kept there are the earlier Pollinations renders (archive only — the shipped exports of those two come from the fusion pipeline described above). Process notes for all three live in `assets/cards/stealth-prompt.md`, `cloak-prompt.md` and `stun-prompt.md`. Before importing, verify that the illustration remains legible at 128 × 85 px, that all safe margins are empty, and that no accidental text was generated.

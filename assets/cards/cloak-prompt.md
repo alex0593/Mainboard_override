@@ -20,3 +20,7 @@ monochrome green phosphor neon wireframe game icon on pure black background, abs
 ## Crítica final (honestidad)
 
 La pieza es un icono tech abstracto, en paleta (lima sobre void), legible a 128 px y con margen de seguridad correcto, pero es **más plana y esquemática** que los sprites de la familia (que son hardware oscuro con más elementos secundativos). Se acepta dentro del límite de 6 iteraciones; si se reparte presupuesto de arte, regenerar con el mismo prompt en el modo con API key/prompt realce.
+
+## Receta final (2026-10-17, arte fusionado aprobado)
+
+La v6 de Pollinations **ya no es la pieza embarcada**: ganó el concurso de tres pipelines con la opción fusión —render base FLUX (endpoint `flux.2-klein-4b`, licencia Apache 2.0, semilla **101**) + postproceso de profundidad en Pillow—, con el candidato final juzgado por Nemotron 3.5 super-vl-120b. Se empaqueta como `app/src/main/res/drawable-nodpi/script_card_cloak.png` (1254 × 1254 RGBA, fondo transparente). `originals/script_card_cloak.png` queda como archivo del render anterior y no se toca (el rollback es git).

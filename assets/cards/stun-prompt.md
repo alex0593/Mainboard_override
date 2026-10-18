@@ -22,3 +22,7 @@ one single fused object: a square microchip icon whose outline is drawn as a jag
 ## Crítica final (honestidad)
 
 La pieza es un icono tech abstracto legible a 128 px (banda diagonal de alta energía, rojo/ámbar en paleta, fondo transparente), pero **más esquemática** que los sprites de la familia y sin la lectura literal de «nodo paralizado» (el chip se intuye romboidal, no frontal). Se acepta dentro del límite de 6 iteraciones; una regeneración con API key y referencias de estilo reales (tipo imagegen con inputs) daría mejor resultado.
+
+## Receta final (2026-10-17, arte fusionado aprobado)
+
+La v6 de Pollinations **ya no es la pieza embarcada**: ganó el concurso de tres pipelines con la opción fusión —render base FLUX (endpoint `flux.2-klein-4b`, licencia Apache 2.0, semilla **1202**) + postproceso de profundidad en Pillow—, con el candidato final juzgado por Nemotron 3.5 super-vl-120b. Se empaqueta como `app/src/main/res/drawable-nodpi/script_card_stun.png` (1254 × 1254 RGBA, fondo transparente). `originals/script_card_stun.png` queda como archivo del render anterior y no se toca (el rollback es git).
