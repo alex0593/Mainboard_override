@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -47,8 +49,13 @@ internal fun SettingsScreen(state: GameUiState, actions: MainViewModel, onBack: 
     }
     CircuitBackground {
         AppWindow(header = { ArtHeader(stringResource(R.string.settings), onBack) }) {
-            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     SettingsPanel(stringResource(R.string.settings_game), Modifier.weight(1f)) {
                         Text(stringResource(R.string.language), color = Cyan, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -61,13 +68,11 @@ internal fun SettingsScreen(state: GameUiState, actions: MainViewModel, onBack: 
                                 Modifier.weight(1f), primary = state.preferences.language == "en",
                             )
                         }
-                        Row(Modifier.fillMaxWidth()) {
-                            CompactSwitch(stringResource(R.string.audio), state.preferences.audioEnabled, actions::setAudio, Modifier.weight(1f))
-                            CompactSwitch(stringResource(R.string.vibration), state.preferences.vibrationEnabled, actions::setVibration, Modifier.weight(1f))
-                        }
-                        Row(Modifier.fillMaxWidth()) {
-                            CompactSwitch(stringResource(R.string.reduced_motion), state.preferences.reducedMotion, actions::setReducedMotion, Modifier.weight(1f))
-                            CompactSwitch(stringResource(R.string.context_help), state.preferences.contextHelpEnabled, actions::setContextHelpEnabled, Modifier.weight(1f))
+                        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            CompactSwitch(stringResource(R.string.audio), state.preferences.audioEnabled, actions::setAudio, Modifier.fillMaxWidth())
+                            CompactSwitch(stringResource(R.string.vibration), state.preferences.vibrationEnabled, actions::setVibration, Modifier.fillMaxWidth())
+                            CompactSwitch(stringResource(R.string.reduced_motion), state.preferences.reducedMotion, actions::setReducedMotion, Modifier.fillMaxWidth())
+                            CompactSwitch(stringResource(R.string.context_help), state.preferences.contextHelpEnabled, actions::setContextHelpEnabled, Modifier.fillMaxWidth())
                         }
                     }
                     SettingsPanel(stringResource(R.string.settings_volume), Modifier.weight(1f)) {
