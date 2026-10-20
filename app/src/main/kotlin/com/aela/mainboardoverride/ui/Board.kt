@@ -363,8 +363,13 @@ internal fun Board(
                 val spec: AnimationSpec<Dp> = if (reduced) snap() else tween(420, easing = FastOutSlowInEasing)
                 val daemonX by animateDpAsState(cell * daemon.position.x, spec, label = "daemon-x")
                 val daemonY by animateDpAsState(cell * daemon.position.y, spec, label = "daemon-y")
-                Box(Modifier.offset(daemonX, daemonY).size(cell).zIndex(3f), contentAlignment = Alignment.Center) {
-                    Text("D!", color = Danger, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black)
+                Box(Modifier.size(cell).zIndex(3f), contentAlignment = Alignment.Center) {
+                    Box(Modifier.graphicsLayer {
+                        translationX = daemonX.value
+                        translationY = daemonY.value
+                    }) {
+                        Text("D!", color = Danger, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Black)
+                    }
                 }
             }
             }

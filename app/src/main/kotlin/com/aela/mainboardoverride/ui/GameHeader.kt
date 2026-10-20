@@ -95,10 +95,13 @@ private fun NodesIndicator(game: GameState) {
 private fun TraceIndicator(trace: Int) {
     var previousTrace by remember { mutableIntStateOf(trace) }
     var increase by remember { mutableIntStateOf(0) }
+    val reducedMotion = LocalReducedMotion.current
+    // Spec for the trace delta rise/fade animation; snaps instantly under reduced motion.
+    val riseSpec: AnimationSpec<Float> = snap()
+    val fadeSpec: AnimationSpec<Float> = snap()
     val rise = remember { Animatable(0f) }
     val fade = remember { Animatable(0f) }
     val critical = remember { Animatable(0f) }
-    val reducedMotion = LocalReducedMotion.current
     val traceColor = if (trace >= 80) Danger else Warning
     // The label counts up while the delta badge animates off the raw change.
     val countSpec: AnimationSpec<Int> = if (reducedMotion) snap() else tween(350, easing = FastOutSlowInEasing)
@@ -113,14 +116,14 @@ private fun TraceIndicator(trace: Int) {
             rise.snapTo(0f)
             fade.snapTo(1f)
             launch {
-                fade.animateTo(0f, tween(900, easing = FastOutSlowInEasing))
+                fade.animateTo(0f, fadeSpec)
             }
-            rise.animateTo(-24f, tween(900, easing = FastOutSlowInEasing))
+            rise.animateTo(-24f, riseSpec)
         }
         // One-shot red flash the first time trace crosses into critical range.
         if (!wasCritical && trace >= 80 && !reducedMotion) {
             critical.snapTo(1f)
-            launch { critical.animateTo(0f, tween(900, easing = FastOutSlowInEasing)) }
+            launch { critical.animateTo(0f, tween(350, easing = FastOutSlowInEasing)) }
         }
     }
 
