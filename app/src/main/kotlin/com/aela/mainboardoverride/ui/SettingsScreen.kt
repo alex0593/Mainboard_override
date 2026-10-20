@@ -53,33 +53,42 @@ internal fun SettingsScreen(state: GameUiState, actions: MainViewModel, onBack: 
                 Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SettingsPanel(stringResource(R.string.settings_game), Modifier.weight(1f)) {
-                        Text(stringResource(R.string.language), color = Cyan, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            TerminalButton(
-                                stringResource(R.string.spanish), { actions.setLanguage("es") },
-                                Modifier.weight(1f), primary = state.preferences.language == "es",
-                            )
-                            TerminalButton(
-                                stringResource(R.string.english), { actions.setLanguage("en") },
-                                Modifier.weight(1f), primary = state.preferences.language == "en",
-                            )
-                        }
-                        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            CompactSwitch(stringResource(R.string.audio), state.preferences.audioEnabled, actions::setAudio, Modifier.fillMaxWidth())
-                            CompactSwitch(stringResource(R.string.vibration), state.preferences.vibrationEnabled, actions::setVibration, Modifier.fillMaxWidth())
-                            CompactSwitch(stringResource(R.string.reduced_motion), state.preferences.reducedMotion, actions::setReducedMotion, Modifier.fillMaxWidth())
-                            CompactSwitch(stringResource(R.string.context_help), state.preferences.contextHelpEnabled, actions::setContextHelpEnabled, Modifier.fillMaxWidth())
-                        }
+                // --- Sección 1: Ajustes de juego ---
+                SettingsPanel(
+                    stringResource(R.string.settings_game),
+                    Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.language), color = Cyan, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TerminalButton(
+                            stringResource(R.string.spanish), { actions.setLanguage("es") },
+                            Modifier.weight(1f), primary = state.preferences.language == "es",
+                        )
+                        TerminalButton(
+                            stringResource(R.string.english), { actions.setLanguage("en") },
+                            Modifier.weight(1f), primary = state.preferences.language == "en",
+                        )
                     }
-                    SettingsPanel(stringResource(R.string.settings_volume), Modifier.weight(1f)) {
-                        VolumeSlider(stringResource(R.string.music_volume), state.preferences.musicVolume, actions::setMusicVolume)
-                        VolumeSlider(stringResource(R.string.sfx_volume), state.preferences.sfxVolume, actions::setSfxVolume)
+                    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        CompactSwitch(stringResource(R.string.audio), state.preferences.audioEnabled, actions::setAudio, Modifier.fillMaxWidth())
+                        CompactSwitch(stringResource(R.string.vibration), state.preferences.vibrationEnabled, actions::setVibration, Modifier.fillMaxWidth())
+                        CompactSwitch(stringResource(R.string.reduced_motion), state.preferences.reducedMotion, actions::setReducedMotion, Modifier.fillMaxWidth())
+                        CompactSwitch(stringResource(R.string.context_help), state.preferences.contextHelpEnabled, actions::setContextHelpEnabled, Modifier.fillMaxWidth())
                     }
                 }
+
+                // --- Sección 2: Volumen y Sistema ---
+                SettingsPanel(
+                    stringResource(R.string.settings_volume),
+                    Modifier.fillMaxWidth()
+                ) {
+                    VolumeSlider(stringResource(R.string.music_volume), state.preferences.musicVolume, actions::setMusicVolume)
+                    VolumeSlider(stringResource(R.string.sfx_volume), state.preferences.sfxVolume, actions::setSfxVolume)
+                }
+
+                // --- Sección 3: Créditos y Versión (se queda donde está) ---
                 AboutStrip(versionName, state)
             }
         }

@@ -39,7 +39,6 @@ internal fun CircuitBackground(
             modifier = Modifier.matchParentSize().alpha(.72f),
             contentScale = androidx.compose.ui.layout.ContentScale.Crop,
         )
-        if (ambientTint != null) AnimatedAmbientWebp(ambientTint, Modifier.matchParentSize())
         Canvas(Modifier.fillMaxSize()) {
             val step = 48.dp.toPx()
             var x = -step

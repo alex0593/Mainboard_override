@@ -94,7 +94,6 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
         backgroundResource = if (state.challengeLevel == null) {
             scenarioBackgroundResource(state.scenarioId)
         } else R.drawable.menu_background_v2,
-        ambientTint = if (state.challengeLevel == null) scenarioAccentColor(state.scenarioId) else null,
     ) {
         Column(Modifier.fillMaxSize().padding(8.dp)) {
             Row(Modifier.fillMaxWidth().testTag("header-row"), verticalAlignment = Alignment.CenterVertically) {

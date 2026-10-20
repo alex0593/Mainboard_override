@@ -29,7 +29,4 @@ class FxWebpResourcesTest {
         assertEquals(Rewards.premiumSkins, Rewards.premiumSkins.filter { fxResource(it) != null }.toSet())
     }
 
-    @Test fun ambientMotesWebpExists() {
-        assertNotEquals(0, ambientMotesResource())
     }
-}

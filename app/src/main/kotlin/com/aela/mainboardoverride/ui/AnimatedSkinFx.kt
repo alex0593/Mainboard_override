@@ -34,11 +34,7 @@ internal fun fxResource(id: String): Int? = when (id) {
     else -> null
 }
 
-/** Generic neutral motes loop that CircuitBackground tints per scenario accent. */
-internal fun ambientMotesResource(): Int = R.drawable.ambient_motes
-
-/**
- * Plays the premium skin's particle WebP over the static artwork. API 26-27 and reduced motion
+/** Plays the premium skin's particle WebP over the static artwork. API 26-27 and reduced motion
  * fall back to the Canvas glow in [PremiumGlowCanvas], which is static under reduced motion.
  */
 @Composable
@@ -53,17 +49,7 @@ internal fun AnimatedSkinFxWebp(skin: String?, modifier: Modifier = Modifier) {
 }
 
 /**
- * Ambient motes over the free-mode background, tinted with the scenario accent. Skipped entirely
- * under reduced motion and on API 26-27; the static background already covers those.
- */
-@Composable
-internal fun AnimatedAmbientWebp(tint: Color, modifier: Modifier = Modifier) {
-    val reducedMotion = LocalReducedMotion.current
-    if (reducedMotion || Build.VERSION.SDK_INT < 28) return
-    AnimatedWebpView(ambientMotesResource(), modifier, tint = tint)
-}
-
-/** Hosts one looping AnimatedImageDrawable; starts and stops with the lifecycle. */
+ * Hosts one looping AnimatedImageDrawable; starts and stops with the lifecycle. */
 @androidx.annotation.RequiresApi(28)
 @Composable
 private fun AnimatedWebpView(@DrawableRes source: Int, modifier: Modifier = Modifier, tint: Color? = null, opacity: Float = 1f) {
