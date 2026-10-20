@@ -42,10 +42,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.zIndex
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
@@ -87,7 +92,8 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
             pingProgress.animateTo(0f, animationSpec = tween(5_000, easing = LinearEasing))
         }
     }
-    val pingActive = pingProgress.value > 0f && game.pingPreview.isNotEmpty()
+    val pingActive = remember { derivedStateOf { pingProgress.value > 0f && game.pingPreview.isNotEmpty() } }
+    val pingProgressState = remember { derivedStateOf { pingProgress.value } }
     BackHandler(enabled = pendingExitAction == null) { pendingExitAction = GameExitAction.EXIT }
     CircuitBackground(
         animated = !state.preferences.reducedMotion,
@@ -100,12 +106,12 @@ internal fun GameScreen(state: GameUiState, actions: MainViewModel, onMenu: () -
                 Box(Modifier.weight(1f).heightIn(min = 64.dp)) {
                     // PING takes over the whole band while its preview lasts; the header comes back
                     // on its own once the countdown reaches zero.
-                    if (pingActive) {
+                    if (pingActive.value) {
                         PingHeader(
                             tiles = game.pingPreview,
                             skin = state.preferences.dominoSkin,
                             accent = scenarioAccentColor(state.scenarioId),
-                            progress = pingProgress.value,
+                            progress = pingProgressState,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     } else {
@@ -330,17 +336,37 @@ private fun PingHeader(
     tiles: List<Domino>,
     skin: String,
     accent: Color,
-    progress: Float,
+    progress: androidx.compose.runtime.State<Float>,
     modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(10.dp)
+    val timerHeight = 3.dp
+    val timerBackground = accent.copy(alpha = .18f)
     Box(
         modifier
             .heightIn(min = 64.dp)
             .testTag("ping-header")
             .clip(shape)
             .background(Panel.copy(alpha = .98f))
-            .border(BorderStroke(1.dp, accent.copy(alpha = .6f)), shape),
+            .border(BorderStroke(1.dp, accent.copy(alpha = .6f)), shape)
+            .drawBehind {
+                // Draw the progress bar in the draw phase to avoid per-frame recomposition/relayout
+                val p = progress.value.coerceIn(0f, 1f)
+                if (p > 0f) {
+                    val width = size.width * p
+                    drawRect(
+                        color = accent,
+                        topLeft = Offset(0f, size.height - timerHeight.toPx()),
+                        size = Size(width, timerHeight.toPx()),
+                    )
+                }
+                // Draw the timer background track
+                drawRect(
+                    color = timerBackground,
+                    topLeft = Offset(0f, size.height - timerHeight.toPx()),
+                    size = Size(size.width, timerHeight.toPx()),
+                )
+            },
     ) {
         Row(
             Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 18.dp, vertical = 9.dp),
@@ -364,16 +390,11 @@ private fun PingHeader(
                 }
             }
         }
+        // Keep the timer track semantics for tests (ping-timer tag)
         Box(
-            Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(3.dp)
-                .background(accent.copy(alpha = .18f))
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(timerHeight)
+                .background(Color.Transparent)
                 .testTag("ping-timer"),
-        ) {
-            Box(
-                Modifier.fillMaxWidth(progress.coerceIn(0f, 1f))
-                    .fillMaxHeight()
-                    .background(accent),
-            )
-        }
+        )
     }
 }
