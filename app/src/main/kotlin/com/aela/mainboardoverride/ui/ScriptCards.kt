@@ -15,6 +15,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.semantics.Role
@@ -97,7 +99,7 @@ internal fun DominoView(tile: Domino, selected: Boolean, skin: String = "kenney"
     // The idle clock is read only in the draw phase: every hand tile drifts on its own staggered
     // phase and the selected tile's background breathes at the same rate. The hand passes one
     // shared [phase] so the panel runs off a single animation; standalone callers get their own.
-    val idlePhase = phase ?: rememberIdlePhase()
+    val idlePhase = phase ?: rememberIdlePhase(reducedMotion)
     Row(
         modifier.widthIn(min = 42.dp).heightIn(min = 64.dp).semantics { contentDescription = label; this.selected = selected }.background(Void)
             .drawBehind {
@@ -116,9 +118,13 @@ internal fun DominoView(tile: Domino, selected: Boolean, skin: String = "kenney"
 
 /** A tile's own idle clock, only used by callers that do not share the hand's phase. */
 @Composable
-private fun rememberIdlePhase(): State<Float> = rememberInfiniteTransition(label = "tile-idle")
-    .animateFloat(
-        0f, 2f * Math.PI.toFloat(),
-        infiniteRepeatable(tween(2200, easing = LinearEasing)),
-        label = "tile-idle-phase",
-    )
+private fun rememberIdlePhase(reducedMotion: Boolean): State<Float> = if (reducedMotion) {
+        remember { mutableStateOf(0f) }
+    } else {
+        rememberInfiniteTransition(label = "tile-idle")
+            .animateFloat(
+                0f, 2f * Math.PI.toFloat(),
+                infiniteRepeatable(tween(2200, easing = LinearEasing)),
+                label = "tile-idle-phase",
+            )
+    }
