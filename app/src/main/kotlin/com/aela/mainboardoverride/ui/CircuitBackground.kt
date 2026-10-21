@@ -4,9 +4,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -15,8 +12,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import com.aela.mainboardoverride.R
 import androidx.compose.animation.core.*
 
@@ -24,11 +23,13 @@ import androidx.compose.animation.core.*
 internal fun CircuitBackground(
     animated: Boolean = false,
     @androidx.annotation.DrawableRes backgroundResource: Int = R.drawable.menu_background_v2,
-    // Ambient motes tinted with this accent drift over the static background (free mode only).
-    ambientTint: androidx.compose.ui.graphics.Color? = null,
     content: @Composable () -> Unit,
 ) {
-    val progress = if (animated) {
+    // The pulse only runs while the screen is actually visible: a backgrounded screen keeps the
+    // static grid but drops the frame clock entirely.
+    val resumed = LocalLifecycleOwner.current.lifecycle.currentStateAsState().value == Lifecycle.State.RESUMED
+    val active = animated && resumed
+    val progress = if (active) {
         val transition = rememberInfiniteTransition(label = "menu circuits")
         transition.animateFloat(0f, 1f, infiniteRepeatable(tween(6000, easing = LinearEasing)), label = "pulse")
     } else null
@@ -50,7 +51,7 @@ internal fun CircuitBackground(
                 drawLine(tint, Offset(x, bend), Offset(x + step / 2, bend + step / 2), 1.dp.toPx())
                 drawLine(tint, Offset(x + step / 2, bend + step / 2), Offset(x + step / 2, size.height), 1.dp.toPx())
                 drawCircle(tint, 3.dp.toPx(), Offset(x, bend), style = Stroke(1.dp.toPx()))
-                if (animated) {
+                if (active) {
                     // Read the animation in the draw phase, without recomposing menu content each frame.
                     val distance = (((progress?.value ?: 0f) + index * .13f) % 1f) * (size.height + step / 2)
                     val point = when {
