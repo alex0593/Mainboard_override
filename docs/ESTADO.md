@@ -157,7 +157,7 @@ reflejarse en el GDD y en los tests del dominio. Este archivo no duplica sus det
 | UI y texturas | Contadores animados (RAM/rastreo/saldo), glow de celdas, daemon animado, flash de honeypot y micro-glitch de rechazo, todos con `LocalReducedMotion`; arte con decodificación acotada a la banda de pantalla (`ui/ArtworkQuality.kt`). | [Roadmap](ROADMAP.md) |
 | Localización | Recursos españoles e ingleses para la UI y el tutorial (47 instrucciones en paridad). | `app/src/main/res/values*` |
 | Accesibilidad | Descripciones semánticas y objetivos táctiles mínimos en controles principales; sin revisión TalkBack registrada. | [Arquitectura](ARCHITECTURE.md) |
-| Release | `0.1.0` / `versionCode 12`, firma release + R8; APK y AAB construidos, `lintRelease` sin errores; ficha de tienda lista. | [PLAY.md](PLAY.md) |
+| Release | **Publicada: `0.1.0` / `versionCode 12`**, firma release + R8; APK y AAB construidos, `lintRelease` sin errores; ficha de tienda lista. En desarrollo: `0.1.2` / `versionCode 14`, sin etiquetar. | [PLAY.md](PLAY.md) |
 | Sitio y descarga | Landing en `mainboard-override.duckdns.org` (APK + `latest.apk` + `SHA256SUMS`), Nexus Chat en `nexxxusapp.duckdns.org` y API reservada; **HTTPS activo** en los tres nombres (Let's Encrypt, renovación automática) con redirect HTTP→HTTPS. | [Roadmap](ROADMAP.md) (bloque H) |
 | Servidor | `t4g.micro` + 10 GiB en us-east-2 (~7,3 $/mes), acceso solo por SSM (SG: 80/443 + 22 restringido), bucket `mainboard-override-artifacts-689217346963`. | [Roadmap](ROADMAP.md) (H02) |
 
