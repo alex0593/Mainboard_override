@@ -73,6 +73,17 @@ El APK se genera en `app/build/outputs/apk/debug/app-debug.apk`. Las pruebas
 de interfaz (`./gradlew :app:connectedDebugAndroidTest`) requieren un
 dispositivo o emulador autorizado; por USB en vez de adb WiFi.
 
+**Antes de medir o publicar el peso, borra la salida anterior.** El empaquetado de AGP
+reutiliza la APK que ya estaba: si el cambio retira recursos (por ejemplo la conversión a
+WebP de `tools/ConvertPngToWebp.py`, que retira 131 PNG), el fichero nuevo arrastra las
+entradas viejas puestas a cero y **no adelgaza aunque el contenido sí haya bajado**. La
+primera medición tras la conversión dio 57,1 MB con 441 entradas fantasma y 26,4 MB de
+relleno; reempaquetando limpio, 30,7 MB.
+
+```bash
+rm -rf app/build/outputs/apk/debug app/build/outputs/apk/release app/build/outputs/bundle/release
+```
+
 ## Descarga directa
 
 La landing publicada en
