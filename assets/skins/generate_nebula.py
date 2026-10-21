@@ -14,6 +14,9 @@ file. Runtime exports are produced with tools/PrepareSkinAsset.java:
     java tools/PrepareSkinAsset.java originals/domino_nebula.png \
         app/src/main/res/drawable-nodpi/domino_nebula_preview.png 96 192
 
+res/ keeps static artwork as WebP: run the exported PNGs through
+`python3 tools/ConvertPngToWebp.py` afterwards.
+
 Design rules honoured here (docs/GDD.md + assets/skins/README.md):
   * board artwork is opaque; the centre stays calm so dominoes read clearly;
   * the domino shell is a rounded silhouette on a genuinely transparent canvas;

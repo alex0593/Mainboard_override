@@ -5,7 +5,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.imageio.ImageIO;
 
-/** Offline PNG export; original art is never packaged at generation resolution. */
+/**
+ * Offline PNG export; original art is never packaged at generation resolution.
+ *
+ * res/ keeps static artwork as WebP, so an exported PNG still has to go through
+ * `python3 tools/ConvertPngToWebp.py`, which writes the WebP twin and drops the PNG.
+ */
 class PrepareSkinAsset {
     public static void main(String[] args) throws Exception {
         if (args.length != 4) throw new IllegalArgumentException("source destination width height");

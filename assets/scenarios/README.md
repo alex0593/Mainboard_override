@@ -34,6 +34,8 @@ buffs y daemon de la semilla fija 42 (`app/.../ui/ScenarioPreview.kt`).
 - `python3 assets/scenarios/generate_overlays.py` — pinta a 4×, remuestrea
   premultiplicado a 1280×800 (`originals/overlay_<id>.png`).
 - Export: `java tools/PrepareSkinAsset.java assets/scenarios/originals/overlay_<id>.png app/src/main/res/drawable-nodpi/scenario_<id>_overlay.png 640 400`.
+- Conversión: `python3 tools/ConvertPngToWebp.py` (en `res/` el arte estático vive como
+  WebP; el PNG exportado es un paso intermedio y el script lo borra al crear el `.webp`).
 - Las trampas ocultas (honeypots) y las soluciones nunca se hornean: el volcado
   de geometría las excluye por construcción y el test de dominio las ignora.
 

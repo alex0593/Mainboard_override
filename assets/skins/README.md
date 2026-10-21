@@ -18,7 +18,7 @@ Procedural pairs are drawn analytically (SDF + value noise), reproducible byte-f
 
 Exports: domino shells 256 × 512 (512 KiB decoded ARGB), domino previews 96 × 192 (72 KiB); boards 1024 × 512 (2 MiB), board previews 384 × 192 (288 KiB). Transparency is preserved. Real pip values are drawn by the game, never generated as part of the shell. The circuit skin uses a 256 × 512 sibling export instead of decoding its 887 × 1774 original (about 6 MiB).
 
-Reproduce an export with a full JDK: `java -Djava.awt.headless=true tools/PrepareSkinAsset.java SOURCE DESTINATION WIDTH HEIGHT`. This performs offline resizing and PNG encoding; it is not an image-generation API client. Original artwork remains untouched.
+Reproduce an export with a full JDK: `java -Djava.awt.headless=true tools/PrepareSkinAsset.java SOURCE DESTINATION WIDTH HEIGHT`. This performs offline resizing and PNG encoding; it is not an image-generation API client. Original artwork remains untouched. En `res/` el arte estático vive como WebP, así que después del export hay que pasar el PNG por `python3 tools/ConvertPngToWebp.py` (escribe el gemelo `.webp` y borra el PNG).
 
 ## Final prompts
 

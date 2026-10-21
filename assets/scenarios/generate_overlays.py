@@ -12,10 +12,13 @@ kept in sync with LevelGenerator by PreviewOverlayGeometryTest. Hidden honeypots
 and solutions are absent by construction: the dump never contains them.
 
 Draws at 4x for anti-aliasing, downsamples premultiplied (LANCZOS) to the 2x
-original in originals/, then export the runtime PNG with:
+original in originals/, then export the runtime asset with:
 
     java tools/PrepareSkinAsset.java originals/overlay_<id>.png \
         app/src/main/res/drawable-nodpi/scenario_<id>_overlay.png 640 400
+    python3 tools/ConvertPngToWebp.py
+
+res/ keeps static artwork as WebP, so the exporter's PNG is a stepping stone.
 """
 
 import json
@@ -28,12 +31,24 @@ HERE = Path(__file__).resolve().parent            # assets/scenarios
 ROOT = HERE.parent.parent                          # repository root
 GEOMETRY = ROOT / "game-domain/src/test/resources/overlay-geometry-seed42.json"
 ORIGINALS = HERE / "originals"
-FIREWALL = ROOT / "app/src/main/res/drawable-nodpi/board_firewall.png"
-PORT_S0 = ROOT / "app/src/main/res/drawable-nodpi/board_port_s0_v1.png"
-PORT_X6 = ROOT / "app/src/main/res/drawable-nodpi/board_port_x6_v1.png"
+DRAWABLES = ROOT / "app/src/main/res/drawable-nodpi"
+
+
+def res_drawable(name):
+    """Resuelve un drawable empaquetado por nombre base: en res/ los estáticos viven como WebP."""
+    for suffix in (".webp", ".png"):
+        path = DRAWABLES / f"{name}{suffix}"
+        if path.exists():
+            return path
+    raise FileNotFoundError(f"no encuentro {name} en {DRAWABLES} (ni .webp ni .png)")
+
+
+FIREWALL = res_drawable("board_firewall")
+PORT_S0 = res_drawable("board_port_s0_v1")
+PORT_X6 = res_drawable("board_port_x6_v1")
 BUFFS = {
-    "RAM_RESERVE": ROOT / "app/src/main/res/drawable-nodpi/board_ram_reserve_v1.png",
-    "TRACE_COOLER": ROOT / "app/src/main/res/drawable-nodpi/board_trace_cooler_v1.png",
+    "RAM_RESERVE": res_drawable("board_ram_reserve_v1"),
+    "TRACE_COOLER": res_drawable("board_trace_cooler_v1"),
 }
 # FontFamily.Monospace + FontWeight.Black stand-in (same weight/width class).
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"
