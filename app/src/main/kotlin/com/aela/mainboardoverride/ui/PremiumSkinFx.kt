@@ -9,7 +9,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -76,17 +75,16 @@ internal fun PremiumGlowCanvas(skin: String?, modifier: Modifier = Modifier) {
 
 @Composable
 private fun PremiumGlowLayer(fx: SkinFx, modifier: Modifier = Modifier) {
-    val reducedMotion = LocalReducedMotion.current
-    val transition = rememberInfiniteTransition(label = "premium-glow")
-    // Reduced motion keeps the layer but freezes it at the midpoint of each cycle.
-    val phase by transition.animateFloat(
-        0f, 1f,
-        infiniteRepeatable(tween(fx.periodMillis, easing = LinearEasing)),
-        label = "premium-glow-phase",
-    )
-    val frozen = 0.5f
+    // Reduced motion keeps the layer but freezes it at the midpoint of each cycle, and no frame
+    // clock is created at all while frozen.
+    val phase = if (LocalReducedMotion.current) null else rememberInfiniteTransition(label = "premium-glow")
+        .animateFloat(
+            0f, 1f,
+            infiniteRepeatable(tween(fx.periodMillis, easing = LinearEasing)),
+            label = "premium-glow-phase",
+        )
     Canvas(modifier) {
-        val t = if (reducedMotion) frozen else phase
+        val t = phase?.value ?: 0.5f
         when (fx.style) {
             SkinFxStyle.SWEEP -> drawSweep(fx.accent, t)
             SkinFxStyle.PULSE -> drawPulse(fx.accent, t)
@@ -167,16 +165,16 @@ fun DrawScope.premiumHalo(accent: Color, t: Float) {
 @Composable
 internal fun Modifier.premiumCardBorder(skin: String?, cornerDp: Float = 14f): Modifier {
     val fx = skin?.let(::premiumSkinFx) ?: return this
-    val reducedMotion = LocalReducedMotion.current
-    val transition = rememberInfiniteTransition(label = "premium-card-border")
-    val pulse by transition.animateFloat(
-        .55f, 1f,
-        infiniteRepeatable(tween(1900, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "premium-card-border-alpha",
-    )
+    // No frame clock under reduced motion; the border keeps a fixed accent instead.
+    val pulse = if (LocalReducedMotion.current) null else rememberInfiniteTransition(label = "premium-card-border")
+        .animateFloat(
+            .55f, 1f,
+            infiniteRepeatable(tween(1900, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "premium-card-border-alpha",
+        )
     return drawBehind {
         drawRoundRect(
-            fx.accent.copy(alpha = (if (reducedMotion) .7f else pulse) * .65f),
+            fx.accent.copy(alpha = (pulse?.value ?: .7f) * .65f),
             cornerRadius = CornerRadius(cornerDp.dp.toPx()),
             style = Stroke(1.6.dp.toPx()),
         )
