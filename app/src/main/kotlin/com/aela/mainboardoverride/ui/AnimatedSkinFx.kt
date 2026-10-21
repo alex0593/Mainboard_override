@@ -8,7 +8,10 @@ import android.os.Build
 import android.widget.ImageView
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -55,6 +58,11 @@ internal fun AnimatedSkinFxWebp(skin: String?, modifier: Modifier = Modifier) {
 private fun AnimatedWebpView(@DrawableRes source: Int, modifier: Modifier = Modifier, tint: Color? = null, opacity: Float = 1f) {
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val running = lifecycleState == Lifecycle.State.RESUMED
+    // Decoding the animated WebP is synchronous; defer the AndroidView by one frame so the first
+    // frame (and a test Activity start) is not blocked by it.
+    val ready = remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { ready.value = true }
+    if (!ready.value) return
     AndroidView(
         modifier = modifier,
         factory = { context ->
