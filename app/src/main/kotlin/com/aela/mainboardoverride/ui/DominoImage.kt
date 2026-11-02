@@ -27,7 +27,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Paint
+import android.content.res.Resources
 
 private val kenneyDominoResources = arrayOf(
     intArrayOf(R.drawable.domino_0_0, R.drawable.domino_0_1, R.drawable.domino_0_2, R.drawable.domino_0_3, R.drawable.domino_0_4, R.drawable.domino_0_5, R.drawable.domino_0_6),
@@ -196,9 +198,10 @@ internal fun DominoImage(
 }
 
 /** Decodes the sprite once and stamps the pips with the same rules as the old
- * Canvas path (cachedPips positions, dominoPipColor, customCircuit/aurora halos). */
+ * Canvas path (cachedPips positions, dominoPipColor, customCircuit/aurora halos).
+ * Uses inSampleSize at decode time to avoid loading the full 512×1024 bitmap into memory. */
 private fun renderTile(
-    resources: android.content.res.Resources,
+    resources: Resources,
     @DrawableRes resource: Int,
     targetPx: Int,
     stampPips: Boolean,
@@ -206,21 +209,39 @@ private fun renderTile(
     customCircuit: Boolean,
     tile: Domino,
 ): ImageBitmap {
-    val raw = android.graphics.BitmapFactory.decodeResource(resources, resource)
+    // Calculate inSampleSize: originals are 512×1024, target is targetPx × targetPx*2
+    val options = BitmapFactory.Options()
+    options.inJustDecodeBounds = true
+    BitmapFactory.decodeResource(resources, resource, options)
+
+    val targetW = targetPx
+    val targetH = targetPx * 2
+
+    // Compute inSampleSize as the largest power of 2 that still keeps us above target
+    var sampleSize = 1
+    while ((options.outWidth / sampleSize) / 2 >= targetW &&
+           (options.outHeight / sampleSize) / 2 >= targetH) {
+        sampleSize *= 2
+    }
+    sampleSize = sampleSize.coerceAtLeast(1)
+
+    // Decode with inSampleSize
+    val decodeOpts = BitmapFactory.Options().apply { inSampleSize = sampleSize }
+    val raw = BitmapFactory.decodeResource(resources, resource, decodeOpts)
+
     val w = targetPx.coerceAtLeast(1)
-    val h = w * 2
-    val scaled = if (raw.width == w && raw.height == h) raw else Bitmap.createScaledBitmap(raw, w, h, true)
-    // copy(..., mutable = true) gives a bitmap we can stamp pips on regardless of how
-    // BitmapFactory/ createScaledBitmap left the source.
+    val h = targetPx.coerceAtLeast(2)
+    val scaled = if (raw.width == w && raw.height == h) raw
+        else Bitmap.createScaledBitmap(raw, w, h, true)
     val mutable = scaled.copy(Bitmap.Config.ARGB_8888, true)
     if (stampPips) {
         val pipRadius = w * .072f
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         android.graphics.Canvas(mutable).apply {
-            fun stamp(value: Int, half: Int) {
+            fun stamp(value: Int, pipY: Int) {
                 cachedPips[value].forEach { (x, y) ->
                     val cx = w * x
-                    val cy = h * (half * .5f + y * .5f)
+                    val cy = h * (pipY * .5f + y * .5f)
                     if (customCircuit) { paint.color = Cyan.toArgb(); drawCircle(cx, cy, pipRadius * 1.18f, paint) }
                     if (skin == "aurora") { paint.color = Color(0xFF704500).toArgb(); drawCircle(cx, cy, pipRadius * 1.16f, paint) }
                     paint.color = dominoPipColor(skin).toArgb()

@@ -38,3 +38,6 @@ tools/.butler/
 
 # DuckDNS token de despliegue (nunca se commitea)
 .duckdns_token
+
+# cache de herramienta graphify
+graphify-out/
